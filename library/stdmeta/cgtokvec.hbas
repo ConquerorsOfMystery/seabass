@@ -1,0 +1,33 @@
+/*
+    THE TOKEN LIST VECTOR
+    
+    @cgvec_p[cgstrll*]
+    
+    [
+        [these are]
+        ["tokens" that();]
+        [should be interpreted*** as,]
+        [separate.lists]
+    ]
+    
+    
+*/
+
+#include <stdmeta/cgstl.hbas>
+
+/*
+    take a cgstrll and parse it down.
+*/
+method codegen @cgvec_p[cgstrll*]:parse(cgstrll* input)->cgstrll*:
+    cgstrll* arg
+    while(input != 0)
+        @cg_bldr_foldout_arg arg input
+        //we push arg even if it is null...
+        this.push(arg);
+    end
+end
+//Duplicate and then parse...
+method codegen @cgvec_p[cgstrll*]:parse_dupe(cgstrll* input)->cgstrll*:
+    this.parse(input.dupell());
+end
+

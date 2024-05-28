@@ -1,0 +1,149 @@
+
+REMEMBER THE IDEA OF "BABY STEP ABSTRACTIONS"?
+
+Build big things out of little things. Yeah, I remember it.
+
+The goal of this phase of development will be to create tons
+of "small abstractions" which make programming easier
+
+CONTROL FLOW- LOGIC- COMMON OPERATIONS
+
+I can simplify my code (shorten, make it briefer) quite a bit
+by implementing custom syntaxes to make it easier to read...
+
+I've already implemented eqor/neqand/streqor/strneqand...
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"UNIVERSAL SWITCH"
+
+@uswitch(expr)
+    (case1)[
+        code
+    ](case2)[
+        code
+    ][
+        default code
+    ]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"CGTOKLIST"
+
+class cgtoklist
+    noexport
+    cgstrll* base
+    cgstrll* wlk
+end
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"TOKEN MANIPULATION LANGUAGE"
+//parsing statements...
+
+//variable declarations! tkl is "toklist"
+tkl mytkl tok:inlist_dupe //making a token list from an existing cgstrll*
+tkl mytkl2 ";"; //making an toklist from a qtok....
+
+//expressions! We know because they start with an identifier that
+//isn't a reserved name...
+
+//if we see an identifier we don't recognize, we assume it is
+//a toklist.
+mytkl add my_imported_tkl
+//you can force an interpretation...
+mytkl add tok:mytoken
+//pushqtok! The name of a token list followed immediately by a string....
+mytkl "this_will_be_qtoked"
+
+mytkl2 add mytkl //mytkl will be dupell'd
+mytkl2 addeat mytkl //mytkl will be moved. This is more efficient since we can transfer
+                    //its end pointer into mytkl2.
+//SEABASS!
+$[
+    @pprint[
+        /   "Root node text:"
+        /   (mytkl.base.text)
+        /   "Tail node text:"
+        /   (mytkl.wlk.text)
+    
+    ]
+]                    
+
+                    
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    
+OTHER IDEAS:
+
+    * 1+ custom in-function DSLs for manipulating data structures.
+    
+        * operators for things like "push onto data structure"
+        
+        and executing standard algorithms.
+        
+        * Manipulating trees. Notably, my AST!
+    
+    * A custom DSL for creating bytecode executors. Basically, just creating
+    the giant switch statement and all the various cases, with a copy of the switch
+    at the end of every single instruction's code. Optionally, we want to fill in every single
+    possible "unfulfilled case" with a default case up to some "maximum value" (For my
+    bytecodes, usually 256, but potentially smaller or more depending on the number of bits
+    in the "retrieve opcode" expression or whatever)
+    
+    * DSL stuff for writing programming languages. cgrdparse is pretty close, but we need
+    custom ASTs (... Remember the UAST? Yeah, I do).
+    
+CONTEXT-OBJECT-STATEMENT- A SIMPLE TEMPLATE FOR MOST METAPROGRAMMING ASTS.
+
+    Scopes with variables and then TAC-like statements that act on those objects,
+    and of course, manipulate control flow.
+    
+    This is a general "pattern" for programming languages.
+    
+    WHAT'S NEW? OBJECTS AND STATEMENTS.
+    
+    Seabass already _has_ the control flow stuff we need. We just need the objects
+    and the custom statement/expression types.
+    
+    @GLOBALSCOPE PROVIDES US WITH SUPERPOWERS.
+    
+    we can literally write a function inside of an expression and then call it. Wow!
+    
+    We can (and should) use this to do all sorts of amazing control flow abstractions
+    on objects.
+    
+    WHAT SORTS OF OBJECT-ORIENTED CONTROL FLOW ABSTRACTIONS CAN YOU DO?
+    
+    There's the obvious ones- operator overloads. Adding strings together.
+    
+    
+    
+HOW DO I MAKE IMPLEMENTING AND MANIPULATING DATA STRUCTURES EASY?
+
+    ARGH!!!! 
+    
+    WHAT OPERATIONS CAN YOU DO TO A TREE?
+    
+    * Prune nodes
+    
+    * Swap nodes
+    
+    * Assign/instantiate nodes ("flesh out"/"populate")
+    
+    * Perform a tree transformation
+
+WHAT IS MY GRAND VISION FOR PROGRAMMING IN SEABASS?
+
+    * Write code for anything
+    
+    VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+    * Template/Stamp out entire libraries and programs quickly 
+        > (DSLs/Templates for writing these sorts of things)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    Current goal
+    
+    >>>>more advanced templating<<<<
+    
+    ? Perhaps I should go back to my old design docs
+    for Qformat ?
+    
+    YES! QFORMAT2!
+    
+
+    

@@ -1,0 +1,586 @@
+(This document unchecked, unverified. Please do not take as authoritative.
+Summary of my thoughts.)
+
+~~~~~
+THE MATHEMATICS OF ABSTRACTION
+
+    All Glory to the Lord Jesus Christ, who
+    created all things. Amen.
+~~~~~
+Let a "Character" be any symbol or encoded unit of information.
+Let a "character set" be a finite countable grouping of symbols which comprise the units of
+    information conveyance.
+Let a "Character encoding" or "Char Encoding scheme" be a fashion in which arbitrary
+    character sequences in some "virtual" character set are expressed using a lower level
+    "basal" one
+    
+    The "virtual" character set is implemented "in terms of" the "basal" character set.
+    
+Let len() be a function which accepts a sequence of characters in the basal
+    representation of character sequences, and returns the number of basal characters
+    in that sequence.
+    
+    For instance, if we are encoding 7-bit ascii bit-by-bit, then len('z!3') would
+    be 21, since it takes 21 bits to represent those characters. 
+    
+    On a machine with byte-addressable memory where each character is stored in a
+    separate byte, it would return "3" because the "basal character sequence" is not
+    the individual bits on the machine, but the bytes on the machine.
+    
+Let lenv() and lenb() be functions which accept a character sequence as input, and the
+    former returns the number of virtal characters in the desired encoding and the
+    latter returns the number of basal characters in the sequence (i.e., len)
+
+let nchars() be a function which takes in a character set (not a sequence of characters)
+    and returns the natural number of characters in the character set.
+    
+Let the "Infinite General Encoding scheme efficiency" of a char encoding scheme be defined by this limit:
+
+    limit as lenv(seq) goes to infinity
+    ( 
+        nchars(virtual_charset)^lenv(seq)
+        __________________________________ 
+        nchars(base_charset) ^ lenb(seq)
+    )
+    
+    where seq is the sequence of characters.
+    
+    An infinite general encoding scheme efficiency of 1 being the theoretical
+    maximum.
+    
+
+THEOREM 1: ACHIEVING A MAXIMAL ENCODING SCHEME EFFICIENCY
+
+    Given that the virtual and base charsets have
+    more than one character each... 
+    
+    We can encode a character sequence as digits in a Base-N 
+    number where N is the number of characters in a character
+    set, and then converting that to Base-N2 where N2 is the 
+    number of characters in the basal character set.
+    
+    Note that we must also encode leading zeroes to pack
+    the number to ceil(log base nB(nV^LVSEQ))
+    
+    where nB is the number of characters in the base character set
+    and nV is the number of characters in the virtual character set
+    
+    
+    Let us say we had two character sets: {abcde} {ab} and our goal
+    is to encode the former into the latter with efficiency eventually reaching
+    1 at the limit where the length of the sequence goes to infinity.
+    
+    
+    
+    We treat the characters as digits of a Base-5 number and then re-write that
+    number in Base-2.
+    
+    Let's say we want to encode "ddbaebaccdd"
+    
+    so first we create a mapping...
+    a=0
+    b=1
+    c=2
+    d=3
+    e=4
+    
+    Rewrite it as a number in base 5...
+    
+    ddbaebaccdd
+    33104102233
+    
+    Then rewrite the number in binary (with leading zeroes)
+    10000111110110100010010010
+    
+    Note that we _must not_ omit leading zeroes in order
+    to preserve the number of original characters.
+    
+    This is our encoding for that number.
+    
+    The infinite general encoding scheme of it is...
+    
+    lim lenv(seq)->inf(
+        5 ^ lenv(seq)
+        _____________
+        2 ^ lenb(seq)
+    )
+    
+    We will treat lenv(seq) as our input and rewrite lenb(seq) as a function of lenv(seq).
+
+
+    lim LVSEQ -> inf(
+        5 ^ LVSEQ
+        _____________
+        2 ^ lenb(seq)
+    )
+    
+    and lenb in terms of LVSEQ is
+    
+    ceil(
+        log2(5^LVSEQ)
+    )
+    
+    so
+    
+    lim LVSEQ -> inf(
+        5 ^ LVSEQ
+        _____________
+        2 ^ ceil(log2(5^LVSEQ))
+    )
+    
+    without ceil it would trivially be 1
+    
+    2 ^ (log2(5^LVSEQ)) = 5 ^ LVSEQ
+    
+    however due to ceil, answers approach the range 1-1/2
+    
+    The general formula for this encoding scheme's infinite general
+    encoding scheme efficiency is
+    
+    lim LVSEQ -> inf(
+            nchars_virt ^ LVSEQ
+            _____________________________________________________________
+            nchars_base ^ ceil(log(nchars_virt^LVSEQ) / log(nchars_base))
+        )
+        
+    The naive scheme of simply using the minimum number of basal characters
+    to represent a single character in the base sequence is of course wildly
+    inefficient, often resulting in infinite general encoding scheme efficiency
+    of zero.
+    
+Let a "Token" be a finite sequence of characters comprising an atom of meaning.
+
+    To explain this one, let's create a toy language which allows you to write
+    very large numbers, we will call it "Powlang"
+    
+    11^^3^^^^5
+    
+    The digits 0-9, minus sign, and caret are our operators.
+    
+    Let us say that combined sequences of digits comprise classical
+    base 10 integers, optionally prefixed by a - indicating negation
+    
+    2 (two)
+    
+    -491 (negative four hundred ninety one)
+    
+    placing a single caret between two integers represents exponentiation...
+    
+    -57^-49 == "negative fifty seven to the negative forty-ninth power"
+    
+    and placing multiple carets represents nested, repeated exponentiation, i.e.
+    if we were to use parentheses to express order of operations....
+    
+    57^^451 == 57^(451^(451))
+    3^^^3 == 3^(3^(3^(3)))
+    
+    and we interpret mixed sequences like this:
+    
+    3^3^3 == (3^(3))^3
+    45^^^3^^2 == (45^(3^(3^(3))))^(2^(2))
+    
+    then we could say that the characters of this language are the digits 0-9, - and ^.
+    
+    and we could call individual integers and caret sequences "tokens"
+    
+    (573) (^^^^^^^^) (-27) (^^^^) (21)
+    
+    
+Let a "grammar" be a set of rules which define whether a sequence of tokens is "allowed"
+    
+    So, for instance, in our previous language, these are all allowed:
+    
+    3
+    3^98
+    -3^-98^^^^27
+    
+    but these are not:
+    
+    a^3 (a is not an allowed character)
+    1.5^20 (. is not an allowed character)
+    300^ (a caret sequence must always be followed by an integer)
+
+Let a language be a set of tokens (possibly infinite) and a grammar which defines the validity of token sequences for that language
+    
+    Such as C, C++, Rust, Seabass, 6502 machine code, or Powlang.
+
+Let a "document" be a particular sequence characters, comprising a sequence of tokens, which
+    is part of the language of "all possible character sequences in all possible character
+    encodings"
+    
+    Such as a computer program, or the powlang examples.
+    
+    
+Let a "computational automata" be a deterministic automata whose actions are controlled by its interpretation of a document in a particular language
+
+    Such as a CPU, or a bytecode interpreter, or the AST executor of Seabass.
+    
+Let an "Abstract machine" be an imaginary (or real) computational automata which is defined by how it behaves in relation to the contents of a document in its language
+
+    Any real computational automata is an abstract machine, but so are theoretical
+    ones, like the turing machine.
+    
+Let a program be a document which is interpretable by a particular abstract machine
+Let a Program-verse (Pverse) be the set of all programs for an abstract machine
+
+    "All possible C programs" is a pverse, for instance.
+    
+Let a compiler be a program which accepts programs from some Pverse and emits programs in another (possibly different) pverse
+
+    The input and output pverses could be identical, or entirely different, or intersect.
+~~~~
+"DOMAIN COMPLETENESS"
+A compiler is "Domain complete" if all programs in the destination pverse are possible outputs of the compiler.
+I.E.
+Given a compiler C which accepts programs in P-verse A and emits programs in Pverse B, then for any program 'p' in B, there exists at least one program 'q' in A such that...
+q => C => p
+~~~
+"EFFICIENT DOMAIN COMPLETENESS"
+A compiler is "efficiently domain complete" respective to a program-verse B if, for all programs q in B there exists a p in A for which the following is true:
+
+Length_in_characters(p) <= Length_in_characters(q)
+~~~
+DEFINITION OF "ECHO"
+Let the identity compiler or "echo" on a given Pverse A be the compiler which performs no permutations on its input and emits its input verbatim, for all programs P in A.
+~~~
+PROPERTIES OF ECHO
+* Echo is efficiently domain complete.
+* All programs in Echo are bprogs
+* Length of programs is always exactly equal
+* Echo is an error-free compiler
+~~~
+"BPROG"
+Let the "briefest program" (bprog) with respect to some efficiently domain-complete compiler C be a program where the following is true:
+
+bprog => C => q
+
+there is no program "p" such that...
+p=>C=>q and len(p) < len(bprog)
+~~~
+DOMAIN SPECIFIC COMPILERS
+
+Two efficiently domain complete compilers C1,C2 are said to be "domain specific" if there exists some programs p11, p12, p21, p22, q1, q2 where the following is true:
+
+p11 => C1 => q1
+p12 => C1 => q2
+p21 => C2 => q1
+p22 => C2 => q2
+
+p11,p12 are bprogs of C1
+p21,p22 are bprogs of C2
+
+len(p11) < len(p21) 
+len(p22) < len(p12)
+
+That is to say...
+
+"q1 and q2 can both be expressed using C1 and C2"
+
+"only the most efficient expressions of q1 and q2 using C1 and C2 are considered."
+
+"q1 is more efficiently expressed using C1"
+"q2 is more efficiently expressed using C2"
+
+~~~
+POSED MAJOR QUESTION 1: THE ASEIS
+
+Is there a scheme for taking an efficiently 
+domain-complete compiler C with pverses A,B where
+
+A => C => B
+
+and creating a new compiler, C', where
+
+A'=> C'=> B
+
+such that C and C' are not domain specific relative to
+each other, and there are bprog p1 and program p2, where
+
+p1 => C => B
+p2 => C'=> B
+len(p2) < len(p1)
+
+Let such a scheme for creating new C' given C be called
+an "Arbitrary Syntax Efficiency Improvement Scheme" (ASEIS)
+
+
+
+~~~
+THE DOCUMENT TRANSFORMATION FUNCTION
+
+Let a "Document transformation function" Dfunc be a program which accepts
+a document D as input and performs some operation on the document, producing
+an output document D'
+
+D => Dfunc => D'
+
+(Note that it is irrelevant what the document transformation function actually
+runs on with respect to D and D')
+
+Per our definitions, compilers are document transformation functions. Dfuncs do not
+have to be defined all possible documents, but it is most useful if they are. For any
+Dfunc which is not defined for a given input, let us consider it as outputting
+some null, empty, or magic document (Perhaps the Constitution of the United States)
+~~~
+DOCUMENT TRANSFORMATION FUNCTION COST
+
+For a given Dfunc and D, let the "cost" of a transformation be
+
+len(D') - len(D)
+
+A positive cost meaning that the document increased in length, and
+a negative cost meaning that it decreased in length.
+
+An efficiently domain-complete compiler always has zero or negative
+cost.
+~~~
+DOCUMENT TRANSFORMATION FUNCTION COST FUNCTION
+
+Let the "cost function" Dcf of a Dfunc be a function which takes in
+a document and returns the total difference in size between the
+input and the output, i.e.
+
+if
+
+D => Dfunc => D'
+
+then...
+
+    Dcf(D) = len(D') - len(D)
+    
+EXAMPLE
+    Let us say that there is a Dfunc Dappenda which takes any
+    document and appends the character "a" to it. So...
+    
+    D => Dappenda => D + 'a'
+    
+    The cost function would be
+    
+    len(D + 'a') - len(D) =
+    len(D) + len('a') - len(D) =
+    len('a') =
+    1
+    
+    
+
+
+~~~
+DOCUMENT TRANSFORMATION FN COST FN COMPLEXITY FIRST ORDER
+
+D: Document
+Dfunc: Document Transformation Function
+Dcf: Dfunc Cost Function
+
+
+Let the derivative of Dcf(D) with respect to len(D)
+be the "cost function complexity" Dcfc of the transformation
+as D's length increases.
+
+EXAMPLE
+
+    For Dappenda, the first order complexity is zero, the length of
+    a document has a zero derivative, as shown here:
+    
+       d
+    __________ 1 = 0
+    d * len(D)
+    
+    Let us say that we have a document transformation function which
+    takes the original document and simply duplicates it, I.e....
+    
+    D => Ddup => D+D
+    
+    then the cost function would be
+    
+    len(D+D) - len(D) =
+    len(D) + len(D) - len(D) =
+    len(D)
+    
+    and the first-order complexity would be...
+    
+       d
+    __________ len(D) = 1
+    d * len(D)
+
+~~~
+INVALID DOCUMENTS
+
+A document D is "invalid" with respect to some compiler C if it does not
+result in the compiler producing a valid program in its output domain B.
+
+D => C => ERROR
+~~~
+ERROR-FREE COMPILER
+
+A Compiler is "error-free" if there are no invalid documents with respect
+to that compiler.
+
+I.e., if D is the set of all possible documents, and B is the output
+domain...
+
+D => C => B
+~~~
+INVALID DOCUMENT CREATION FUNCTION (IDCF)
+
+Let an Invalid Document Creation Function (IDCF) with respect to a
+compiler C accepting pverse A and emitting Pverse B be a Dfunc such that...
+
+C: Compiler
+A, B: Pverse
+IDCF: a Dfunc
+
+A => C => B 
+
+A => IDCF => A' (A': a set of documents)
+
+and there is no document D in A' such that
+
+D => C => !ERROR
+~~~
+UNIQUE INVALID DOCUMENT CREATION FUNCTION (UIDCF)
+
+Let a Unique Invalid Document Creation Function (UIDCF)
+with respect to a compiler C be an IDCF where
+there are no documents D, D2, D3 such that...
+
+    D3=> C => ERROR (D3 is an invalid document for C)
+    D => C =>!ERROR (D is a valid input for C)
+    D2=> C =>!ERROR (D2 is a valid input for C)
+    
+    D => UIDCF => D3
+    D2=> UIDCF => D3
+    
+    (D and D2 both generate D3 from the UIDCF)
+    
+~~~
+SYNTAX ERROR
+
+Let the "textual difference" between a document D entered into a UIDCF
+and the output D' be called a "Syntax error" SE
+
+Let the UIDCF itself be called a "Syntax Error Creator".
+~~~
+SYNTAX ERROR CREATION COSTS
+
+Note:
+    see DOCUMENT TRANSFORMATION FUNCTION COST
+
+
+cosnsider a UIDCF U with respect to some compiler C.
+
+Let us define these terms:
+
+"Syntax Error Creation Cost" SEc = Document transformation function cost of U
+"Syntax Error Creation Cost Function" SEcf = Dcf of U
+"Syntax Error Creation Complexity" SEcfc = Dcfc of U
+~~~
+THEOREM 2
+
+UNIVERSAL ASEIS
+
+Given...
+
+1. Efficiently domain-complete compiler Compiler C (accepting pverse Ci and emitting pverse Co) is not error-free.
+
+2. There exists some IDCF U w/ respect to C (whose cost function is Ucf)
+
+3. There exists at least one program P and one bprog P2 in Ci such that...
+        
+    len(U(P)) < len(P2)
+
+THEN
+
+it is possible to create a compiler C' which compresses a bprog
+    P2 in Ci by defining a modified echo function E
+    on Ci where
+    
+    U(P) => E => P2
+    
+    We then define our C' as the composition of E with the
+    original compiler C.
+    
+    INPUT => E => C => OUTPUT
+    
+    This is trivially proven by the fact that P2 was a bprog of Ci, and U(P)
+    is shorter.
+    
+    (Note that if P and P2 are the same, then we consider this U to be a
+    compression Dfunc of P)
+~~~~~
+UNIVERSAL PROPERTIES OF U(P) and P2 IN THEOREM 2
+
+Let C'i be the input pverse of C'...
+
+* P2 is not a bprog of C', regardless of further discourse.
+
+* If the only new defined input was U(P), then U(P) is a bprog.
+    
+~~~~~
+EFFECTS OF SEQUENTIAL OR ALGORITHMIC APPLICATIONS OF THEOREM 2
+
+Let us say that a person (or computer) repeatedly applies the transformation
+described by Theorem 2, finding new U,P,P2 w/ respect to a previous C/C' where each 
+application only increases the pverse of all possible input programs by a single new 
+program, then...
+
+
+1. If it is never the case that a previous U(P) is chosen as P2, then each successive
+    application's U(P) is a bprog.
+
+~~~~~
+ASEIS BY UNIVERSAL COMPRESSION
+
+Given Compiler C accepting Ci emitting Co which is not error-free,
+
+with UIDCF U w/ respect to C
+
+and for all programs P in Ci it is the case that
+
+    len(U(P)) <= len(P)
+    
+    and it is the case that there is one bprog Pb such that
+    
+    len(U(Pb)) <= len(Pb)
+    
+Then it is possible to construct a C' by creating a modified echo E on Ci,
+     merging the inverse function of U with echo on Ci, i.e. create a 
+     function that obeys the following...
+    
+    for all P in Ci...
+    
+    P => E => P
+    
+    and
+    
+    U(P) => E => P (E is inverse of U for U(P))
+    
+    Which we then use to define C' as...
+    
+    (INPUT => E) => C => OUTPUT
+    
+    Once again proven by the fact that U(P) is shorter than P, while
+    equivalent to P.
+~~~~~~
+NUMBERING AS A UNIVERSAL COMPRESSION SCHEME
+
+It is possible to assign each bprog in Ci on C a unique number
+by performing a breadth-first traversal of the space of all character sequences
+in the character encoding and assigning a natural number to each 
+bprog in Ci as they are visited. This natural number is then re-written
+according to Theorem 1 to produce an efficient representation.
+
+The "contiguousness" of the programs is how infrequently invalid documents are encountered
+during the traversal.
+
+For a non-error-free compiler with a non-finite or non-contiguous sequence of valid input programs,
+this is guaranteed to produce either a universal compression scheme or a scheme which is exactly
+as efficient as the original.
+
+This will also turn all non-finite languages into error-free ones.
+
+For efficiently domain-complete error-free compilers, no compression will occur.
+
+If the number of gaps encountered during the traversal is large enough, then
+it is certain that this will produce a universal compression scheme. I believe it has
+to do with the logarithm of how far we have traversed.
+

@@ -1,0 +1,80 @@
+
+I WANT TO WRITE CBASPLUSPLUS.
+
+A C++-like language for Cbas with the following features:
+
+* Exceptions
+
+* Templates
+
+* Owning Pointers & References
+
+* Enums
+
+* A match statement which takes in an enum and requires all cases be handled
+
+* Some scheme for doing guaranteed memory-safe and data-race-safe programming, ala Rust
+
+    BUT BETTER THAN THE BORROW CHECKER...
+
+* Multithreading (Using stuff from the seabass stdlib)
+
+* Parsehooks (Just like Seabass)
+
+* Automatically written Ctors/Dtors
+
+HOW DO OWNING POINTERS / REFERENCES IN CBAS++ WORK?
+
+After some thought, the pointer system from CBAS
+can be used as "references" and a special owningptr
+type can be used for owning pointers.
+
+so a reference will be declared like this:
+
+myStruct* myReference
+
+and an owning pointer like this:
+
+owned myStruct* myVariable
+
+The only difference between them is that the CBAS++
+compiler will automatically generate a destructor
+call and a free() for the latter.
+
+AUTOMATIC CTOR/DTOR AUTHORING
+
+For most data types, CBAS++ should automatically create ctor and dtor.
+
+However, for some special structs, this might not work. For instance, a file handle
+might need to be opened or closed. For these special structs, a special keyword (perhaps "complicated")
+should be reserved for indicating to CBAS++ that it cannot automatically write a ctor and dtor
+and that manual implementation is required.
+
+If a struct contains no owning pointers, then there is nothing that a `ctor` or `dtor` would do, so
+they are either generated as empty, or not generated at all.
+
+WHAT CAUSES DATA RACES?
+
+Sharing mutable data structures without locks. So if you share a mutable data structure between threads, all accesses (even reads) must be locked.
+
+I should come up with a scheme for explicitly defining state as shared between threads or not.
+
+
+THE AGENT/ACTOR MODEL
+
+Agents will basically be special kinds of classes in Cbas++. They will have special
+reference pointers to shared mutable data as well as owning pointers to private, owned data which
+prevents memory errors.
+
+All access to shared mutable data will be automatically guarded by mutex locks created for each
+of the mutable shared resources- that is, when you create a shared resource, you must also create a
+mutex.
+
+Global variables and non-reentrant functions will use their own mutex for preventing races.
+
+This will enable to write multithreaded code which, while not as fast as it could possibly be
+with optimal usage of atomics, it does let you take advantage of multiple cores on a system with
+reasonable assuredness that you don't have any races.
+
+Which is more then enough for seabass.
+

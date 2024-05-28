@@ -1,0 +1,55 @@
+
+#include "failable.hbas"
+
+fn codegen this_func_fails()->int:
+    throw 1 47
+end
+
+fn codegen this_func_doesntfail()->int:
+    return 1;
+end
+
+
+//as long as these are defined!
+fn predecl get_errno()->int;
+fn predecl set_errno(int a);
+
+
+fn this_function_uses_try_but_isnt_codegen():
+    try[
+        ;;;;
+    ][
+        ;;;;;
+    ]
+end
+
+
+
+
+fn codegen codegen_main():
+    
+    int a
+    int this_function_uses_try_but_isnt_codegen
+    this_function_uses_try_but_isnt_codegen = 37;
+    //this_function_uses_try_but_isnt_codegen();
+    try[
+        (a = this_func_fails())
+    ][
+        __builtin_puts("Uh oh! Something bad happened!");
+        goto bigfail
+        
+    ]
+    
+    try[
+            (a = this_func_doesntfail())
+    ][
+        __builtin_puts("This function failed too?");
+        cg_set_errno(0);
+    ]
+    __builtin_puts("All is Well!");
+    
+    :bigfail
+    
+        return
+end
+

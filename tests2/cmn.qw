@@ -1,0 +1,34 @@
+
+~myArray[200]
+
+
+-# mymacro
+    57 3 +
+..#..
+
+
+//function- hello
+-- hello
+    2 mymacro + myArray
+.
+
+-- if2ret3
+    <>
+    2 == ?
+        //return 3
+        --*
+        3
+    ;;
+        //return 0
+        --*
+        2
+    .
+.
+<#> "hlt;"
+
+-- ends_suddenly
+    
+    1 ?
+    3 4 5 + *
+    
+    

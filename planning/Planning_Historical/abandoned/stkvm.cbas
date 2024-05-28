@@ -1,0 +1,743 @@
+#include <meta>
+#include <toc_native_user>
+
+@wksht prnt[
+    [
+        @pprint [println itoa ARG1]
+    ][
+        ARG1
+    ]
+]
+
+fn inline read8(byte* im, u64 addr)->u8:
+    return im[addr];
+end
+
+fn inline read16(byte* im, u64 addr)->u16:
+    u16[1] r
+    memcpy((u8*)r, im+addr, 2)
+    return r[0]
+end
+
+fn inline read32(byte* im, u64 addr)->u32:
+    u32[1] r
+    memcpy((u8*)r, im+addr, 4)
+    return r[0]
+end
+
+fn inline read64(byte* im, u64 addr)->u64:
+    u64[1] r
+    memcpy((u8*)r, im+addr, 8)
+    return r[0]
+end
+
+fn inline write8(byte* im, u64 addr, u8 valin):
+    u8[1] val
+    val[0] = valin;
+    memcpy(im+addr,(u8*)val,1);
+end
+
+
+fn inline write16(byte* im, u64 addr, u16 valin):
+    u16[1] val
+    val[0] = valin;
+    memcpy(im+addr,(u8*)val,2);
+end
+
+fn inline write32(byte* im, u64 addr, u32 valin):
+    u32[1] val
+    val[0] = valin;
+    memcpy(im+addr,(u8*)val,4);
+end
+
+fn inline write64(byte* im, u64 addr, u64 valin):
+    u64[1] val
+    val[0] = valin;
+    memcpy(im+addr,(u8*)val,8);
+end
+
+fn predecl runvm(
+    byte* im,
+    u64 initpc //initial program counter.
+);
+
+fn inline bios_call(
+    u64* rstk,
+    u16 rstp,
+    byte* im
+)->u16:
+    //TODO implement stuff it can do....
+    if(rstk[rstp] == 0) //write byte...
+        //both values will be popped.
+        rstp++;
+        u8[1] val
+        val[0] = rstk[rstp]; rstp++;
+        fwrite(get_stdout_handle, val, 1);
+    elif(rstk[rstp] == 1) //read byte...
+        //do not pop, we will replace its value...
+        u8[1] val
+        fread(get_stdin_handle, val, 1);    
+        rstk[rstp] = val[0];
+    /*Insert more interactions here...*/
+    elif(rstk[rstp] == 2) //write bytes....
+        rstp++;
+        u64 nb = rstk[rstp]; rstp++;
+        u8* val = im + rstk[rstp]; rstp++;
+        //perform the fwrite...
+        fwrite(get_stdout_handle, val, nb);
+    elif(rstk[rstp] == 3) //read bytes
+        rstp++;
+        u64 nb = rstk[rstp]; rstp++;
+        u8* val = im + rstk[rstp]; rstp++;
+        //perform the fwrite...
+        fread(get_stdin_handle, val, nb);
+    /*TODO: implement more stuff needed to self-host the seabass metacompiler...*/
+    end
+    //return the rstp.
+    return rstp;
+end
+
+
+fn runvm(
+    byte* im,
+    u64 initpc //initial program counter.
+):
+    #define DISP ;switch(read8(im, pc++))\
+     halt nop im8 im16 im32 im64\
+     load8 load16 load32 load64\
+     store8 store16 store32 store64\
+     rload8 rload16 rload32 rload64\
+     rstore8 rstore16 rstore32 rstore64\
+     /*Stack operations....*/\
+     dup /*Take an element deep inside the stack, duplicate it.*/\
+     store /*Store the element on the top of the stack somewhere in the stack.*/\
+     rstkpop /*Pop an element off the rstk*/\
+     rstkpush /*increment the rstk ptr*/\
+     rstkptrclr /*clear the rstk*/\
+     addi subi muli divu divi modu modi/*Integer math pt1*/\
+     compl negi bitxor bitand bitor lsh rsh not boolify logand logor/*int math pt2*/\
+     addf subf mulf divf/*f32 math*/\
+     addd subd muld divd/*f64 math*/\
+     jmp call ret /*non-branching control flow*/\
+     jifnz jifz /*branching control flow*/\
+     se8 se16 se32 /*sign extension...*/\
+     ze8 ze16 ze32 /*Zero extension*/\
+     ftoi itof dtoi itod /*float conversion*/\
+     getstp setstp /*get or set the real stack pointer*/\
+     incri decri /*increment or decrement the integer value at the top*/\
+     getpc /*retrieve the program counter.*/\
+     bios /*perform a bios call....*/\
+     im_1 im_0 im_m1 im_2 im_4 im_8 /*convenience immediates...*/\
+     ;
+    
+    
+    u64 pc = initpc;
+    u64* rstk //register stack
+    u16 rstp=0; //register stack pointer- 16 bit, grows down.
+                //it is always pointing at the last thing pushed- i.e.,
+                //to push, you must decrement FIRST, and to pop, you
+                //increment AFTER.
+    u64 actual_stp=0;   //the stack pointer... it grows up.
+    rstk = (u64*)malloc(0x10000 * 8);//a lot of space...
+    
+    :halt
+        goto doquit
+    
+    //DISP
+    :nop
+    
+    DISP
+    :im8
+        --rstp;
+        rstk[rstp] = read8(im,pc); pc = pc + 1;
+    DISP
+    :im16
+        --rstp;
+        rstk[rstp] = read16(im,pc); pc = pc + 2;
+    DISP
+    :im32
+        --rstp;
+        rstk[rstp] = read32(im,pc); pc = pc + 4;
+    DISP
+    :im64
+        --rstp;
+        rstk[rstp] = read64(im,pc); pc = pc + 8;
+    DISP
+    :load8
+        if(1)
+            u64 addr = rstk[rstp];
+            rstk[rstp] = read8(im,addr);
+        end
+    DISP    
+    :rload8
+        if(1)
+            u64 addr = rstk[rstp] + pc;
+            rstk[rstp] = read8(im,addr);
+        end
+    DISP
+    :load16
+        if(1)
+            u64 addr = rstk[rstp];
+            rstk[rstp] = read16(im,addr);
+        end
+    DISP    
+    :rload16
+        if(1)
+            u64 addr = rstk[rstp] + pc;
+            rstk[rstp] = read16(im,addr);
+        end
+    DISP
+    :load32
+        if(1)
+            u64 addr = rstk[rstp];
+            rstk[rstp] = read32(im,addr);
+        end
+    DISP    
+    :rload32
+        if(1)
+            u64 addr = rstk[rstp] + pc;
+            rstk[rstp] = read32(im,addr);
+        end
+    DISP
+    :load64
+        if(1)
+            u64 addr = rstk[rstp];
+            rstk[rstp] = read64(im,addr);
+        end
+    DISP    
+    :rload64
+        if(1)
+            u64 addr = rstk[rstp] + pc;
+            rstk[rstp] = read64(im,addr);
+        end
+    DISP
+    :store8
+        if(1)
+            u64 addr = rstk[rstp]; rstp++;
+            u8 val = rstk[rstp]; rstp++;
+            write8(im,addr,val);
+        end
+    DISP 
+    :rstore8
+        if(1)
+            u64 addr = rstk[rstp] + pc; rstp++;
+            u8 val = rstk[rstp]; rstp++;
+            write8(im,addr,val);
+        end
+    DISP
+    :store16
+        if(1)
+            u64 addr = rstk[rstp]; rstp++;
+            u16 val = rstk[rstp]; rstp++;
+            write16(im,addr,val);
+        end
+    DISP
+    :rstore16
+        if(1)
+            u64 addr = rstk[rstp] + pc; rstp++;
+            u16 val = rstk[rstp]; rstp++;
+            write16(im,addr,val);
+        end
+    DISP
+    :store32
+        if(1)
+            u64 addr = rstk[rstp]; rstp++;
+            u32 val = rstk[rstp]; rstp++;
+            write32(im,addr,val);
+        end
+    DISP
+    :rstore32
+        if(1)
+            u64 addr = rstk[rstp] + pc; rstp++;
+            u32 val = rstk[rstp]; rstp++;
+            write32(im,addr,val);
+        end
+    DISP
+    :store64
+        if(1)
+            u64 addr = rstk[rstp]; rstp++;
+            u64 val = rstk[rstp]; rstp++;
+            write64(im,addr,val);
+        end
+    DISP
+    :rstore64
+        if(1)
+            u64 addr = rstk[rstp] + pc; rstp++;
+            u64 val = rstk[rstp]; rstp++;
+            write64(im,addr,val);
+        end
+    DISP
+    :dup
+        if(1)
+            //replace the index...
+            //since we want to go DEEPER into the stack,
+            //we do an ADD...
+            u16 ind = rstk[rstp];
+            rstk[rstp] = rstk[rstp + ind];
+        end
+    DISP
+    :store
+        if(1)
+            u16 ind = rstk[rstp]; rstp++;
+            u64 val = rstk[rstp];//this location will be replaced...
+            
+            rstk[rstp+ind] = val;
+        end
+    DISP
+    :rstkpush
+        rstp--;
+    DISP
+    :rstkpop
+        rstp++;
+    DISP
+    :rstkptrclr
+        rstp = 0;
+    DISP
+    :im_0
+        --rstp;
+        rstk[rstp] = 0;
+    DISP
+    :im_1
+        --rstp;
+        rstk[rstp] = 1;
+    DISP
+    :im_m1
+        --rstp;
+        rstk[rstp] = -1;
+    DISP
+    :im_2
+        --rstp;
+        rstk[rstp] = 2;
+    DISP
+    :im_4
+        --rstp;
+        rstk[rstp] = 4;
+    DISP
+    :im_8
+        --rstp;
+        rstk[rstp] = 8;
+    DISP
+    :addi
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 + v2;
+        end
+    DISP
+    :subi
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 - v2;
+        end
+    DISP
+    :muli
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 * v2;
+        end
+    DISP
+    :divu
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 / v2;
+        end
+    DISP
+    :modu
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 % v2;
+        end
+    DISP
+    :modi
+        if(1)
+            i64 v1 = rstk[rstp];rstp++;
+            i64 v2 = rstk[rstp];
+            rstk[rstp] = v1 % v2;
+        end
+    DISP
+    :divi
+        if(1)
+            i64 v1 = rstk[rstp];rstp++;
+            i64 v2 = rstk[rstp];
+            rstk[rstp] = v1 / v2;
+        end
+    DISP
+    :bitxor
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 ^ v2;
+        end
+    DISP
+    :bitand
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 & v2;
+        end
+    DISP
+    :bitor
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 | v2;
+        end
+    DISP
+    :lsh
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 << v2;
+        end
+    DISP
+    :rsh
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 >> v2;
+        end
+    DISP
+    :logand
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 && v2;
+        end
+    DISP
+    :logor
+        if(1)
+            u64 v1 = rstk[rstp];rstp++;
+            u64 v2 = rstk[rstp];
+            rstk[rstp] = v1 || v2;
+        end
+    DISP
+    :compl
+        if(1)
+            u64 v1 = rstk[rstp];
+            v1 = ~v1;
+            rstk[rstp] = v1;
+        end
+    DISP
+    :negi
+        if(1)
+            i64 v1 = rstk[rstp];
+            v1 = -v1;
+            rstk[rstp] = v1;
+        end
+    DISP   
+    :not
+        if(1)
+            u64 v1 = rstk[rstp];
+            v1 = !v1;
+            rstk[rstp] = v1;
+        end
+    DISP
+    :boolify
+        if(1)
+            u64 v1 = rstk[rstp];
+            v1 = !!v1;
+            rstk[rstp] = v1;
+        end
+    DISP
+    :addf
+        if(1)
+            u32[1] v1
+            u32[1] v2
+            v1[0] = rstk[rstp];rstp++;
+            v2[0] = rstk[rstp];
+            f32[1] f1
+            f32[1] f2
+            memcpy((u8*)f1, (u8*)v1, 4);
+            memcpy((u8*)f2, (u8*)v2, 4);
+            f1[0] = f1[0] + f2[0];
+            memcpy((u8*)v1, (u8*)f1, 4);
+            rstk[rstp] = v1[0];
+        end
+    DISP
+    :subf
+        if(1)
+            u32[1] v1
+            u32[1] v2
+            v1[0] = rstk[rstp];rstp++;
+            v2[0] = rstk[rstp];
+            f32[1] f1
+            f32[1] f2
+            memcpy((u8*)f1, (u8*)v1, 4);
+            memcpy((u8*)f2, (u8*)v2, 4);
+            f1[0] = f1[0] - f2[0];
+            memcpy((u8*)v1, (u8*)f1, 4);
+            rstk[rstp] = v1[0];
+        end
+    DISP
+    :mulf
+        if(1)
+            u32[1] v1
+            u32[1] v2
+            v1[0] = rstk[rstp];rstp++;
+            v2[0] = rstk[rstp];
+            f32[1] f1
+            f32[1] f2
+            memcpy((u8*)f1, (u8*)v1, 4);
+            memcpy((u8*)f2, (u8*)v2, 4);
+            f1[0] = f1[0] * f2[0];
+            memcpy((u8*)v1, (u8*)f1, 4);
+            rstk[rstp] = v1[0];
+        end
+    DISP
+    :divf
+        if(1)
+            u32[1] v1
+            u32[1] v2
+            v1[0] = rstk[rstp];rstp++;
+            v2[0] = rstk[rstp];
+            f32[1] f1
+            f32[1] f2
+            memcpy((u8*)f1, (u8*)v1, 4);
+            memcpy((u8*)f2, (u8*)v2, 4);
+            f1[0] = f1[0] / f2[0];
+            memcpy((u8*)v1, (u8*)f1, 4);
+            rstk[rstp] = v1[0];
+        end
+    DISP
+    :addd
+        if(1)
+            u64[1] v1
+            u64[1] v2
+            v1[0] = rstk[rstp];rstp++;
+            v2[0] = rstk[rstp];
+            f64[1] f1
+            f64[1] f2
+            memcpy((u8*)f1, (u8*)v1, 8);
+            memcpy((u8*)f2, (u8*)v2, 8);
+            f1[0] = f1[0] + f2[0];
+            memcpy((u8*)v1, (u8*)f1, 8);
+            rstk[rstp] = v1[0];
+        end
+    DISP
+    :subd
+        if(1)
+            u64[1] v1
+            u64[1] v2
+            v1[0] = rstk[rstp];rstp++;
+            v2[0] = rstk[rstp];
+            f64[1] f1
+            f64[1] f2
+            memcpy((u8*)f1, (u8*)v1, 8);
+            memcpy((u8*)f2, (u8*)v2, 8);
+            f1[0] = f1[0] - f2[0];
+            memcpy((u8*)v1, (u8*)f1, 8);
+            rstk[rstp] = v1[0];
+        end
+    DISP
+    :muld
+        if(1)
+            u64[1] v1
+            u64[1] v2
+            v1[0] = rstk[rstp];rstp++;
+            v2[0] = rstk[rstp];
+            f64[1] f1
+            f64[1] f2
+            memcpy((u8*)f1, (u8*)v1, 8);
+            memcpy((u8*)f2, (u8*)v2, 8);
+            f1[0] = f1[0] * f2[0];
+            memcpy((u8*)v1, (u8*)f1, 8);
+            rstk[rstp] = v1[0];
+        end
+    DISP
+    :divd
+        if(1)
+            u64[1] v1
+            u64[1] v2
+            v1[0] = rstk[rstp];rstp++;
+            v2[0] = rstk[rstp];
+            f64[1] f1
+            f64[1] f2
+            memcpy((u8*)f1, (u8*)v1, 8);
+            memcpy((u8*)f2, (u8*)v2, 8);
+            f1[0] = f1[0] / f2[0];
+            memcpy((u8*)v1, (u8*)f1, 8);
+            rstk[rstp] = v1[0];
+        end
+    DISP
+    :jmp
+        pc = pc + rstk[rstp]; rstp++; //Relative Jump!
+    DISP
+    :call
+        if(1)
+            u64 val = pc; //save the program counter...
+            pc = pc + rstk[rstp]; //at the top of the stack is where we are jumping...
+                                  //it is a relative address...
+            rstk[rstp] = val; //store the value in the same place...
+        end
+    DISP
+    :ret
+        if(1)
+            pc = rstk[rstp]; rstp++; //this is NOT a relative address...
+        end
+    DISP
+    :jifnz
+        if(1)
+            u64 testme = rstk[rstp]; rstp++;
+            u64 jtarg = rstk[rstp]; rstp++;
+            if(testme != 0)
+                pc = pc + jtarg; //RELATIVE JUMP!
+            end
+        end
+    DISP
+    :jifz
+        if(1)
+            u64 testme = rstk[rstp]; rstp++;
+            u64 jtarg = rstk[rstp]; rstp++;
+            if(testme == 0)
+                pc = pc + jtarg; //RELATIVE JUMP!
+            end
+        end
+    DISP
+    :se8
+        if(1)
+            i8 a= (u8)rstk[rstp];
+            i64 b = a;
+            rstk[rstp] = b;
+        end
+    DISP
+    :se16
+        if(1)
+            i16 a= (u16)rstk[rstp];
+            i64 b = a;
+            rstk[rstp] = b;
+        end
+    DISP
+    :se32
+        if(1)
+            i32 a= (u32)rstk[rstp];
+            i64 b = a;
+            rstk[rstp] = b;
+        end
+    DISP
+    :ze8
+        if(1)
+            u8 a= (u8)rstk[rstp];
+            rstk[rstp] = a;
+        end
+    DISP
+    :ze16
+        if(1)
+            u16 a= (u16)rstk[rstp];
+            rstk[rstp] = a;
+        end
+    DISP
+    :ze32
+        if(1)
+            u32 a= (u32)rstk[rstp];
+            rstk[rstp] = a;
+        end
+    DISP
+    :ftoi
+        if(1)
+            u32[1] a
+            f32[1] f
+            i64[1] v
+            a[0] = (u32)rstk[rstp];
+            memcpy((u8*)f,(u8*)a,4);
+            v[0] = f[0];
+            rstk[rstp] = v[0];
+        end
+    DISP
+    :dtoi
+        if(1)
+            f64[1] f
+            i64[1] v
+            v[0] = rstk[rstp];
+            memcpy((u8*)f,(u8*)v,8);
+            v[0] = f[0];
+            rstk[rstp] = v[0];
+        end
+    DISP
+    :itof //we assume a sixty four bit signed number...
+        if(1)
+            u32[1] a
+            f32[1] f
+            i64[1] v
+            v[0] = rstk[rstp];
+            f[0] = v[0];
+            memcpy((u8*)a,(u8*)f,4);
+            rstk[rstp] = a[0];
+        end
+    DISP
+    :itod
+        if(1)
+            f64[1] f
+            i64[1] v
+            v[0] = rstk[rstp];
+            f[0] = v[0];
+            rstk[rstp] = v[0];
+        end
+    DISP
+    :getstp
+        rstp--;
+        rstk[rstp] = actual_stp;
+    DISP
+    :setstp
+        actual_stp = rstk[rstp]; rstp++;
+    DISP
+    :incri
+        rstk[rstp]++;
+    DISP
+    :decri
+        rstk[rstp]--;
+    DISP
+    :getpc
+        rstk[rstp] = pc;
+    DISP
+    :bios
+        rstp = bios_call(rstk, rstp, im);
+    DISP
+
+
+
+
+
+    :doquit
+    free((u8*)rstk);
+    return
+end
+
+
+
+
+fn pub main(i32 argc, schar** argv)->i32:
+    if(argc < 3)
+        @prnt[
+            /   "Usage:"
+            /   "stkvm image.bin nbytes"
+        ]
+        sys_exit(1);
+    end
+    u64 ff = fopen((char*)argv[1], "rb");
+    if(ff == 0)
+        @prnt[
+            /   "Could not open file:"
+            /   ((char*)argv[1])
+        ]
+        sys_exit(1);
+    end
+    fseek(ff, 0,SEEK_END() );
+    u64 sz = ftell(ff);
+    fseek(ff, 0,SEEK_SET() );
+    u64 sz_askedfor = atou((char*)argv[2]);
+    if(sz > sz_askedfor)
+        sz_askedfor = sz;
+    end
+    //we could escape every single character in the file...
+    char* buf = malloc(sz_askedfor);
+    fread(ff, buf, sz);
+    runvm(buf, 0);
+end
+
+fn codegen codegen_main():
+    cg_emitC(SEABASS_STDLIB_PREFIX);
+end

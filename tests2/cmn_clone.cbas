@@ -1,0 +1,1133 @@
+/*
+    My attempt to beat Drummyfish at his own game.
+    
+    (UNFINISHED)
+    
+    Message for Drummy when I'm done:
+    
+    DEAR DRUMMYFISH:
+    
+        Comun is a neat idea! So I thought I'd make a language which
+        was inspired by it. I thought I could make something which
+        achieved your goals even better while also maintaining your
+        goals. So I wrote you this.
+        
+        It is a public domain work. Enjoy!
+        
+        Yea, though I walk through the valley of the shadow of death, 
+        I will fear no evil: for thou art with me; 
+        thy rod and thy staff they comfort me.
+        -Ps 23:4
+        
+        
+    
+    I like the idea of his language- Comun. But I think
+    I can do better
+    
+    GRAND VISION
+    
+    A tiny, embeddable, multi-architecture integer-only language
+    which is optimized for tiny computers. Needs to be easy to
+    understand and implement yourself while also being reasonably
+    easy to use.
+    
+    WHAT ARE THE GOALS?
+    
+    -> Must be extremely minimal so that it is easy to implement.
+    
+    -> It must be possible to compile this on a tiny computer with just
+        kilobytes of memory- possibly less than a Commodore 64
+    
+    -> that language should require minimal knowledge/understanding
+    to implement.
+    
+    -> we assume there is no standard filesystem on the device, the source
+    code has somehow magically appeared into some array of memory somewhere.
+    
+    -> it should be trivial to implement extensions to the language.
+        
+        
+    DESIGN DECISIONS
+    
+    1. Drummy has dictated to us that signed integers are apparently too
+    complicated to be the default, and we should default to unsigned. Alright then.
+    
+    2. Since Drummy wants unsigned integers to be the default, they will be. 
+    
+    ~garr
+    
+    -- func 
+    
+        words
+    .
+    
+    
+    -# macro
+    
+        words   
+    .
+    
+    
+    
+*/
+
+#include <toc_native_user>
+//mutate pprint....
+@wksht prnt[
+    [
+        @pprint [println itoa ARG1]
+    ][
+        ARG1
+    ]
+]
+
+//the source code text, which has magically appeared into memory
+//this is actually a giant round buffer....
+char* source_text = 0;
+char* tokenizer_out = 0;
+char* bigbuf = 0;
+char* tk = 0;
+TGT_UMAX input_len;
+#define MAX_FARGS 8
+//the compiler functions...
+fn predecl tokenize;
+fn predecl compile;
+fn predecl generate_code;
+
+//declarations/statements.
+
+
+/*
+    GUIDE TO SELF HOSTING STRUCTS-
+    
+    Write a function that offsets a pointer.
+    
+    I don't want to do be forced to do that here, so
+    I don't bother.
+*/
+
+//anything that is not a variable is this
+struct astnode
+    //name of this node- used by symbols for their name,
+    //and string literals to point to... the string literal.
+    //goto and label use this for their labelname.
+    //ops use this to identify what kind of operation they are.
+    char* name
+    //what is this node?
+    byte whatami
+    //stored value for constants
+    TGT_UMAX val
+    //next statement in the same scope. We store statements
+    //in the same scope in a linked list.
+    astnode* right
+    //child statements of this node- our scope for instance.
+    //switch uses this to store the list of labels it can go to.
+    //macro uses this to store a list of words in the macro.
+    astnode* children
+    //child statements of the else clause of an if
+    astnode* children2
+end
+
+
+
+//ast node types...
+byte AST_BAD = 0;
+byte AST_FN = 1;
+byte AST_INLINEFN = 2;
+byte AST_INTLIT = 3;
+byte AST_OP = 4;
+byte AST_IFELSE = 5;
+byte AST_SWITCH=6;
+byte AST_GOTO=7;
+byte AST_LBL=8;
+byte AST_SWITCHLISTENTRY=9;
+//like comun
+byte AST_STRINGLIT = 10;
+byte AST_NOP = 11;
+byte AST_ARR = 12;
+byte AST_MACRO = 13;
+//unparsed identifier...
+byte AST_IDENT = 14;
+//parsed identifier...
+byte AST_FCALL = 15;
+byte AST_ARRNAME = 16;
+byte AST_WHILE = 17;
+byte AST_ASM = 18;
+
+/*
+    AST dumping...
+*/
+fn inline astdump(astnode* qq):
+    if(qq.whatami == AST_BAD)
+        @prnt[
+            /   "~~~~~~~~~~~~~~BAD~~~~~~~~~~~~~~~~~~~~~~"
+        ]
+        if(qq.name != 0)
+            @prnt[
+                /   "NAME="
+                /   (qq.name)
+            ]
+        end
+    elif(qq.whatami == AST_FN)
+        @prnt[
+            /bar
+            /   "<fn>"
+            /   "<name>"
+            /   (qq.name)
+            /   "</name>"
+        ]
+        astdump(qq.children);
+        @prnt[/"</fn>"]
+    elif(qq.whatami == AST_INLINEFN)
+        @prnt[
+            /bar
+            /   "<inlinefn>"
+            /   "<name>"
+            /   (qq.name)
+            /   "</name>"
+        ]
+        astdump(qq.children);
+        @prnt[/"</inlinefn>"]
+    elif(qq.whatami == AST_INTLIT)
+        @prnt[
+            /int(qq.val)
+        ]
+    elif(qq.whatami == AST_OP)
+        @prnt[
+            /(qq.name)
+        ]
+    elif(qq.whatami == AST_IFELSE)
+        @prnt[
+            /   "<if>"
+        ]
+        astdump(qq.children)
+        if(qq.children2 != 0)
+            @prnt[
+                /bar
+                /   "<else>"
+                /bar
+            ]
+            astdump(qq.children2);
+        end
+        @prnt[/"</if>"]
+    elif(qq.whatami == AST_WHILE)
+        @prnt[
+            /   "<while>"
+        ]
+        astdump(qq.children);
+        @prnt[/"</while>"]
+    elif(qq.whatami == AST_SWITCH)
+        @prnt[
+            /   "<switch>"
+        ]
+        astdump(qq.children);
+        @prnt[/"</switch>"]        
+    elif(qq.whatami == AST_SWITCHLISTENTRY)
+        @prnt[
+            /(qq.name)
+        ]
+    elif(qq.whatami == AST_GOTO)
+        @prnt[
+            /"Goto:"
+            /(qq.name)
+        ]
+    elif(qq.whatami == AST_LBL)
+        @prnt[
+            /"label:"
+            /(qq.name)
+        ]
+    elif(qq.whatami == AST_STRINGLIT)
+        @prnt[/(qq.name)]
+    elif(qq.whatami == AST_NOP)
+        if(qq.children != 0)
+            @prnt[/"<root>"]
+            astdump(qq.children);
+            @prnt[/"</root>"]
+        else
+            @prnt[/"<nop>"]
+        end
+    elif(qq.whatami == AST_ARR)
+        @prnt[
+            /"Array:"
+            /(qq.name)
+            /"Sz:"
+            /int(qq.val)
+        ]
+    elif(qq.whatami == AST_FCALL)
+        @prnt[
+            /"fcall:"
+            /(qq.name)
+        ]
+    elif(qq.whatami == AST_ARRNAME)
+        @prnt[
+            /"arrname:"
+            /(qq.name)
+        ]
+    elif(qq.whatami == AST_ASM)
+        @prnt[
+            /"<asm>"
+            /(qq.name)
+            /"</asm>"
+        ]
+    end
+    if(qq.right != 0)
+        qq = qq.right;
+        tail astdump
+    end
+end
+
+
+method inline astnode.ctor:
+    memclear((u8*)this, sizeof(astnode))
+end
+
+//UNBLOATED DYNAMIC MEMORY ALLOCATION
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//  HOW DOES IT WORK?
+//  We only use it for stuff we never free-
+//  the AST. When we are done compiling,
+//  the dynamic memory can all be freed.
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//For your typical tiny computer, this will
+//obviously be a much smaller number....
+char[0x8000000] dynmem;
+char* dynptr;
+//does your tiny computer use alignment?
+//we align to 8 here, because we are compiling for 64 bit
+TGT_UMAX alignment = 8;
+
+//dynamic memory allocation is not bloat...
+fn inline mini_alloc(TGT_UMAX amt)->char*:
+    amt = amt + alignment - 1;
+    amt = amt & ~(alignment-1);
+    //perform the allocation
+    char* v = dynptr;
+    dynptr = dynptr + amt;
+    return v
+end
+
+//allocate an ast node
+fn inline new_astnode->astnode*:
+    return cast(astnode*)mini_alloc(sizeof(astnode));
+end
+
+astnode root;
+astnode* rootwalker = 0;
+fn inline push_sym(astnode* z):
+    if(rootwalker == 0)
+        rootwalker = z;
+        root.children = z;
+        return
+    end
+    //else
+    rootwalker.right = z;
+    rootwalker = z;
+end
+
+fn inline find_sym(char* name)->astnode*:
+    astnode* v = root.children;
+    //Search linearly through the linked list
+    while(v!=0)
+        if(v.name streq name)
+            return v
+        end
+        v = v.right;
+    end
+    
+    return v
+end
+
+
+//used for debugging...
+fn predecl debug_print_all_tokens;
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//MAIN- KINDA BLOATED
+//It has to be, because we have to talk
+//to the operating system, and we have to
+//read the file from disk. We call malloc.
+//If you're mad we call malloc, replace it
+//with a giant fixed size buffer somewhere.
+//on a "real" mini computer, we would put
+//the source code at a fixed address and
+//tokenize from there.
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+fn pub main(i32 argc, schar** argv)->i32:
+    dynptr = dynmem;
+    root.ctor();
+    root.whatami = AST_NOP;
+    if(argc < 2)
+        @prnt[
+            /   "Usage:"
+            /   "qw file"
+        ]
+        sys_exit(1);
+    end
+    //open the file:
+    TGT_UMAX fh = fopen((char*)argv[1], "rb");
+    if(fh == 0 )
+        @prnt[
+            /   "Unable to open file:"
+            /   ((char*)argv[1])
+        ]
+        sys_exit(1);
+    end
+    fseek(fh, 0,SEEK_END);
+    TGT_UMAX sz = ftell(fh);
+    fseek(fh, 0,SEEK_SET);
+    input_len = sz+1;
+    char* buf = malloc((sz+1)*2+10); //we allocate 10 extra bytes because why not
+    if(buf == 0)
+        @prnt[
+            /   "Malloc failed!"
+        ]
+        sys_exit(1);
+    end
+    memclear(buf,(sz+1)*2+10);
+    //the source code is in the second half
+    //of our giant buffer.
+    fread(fh, buf+sz+1, sz);
+    fclose(fh);
+    
+    source_text = buf+sz+1;
+    //the tokenizer output begins at the beginning of the buffer...
+    tokenizer_out = buf;
+    //store a pointer to the big buffer...
+    bigbuf = buf;
+    //we are walking from the source text...
+    tokenize();
+    compile();
+    //debug_print_all_tokens();
+    astdump(root);
+    generate_code();
+end
+
+//ASCII
+fn inline is_ws(char a)->byte:
+    return (
+        a == 0x9 ||
+        a == 0xa ||
+        a == 0xb ||
+        a == 0xc ||
+        a == 0xd ||
+        a == 0x20
+    )
+end
+
+//identifier or character. If it starts with a number,
+//the whole thing is interpreted as a number. If you typed
+//9_ then it's 9
+fn inline is_allowed_ident_char(char a)->byte:
+    return (
+        (a >= 'a' && a <= 'z') ||
+        (a >= 'A' && a <= 'Z') ||
+        (a >= '0' && a <= '9') ||
+        (a == '_')
+    )
+end
+
+fn inline is_digit(char a)->byte:
+    return (
+        (a >= '0' && a <= '9')
+    )
+end
+
+
+fn inline is_allowed_start_ident_char(char a)->byte:
+    return (
+        (a >= 'a' && a <= 'z') ||
+        (a >= 'A' && a <= 'Z') ||
+        (a == '_')
+    )
+end
+
+fn inline is_single(char a)->byte:
+    return (
+        a == '{' ||
+        a == '}' ||
+        a == '[' ||
+        a == ']' ||
+        a == '(' ||
+        a == ')'
+    )
+end
+
+fn inline is_weird(char a)->byte:
+    if(a == 0)
+        return 0
+    end
+    if(a == '"')
+        return 0
+    end
+    if(is_ws(a))
+        return 0
+    end
+    if( (a >= 'a' && a <= 'z') ||
+        (a >= 'A' && a <= 'Z') ||
+        (a >= '0' && a <= '9') ||
+        (a == '_')
+    )
+        return 0
+    end
+    if(a == ' ')
+        return 0
+    end
+    return 1
+end
+
+//tokenize some weird grouping of symbols...
+fn tokenize_weird:
+    char* q
+    while(is_weird(source_text[0]))
+        tokenizer_out := source_text;
+        tokenizer_out++;
+        source_text++;
+    end
+    tokenizer_out[0] = 0; tokenizer_out++;
+end
+
+//could be anything...
+fn tokenize_ident_or_number:
+    char* q
+    while(
+        (source_text[0] >= 'a' && source_text[0] <= 'z') ||
+        (source_text[0] >= 'A' && source_text[0] <= 'Z') ||
+        (source_text[0] >= '0' && source_text[0] <= '9') ||
+        (source_text[0] == '_')
+    )
+        //copies a single character...
+        tokenizer_out := source_text;
+        tokenizer_out++;source_text++;
+    end
+    tokenizer_out[0] = 0; tokenizer_out++;
+end
+
+//skip to the end of the line...
+fn skip_comment:
+    while(
+        source_text[0] && 
+        source_text[0] != '\n'
+    )
+        source_text++;
+    end
+    if(source_text[0]) //it was a newline! Skip that too...
+        source_text++;
+    end
+end
+fn skip_ws:
+    while(
+        source_text[0] == 0x9 ||
+        source_text[0] == 0xa ||
+        source_text[0] == 0xb ||
+        source_text[0] == 0xc ||
+        source_text[0] == 0xd ||
+        source_text[0] == 0x20
+    )
+        source_text++;
+    end
+end
+
+fn tokenize_string:
+    //grab the first quote..
+    tokenizer_out := source_text;
+    source_text++;
+    tokenizer_out++;
+    while(source_text[0] != '"' && source_text[0] != 0)
+        if(source_text[0] == '\\')
+            source_text++;
+            //Handle escapes
+            if(source_text[0] == 'n')
+                source_text++;
+                tokenizer_out[0] = '\n';
+            elif(source_text[0] == 't')
+                source_text++;
+                tokenizer_out[0] = '\t';
+            elif(source_text[0] == 'r')
+                source_text++;
+                tokenizer_out[0] = '\r';
+            elif(source_text[0] == 'a')
+                source_text++;
+                tokenizer_out[0] = '\a';
+            elif(source_text[0] == 'b')
+                source_text++;
+                tokenizer_out[0] = '\b';
+            elif(source_text[0] == 'e')
+                source_text++;
+                tokenizer_out[0] = '\e';
+            elif(source_text[0] == 'v')
+                source_text++;
+                tokenizer_out[0] = '\v';
+            elif(source_text[0] == 'f')
+                source_text++;
+                tokenizer_out[0] = '\f';
+            else
+                tokenizer_out := source_text;
+                source_text++;tokenizer_out++;
+            end
+        else
+            //emit the raw character..
+            tokenizer_out := source_text;
+            source_text++;tokenizer_out++;
+        end
+    end
+    if(source_text[0])
+        tokenizer_out := source_text;
+        source_text++;//tokenizer_out++;
+    end
+    tokenizer_out[0] = 0;
+    tokenizer_out++;
+end
+
+
+fn tokenize:
+    while(source_text[0])
+        //remove invalid chars...
+        if(source_text[0] > 127)
+            source_text[0] = ' '; //make it a whitespace character...
+        end
+        //handle characters...
+        if(is_allowed_ident_char(source_text[0]))
+            tokenize_ident_or_number()
+        elif(//C++ style comments!
+            source_text[0] == '/' &&
+            source_text[1] == '/'
+        )
+            skip_comment()
+        elif(source_text[0] == '"')
+            tokenize_string;
+        elif(is_single(source_text[0]))
+            tokenizer_out[0] = source_text[0];  tokenizer_out++;
+            tokenizer_out[0] = 0;               tokenizer_out++;
+            source_text++
+        elif(is_ws(source_text[0]))
+            skip_ws()
+        elif(is_weird(source_text[0]))
+            tokenize_weird()
+        else
+            source_text++
+        end
+    end
+    //write three nulls.
+    tokenizer_out[0] = 0; tokenizer_out++;
+    tokenizer_out[0] = 0; tokenizer_out++;
+    tokenizer_out[0] = 0; tokenizer_out++;
+    //set where tokenization begins...
+    tk = bigbuf;
+end
+
+
+
+
+
+//parser stuff
+fn parse_fn(byte is_inline);
+fn parse_arraydecl;
+fn parse_macro;
+fn parse_stmt(astnode* prev)->astnode*;
+fn parse_gasm;
+//we achieve [primitive] metaprogramming using the macro stack!
+//the macro stack is a set of tokens beginning with the token immediately
+//after a macro's name ending with .MACRO_NAME
+char*[256] macro_stack;
+ushort is_parsing_macro = 0;
+ushort macro_stkptr = 0;
+
+fn consume:
+    :top
+    //Started pointing at a null terminator? We've reached
+    //the end of the code.
+    if(tk[0] == 0) 
+        if(macro_stkptr)
+            tk = macro_stack[--macro_stkptr];
+            goto top
+        end
+        return
+    end
+    //skip to the next null terminator...
+    while(tk[0]) tk++ end
+    tk++
+    //if this is a macro...
+    if(tk[0] == 0) 
+        if(macro_stkptr)
+            tk = macro_stack[--macro_stkptr];
+            goto top
+        end
+        return
+    end
+    //check if this is a macro...
+    astnode* qq = 0
+    if(tk[0] != 0 || is_parsing_macro)
+        qq = find_sym(tk);
+    end
+    if(qq == 0) return end
+    if(qq.whatami != AST_MACRO) return end
+    //begin parsing the macro...
+    //but only if it is not an empty macro!
+    if(qq.children != 0)
+        macro_stack[macro_stkptr] = tk;
+        ++macro_stkptr;
+        tk = (char*)qq.children;
+    end 
+end
+
+fn debug_print_all_tokens:
+    println("<Dumping Tokens>")
+    while(tk[0])
+        println(tk);
+        consume();
+    end
+    println("<Tokens Dumped>");
+    sys_exit(1);
+end
+
+fn parse_gasm:
+    astnode* me
+    me = new_astnode;
+    me.ctor();
+    me.whatami = AST_ASM;
+    me.name = tk;
+    consume;
+    push_sym(me);
+end
+
+fn compile_global:
+    if(tk[0] == 0)
+        return
+    end
+    if(tk streq "--")
+        //TODO    
+        consume;
+        parse_fn(0);
+        return
+    elif(tk streq "---") //inline function
+        //TODO    
+        consume;
+        parse_fn(1);
+        return
+    elif(tk streq "-#") //macro
+        consume;
+        parse_macro;
+        return
+    elif(tk streq "~") //global array declaration
+        //TODO
+        consume;
+        parse_arraydecl;
+        return
+    elif(tk streq "<#>")
+        consume();
+        if(tk[0] != '"')
+            @prnt[
+                /   "SYNTAX ERROR"
+                /   "global asm expected string literal!"
+            ]
+            debug_print_all_tokens;
+        end
+        parse_gasm;
+        return
+    end
+end
+fn parse_switch_list_entry(astnode* me_outer, astnode* wlk)->astnode*:
+    if(!is_allowed_start_ident_char(tk[0]))
+        println("Invalid labelname in switch:");
+        println(tk);
+        debug_print_all_tokens;
+    end
+    astnode* me = new_astnode;
+    me.ctor();
+    me.name = tk;
+    consume;
+    me.whatami = AST_SWITCHLISTENTRY;
+    if(wlk != 0)
+        wlk.right = me;
+        return me
+    end
+    //assign me_outer.children
+    me_outer.children = me;
+    return me;
+end
+
+fn parse_stmt(astnode* prev)->astnode*:
+    astnode* me
+    //the null statement...
+    if(tk streq ";")
+        consume;
+        return prev
+    end
+    if(tk streq "@@@")
+        consume();
+        compile_global;
+        return prev;
+    end
+    if(tk streq ";;")
+        println("SYNTAX ERROR- else clause with no if?");
+        debug_print_all_tokens;
+    end
+        //operations!
+    if(
+        tk streq "+" ||    //    tk streq "add" ||
+        tk streq "-" ||    //    tk streq "sub" ||
+        tk streq "*" ||    //    tk streq "mul" ||
+        tk streq "/" ||    //    tk streq "div" ||
+        tk streq "%" ||    //    tk streq "mod" ||
+        tk streq "%/" ||   //    tk streq "sdiv"|| 
+        tk streq "%%" ||   //    tk streq "smod"|| //signed
+        tk streq "=" ||    //    tk streq "store" || //assignment to int*
+        tk streq "#=" ||   //    tk streq "storebyte" || //assignment to byte*
+        tk streq "[]" ||   //    tk streq "load" || //dereference
+        tk streq "#[]" ||  //    tk streq "loadbyte" || //dereference as byte
+        tk streq "<<" ||   //    tk streq "lsh" ||
+        tk streq ">>" ||   //    tk streq "rsh" ||
+        tk streq "^" ||    //    tk streq "xor" ||
+        tk streq "&" ||    //    tk streq "and" || //bitand, not l
+        tk streq "|" ||    //    tk streq "or" ||
+        tk streq "!" ||    //    tk streq "not" || //boolean not
+        tk streq "!!" ||   //    tk streq "bool" || //boolify
+        tk streq "~" ||    //    tk streq "compl" || //complement
+        tk streq "--" ||   //    tk streq "decr" || //decrement
+        tk streq "++" ||   //    tk streq "incr" || //increment
+        tk streq "<>" ||   //    tk streq "dup" || //duplicate top element on stack, 0 dupunder
+        tk streq "++*" ||  //     tk streq "incrstp" || //increment stack pointer
+        tk streq "--*" ||  //     tk streq "decrstp" || //decrement stack pointer
+        tk streq "<>*" ||  //    tk streq "dupunder" || //duplicate Nth element deep into the stack
+        tk streq "><" ||   //    tk streq "swap" || //swap top two elements on the stack.
+        tk streq "<" ||    //    tk streq "lt" ||
+        tk streq "%<" ||   //     tk streq "slt" ||
+        tk streq ">" ||    //    tk streq "gt" ||
+        tk streq "%>" ||   //     tk streq "sgt" ||
+        tk streq ">=" ||   //    tk streq "gte" ||
+        tk streq "%>=" ||  //     tk streq "sgte" ||
+        tk streq "<=" ||   //    tk streq "lte" ||
+        tk streq "%<=" ||  //     tk streq "slte" ||
+        tk streq "==" ||   //    tk streq "eq" ||
+        tk streq "!=" ||   //    tk streq "neq" ||
+        //dedicated C strin//g comparison fns
+        tk streq "=#=" ||  //    tk streq "streq" ||
+        tk streq "!=#=" || //    tk streq "strneq" ||
+        0 //or zero
+    )
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_OP;
+        me.name = tk; consume;
+        prev.right = me;
+        return me
+    end
+    if(tk[0] == '"')
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_STRINGLIT;
+        me.name = tk; consume;
+        prev.right = me;
+        return me
+    end
+    if(tk streq "?")
+        consume();
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_IFELSE;
+        astnode* z = new_astnode;
+        z.ctor();
+        z.whatami = AST_NOP;
+        me.children = z;
+        while(tk[0] != 0 && tk strneq "." && tk strneq ";;")
+            z = parse_stmt(z);
+        end
+        if(tk streq ";;")
+            consume();
+            astnode* z = new_astnode;
+            z.ctor();
+            z.whatami = AST_NOP;
+            me.children2 = z;
+            while(tk[0] != 0 && tk strneq ".")
+                z = parse_stmt(z);
+            end
+        end
+        consume;
+        prev.right = me;
+        return me
+    end
+    if(tk streq "@")
+        consume();
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_WHILE;
+        astnode* z = new_astnode;
+        z.ctor();
+        z.whatami = AST_NOP;
+        me.children = z;
+        while(tk[0] != 0 && tk strneq ".")
+            z = parse_stmt(z);
+        end
+        consume;
+        prev.right = me;
+        return me
+    end
+    
+    if(tk streq ":")
+        consume();
+        if(!is_allowed_start_ident_char(tk[0]))
+            println("Label Needs identifier!");
+            debug_print_all_tokens;
+        end
+        if(find_sym(tk) != 0)
+            println("Label name already in use by global symbol!");
+            debug_print_all_tokens;
+        end
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_LBL;
+        me.name = tk; consume();
+        prev.right = me;
+        return me
+    end    
+    if(tk streq "->")
+        consume();
+        if(!is_allowed_start_ident_char(tk[0]))
+            println("goto Needs identifier!");
+            debug_print_all_tokens;
+        end
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_GOTO;
+        me.name = tk; consume();
+        prev.right = me;
+        return me
+    end
+    //switch case...
+    if(tk streq "::")
+        consume();
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_SWITCH;
+        astnode* wlk = 0;
+        while(tk[0] != 0 && tk strneq ".")
+            wlk = parse_switch_list_entry(me, wlk);
+        end
+        consume();
+        prev.right = me;
+        return me
+    end
+    if(tk streq "<#>")
+        consume();
+        if(tk[0] != '"')
+            @prnt[
+                /   "SYNTAX ERROR"
+                /   "asm expected string literal!"
+            ]
+            debug_print_all_tokens;
+        end
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_ASM;
+        me.name = tk;
+        consume;
+        prev.right = me;
+        return me
+    end
+    
+    if(is_allowed_start_ident_char(tk[0]))
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_IDENT;
+        astnode* v = find_sym(tk);
+        if(v == 0)
+            println("SYNTAX ERROR! Uknown Symbol:");
+            println(tk);
+            debug_print_all_tokens;
+        end
+        if(v.whatami == AST_FN || v.whatami == AST_INLINEFN)
+            me.whatami = AST_FCALL;
+        elif(v.whatami == AST_ARR)
+            me.whatami = AST_ARRNAME;
+        elif(v.whatami == AST_MACRO)
+            println("SYNTAX ERROR! Identifier is actually the name of a macro:");
+            println(tk);
+            debug_print_all_tokens;
+        else
+            println("INTERNAL ERROR: Symbol retrieved is nonsense:");
+            println(tk);
+            debug_print_all_tokens;
+        end
+        me.name = tk;
+        consume;
+        prev.right = me;
+        return me
+    end
+    if(is_digit(tk[0]))
+        me = new_astnode;
+        me.ctor();
+        me.whatami = AST_INTLIT;
+        me.val = atou(tk); consume;
+        prev.right = me;
+        return me
+    end
+    println("SYNTAX ERROR- Unrecognized symbol:")
+    if(tk[0] == 0)
+        println("[empty string]");
+    else
+        println(tk);
+    end
+    debug_print_all_tokens;
+end
+
+fn compile:
+    :top
+    if(tk[0] == 0)
+        return
+    end
+    if(tk streq "--")
+        //TODO    
+        consume;
+        parse_fn(0);
+        goto top
+    elif(tk streq "---") //inline function
+        //TODO    
+        consume;
+        parse_fn(1);
+        goto top
+    elif(tk streq "-#") //macro
+        consume;
+        parse_macro;
+        goto top
+    elif(tk streq "~") //global array declaration
+        //TODO
+        consume;
+        parse_arraydecl;
+        goto top
+    elif(tk streq "<#>")
+        consume();
+        if(tk[0] != '"')
+            @prnt[
+                /   "SYNTAX ERROR"
+                /   "<#> (asm) expected string literal!"
+            ]
+            debug_print_all_tokens;
+        end
+        //TODO
+        parse_gasm;
+        goto top
+    end
+    println("SYNTAX ERROR AT GLOBAL SCOPE");
+    println("Expected ~ (arraydecl), -- (fndecl), --- (inline fn decl), -# (macro), ");
+    debug_print_all_tokens;
+end
+
+fn parse_fn(byte is_inline):
+    astnode me
+    if(!is_allowed_start_ident_char(tk[0]))
+        println("SYNTAX ERROR- FUNCTION DECLARATION REQUIRES IDENTIFIER");
+        debug_print_all_tokens;
+    end
+    
+    if(is_inline)
+        me.whatami = AST_INLINEFN;
+    else
+        me.whatami = AST_FN;
+    end
+    me.name = tk; consume;
+    astnode* v = find_sym(me.name);
+    //check if this is a pre-declaration...
+    if(tk streq ";")
+        consume();
+        return
+    end
+    //this is not a predeclaration...
+    
+    
+    if(v != 0 && v.children != 0)
+        println("SYNTAX ERROR- FUNCTION ALREADY DEFINED");
+        debug_print_all_tokens;
+    end
+    //begin parsing statements...
+    if(v == 0)
+        v = new_astnode;
+        v := me;
+        push_sym(v);
+    end
+    v.children = new_astnode;
+    v.children.ctor();
+    v = v.children;
+    v.whatami = AST_NOP;
+    while(tk[0] != 0 && tk strneq ".")
+        v = parse_stmt(v);
+    end
+    consume;
+end
+
+fn parse_arraydecl:
+    astnode me
+    if(!is_allowed_start_ident_char(tk[0]))
+        println("SYNTAX ERROR- ARRAY DECLARATION REQUIRES IDENTIFIER");
+        debug_print_all_tokens;
+    end
+    me.whatami = AST_ARR;
+    me.name = tk; consume;
+    astnode* v = find_sym(me.name);
+    if(v != 0)
+        println("SYNTAX ERROR- DUPLICATE ARRAY DECLARATION");
+        debug_print_all_tokens;
+    end
+    v = new_astnode;
+    v := me;
+    push_sym(v);
+    if(tk streq "[")
+        consume;
+        //parse an integer...
+        v.val = atou(tk); consume;
+        if(tk strneq "]")
+            println("SYNTAX ERROR- ENDING BRACKED REQUIRED.");
+            debug_print_all_tokens;
+        end
+        consume;
+        //we allocate at least one integer.
+        if(v.val == 0)
+            v.val++;
+        end
+        return
+    end
+    //default: we allocate 256 integers.
+    v.val = 256;
+end
+
+fn parse_macro:
+    astnode me
+    is_parsing_macro = 1;
+    if(tk[0] == 0)
+        println("SYNTAX ERROR- MACRO DECLARATION REQUIRES NAME");
+        debug_print_all_tokens;
+    end
+    
+    me.whatami = AST_MACRO;
+
+    me.name = tk; consume;
+    astnode* v = find_sym(me.name);
+    if(v != 0)
+        println("SYNTAX ERROR- MACRO NAME IS TAKEN");
+        debug_print_all_tokens;
+    end
+    //begin parsing statements...
+    v = new_astnode;
+    v := me;
+    push_sym(v);
+    v.children = (astnode*)tk;
+    while(tk[0] != 0 && tk strneq "..#..")
+        consume
+    end
+    if(tk[0])
+        tk[0] = 0; ++tk; consume; //finish off the macro, skip to next token.
+    end
+    is_parsing_macro = 0;
+end
+
+fn generate_code:
+    //from the AST, generate code for all symbols...
+    //TODO: Translate to some target code...
+end
+
+
+//generate code
+fn codegen codegen_main():
+    cg_emitC(SEABASS_STDLIB_PREFIX);
+end
+
+

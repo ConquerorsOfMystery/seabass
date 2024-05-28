@@ -1,0 +1,23 @@
+
+#guard BIT64_TGT_CBAS
+
+#define TGT_UMAX u64
+#define TGT_IMAX i64
+#define TGT_FMAX double
+
+
+#__CBAS_TARGET_WORDSZ 64
+#__CBAS_TARGET_MAX_FLOAT 64
+data codegen string SEABASS_BIT_PREFIX "
+#define SEABASS_64_BIT 1
+#define i32 int
+#define u32 unsigned int
+#define _STRTOU_ strtoull
+#define _STRTOI_ strtoll
+#define TGT_UMAX unsigned long long
+#define TGT_IMAX long long
+";
+
+codegen u64 SEABASS_TARGET_BITS = 64;
+
+

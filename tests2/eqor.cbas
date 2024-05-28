@@ -1,0 +1,40 @@
+
+#include <stdmeta/mini_abstractions.hbas>
+
+
+
+fn codegen codegen_main():
+    if(
+        @eqor(7)` (1+5)
+                ` (1+5)
+                ` (1+5)
+                ` (1+5)
+                ` (2+5)
+    )
+        @pprint[
+            /   "Bing!"
+        ]
+    end
+    
+    if(
+        @eqor (3+5) ` (4+5)
+                    ` (2+5)
+                    ` (4+5)
+    )
+        @pprint[
+            /   "Bong!"
+        ]
+    end
+    
+    if(
+        @strneqand ("Hello!") ` ("Goodbye!")
+                              ` ("Pardon!")
+                              ` ("Hello!")
+                              ` ("Hullo!")
+    )
+        @pprint[
+            /   "BingBong!"
+        ]
+    end
+
+end

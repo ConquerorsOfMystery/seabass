@@ -1,0 +1,628 @@
+/*
+    Assumption: User has already included the desired
+    TOC setup stuff.
+*/
+
+#guard SEABASS_TOC_STL
+#include <meta>
+
+#include <toc/toc.hbas>
+#include <toc/inlinec.hbas>
+
+/*
+    TARGET STL FOR SEABASS
+*/
+
+
+//CG vector, for PRIMITIVE DATA TYPES.
+@mktemplate[
+    vec_p
+    typed
+    [
+        [__SEABASS_STL_REPLACEMENT_MAGIC__]
+        @globalscope
+            //vector class...
+            class __SEABASS_STL_REPLACEMENT_MAGIC__
+                TYPE* d
+                u64 len
+            end
+            //ctor/dtor
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.ctor:
+                this.d = 0;
+                this.len = 0;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.dtor:
+                if(this.d != 0)
+                    free((byte*)this.d)
+                end
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.push(TYPE a):
+                this.d = cast(TYPE*)realloc(
+                    (byte*)this.d,
+                    sizeof(TYPE) * ++this.len
+                );
+                this.d[this.len-1] = a;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.pop():
+                if(this.len)
+                    --this.len
+                end
+                if(this.len == 0)
+                    if(this.d != 0)
+                        //Important: we don't call destructors...
+                        //we cannot do this arbitrary because we cannot know
+                        //anything about TYPE. it could be an @ generated thing...
+                        free((byte*)this.d)
+                    end
+                    this.d = 0
+                end
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.grow(TGT_IMAX sz):
+                if(sz < -this.len)
+                    sz = -this.len
+                end
+                this.len = this.len + sz;
+                this.d = cast(TYPE*)realloc(
+                    (byte*)this.d,
+                    sizeof(TYPE) * this.len
+                );
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.insert(TYPE a, TGT_UMAX where):
+                if(where >= this.len)
+                    this.grow(where - this.len+1 );
+                    this.d[this.len-1] = a;
+                    return
+                end
+                //Do the memcpy...
+                this.grow(1);
+                byte* b = (byte*)this.d;
+                byte* n = malloc(sizeof(TYPE) * this.len);
+                mcpy(
+                    n,
+                    b + where * sizeof(TYPE),
+                    sizeof(TYPE) *
+                    (this.len - where-1)
+                );
+                this.d[where] = a;
+                mcpy(
+                    b + (where+1) * sizeof(TYPE),
+                    n,
+                    sizeof(TYPE) *
+                    (this.len - where-1)
+                );
+                free(n);
+            end
+        end
+    ][
+        TYPE
+    ][
+        char[50] buf
+        u64 ours = cg_seabass_stl_instance_counter++;
+        cgstrcpy(buf, "__tgstlvecimpl__");
+        __builtin_utoa(buf + 16, ours);
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__SEABASS_STL_REPLACEMENT_MAGIC__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(buf);
+            end
+            iter = iter.right
+        end
+        return result;
+    ]
+]
+
+//CG vector, for STRUCT TYPES that have NO DESTRUCTOR
+@mktemplate[
+    vec_s
+    typed
+    [
+        [__SEABASS_STL_REPLACEMENT_MAGIC__]
+        @globalscope
+            //vector class...
+            class __SEABASS_STL_REPLACEMENT_MAGIC__
+                
+                TYPE* d
+                TGT_UMAX len
+            end
+            //ctor/dtor
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.ctor:
+                this.d = 0;
+                this.len = 0;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.dtor:
+                if(this.d != 0)
+                    free((byte*)this.d)
+                end
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.push(TYPE a):
+                this.d = cast(TYPE*)realloc(
+                    (byte*)this.d,
+                    sizeof(TYPE) * ++this.len
+                );
+                this.d[this.len-1] := a;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.pop():
+                if(this.len)
+                    this.len--
+                end
+                if(this.len == 0)
+                    if(this.d != 0)
+                        free((byte*)this.d)
+                    end
+                    this.d = 0;
+                end
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.grow(TGT_IMAX sz):
+                if(sz < -this.len)
+                    sz = -this.len
+                end
+                this.len = this.len + sz;
+                this.d = cast(TYPE*)realloc(
+                    (byte*)this.d,
+                    sizeof(TYPE) * this.len
+                );
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.insert(TYPE a, TGT_UMAX where):
+                if(where >= this.len)
+                    this.grow(where - this.len+1 );
+                    (this.d + (this.len-1)) := a;
+                    return
+                end
+                //Do the memcpy...
+                this.grow(1);
+                byte* b = (byte*)this.d;
+                byte* n = malloc(sizeof(TYPE) * this.len);
+                mcpy(
+                    n,
+                    b + where * sizeof(TYPE),
+                    sizeof(TYPE) *
+                    (this.len - where-1)
+                );
+                this.d[where] := a;
+                mcpy(
+                    b + (where+1) * sizeof(TYPE),
+                    n,
+                    sizeof(TYPE) *
+                    (this.len - where-1)
+                );
+                free(n);
+            end
+        end
+    ][
+        TYPE
+    ][
+        char[50] buf
+        u64 ours = cg_seabass_stl_instance_counter++;
+        cgstrcpy(buf, "__tgstlvecimpl__");
+        __builtin_utoa(buf + 16, ours);
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__SEABASS_STL_REPLACEMENT_MAGIC__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(buf);
+            end
+            iter = iter.right
+        end
+        return result;
+    ]
+]
+
+
+
+//CG vector, for CLASSES
+//CONSTRUCTORS are __NOT__ called!
+@mktemplate[
+    vec_c
+    typed
+    [
+        [__SEABASS_STL_REPLACEMENT_MAGIC__]
+        @globalscope
+            //vector class...
+            class __SEABASS_STL_REPLACEMENT_MAGIC__
+                
+                TYPE* d
+                TGT_UMAX len
+            end
+            //ctor/dtor
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.ctor:
+                this.d = 0;
+                this.len = 0;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.dtor:
+                if(this.d != 0)
+                    TGT_UMAX i
+                    for(i = 0, i < this.len, i++)
+                        this.d[i].dtor();
+                    end
+                    free((byte*)this.d)
+                end
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.push(TYPE a):
+                this.d = cast(TYPE*)realloc(
+                    (byte*)this.d,
+                    sizeof(TYPE) * ++this.len
+                );
+                this.d[this.len-1] := a;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.pop():
+                if(this.len)
+                    this.d[this.len-1].dtor();
+                    this.len--
+                end
+                if(this.len == 0)
+                    if(this.d != 0)
+                        free((byte*)this.d)
+                    end
+                    this.d = 0;
+                end
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.grow(TGT_IMAX sz):
+                if(sz < -this.len)
+                    sz = -this.len
+                end
+                this.len = this.len + sz;
+                this.d = cast(TYPE*)realloc(
+                    (byte*)this.d,
+                    sizeof(TYPE) * this.len
+                );
+                if(sz <= 0)
+                    return
+                end
+                //call constructors...
+                TGT_IMAX i
+                for(i = 0, i < sz, i++)
+                    this.d[this.len-1-i].ctor()
+                end
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.insert(TYPE a, TGT_UMAX where):
+                if(where >= this.len)
+                    this.grow(where - this.len+1 );
+                    (this.d + (this.len-1)) := a;
+                    return
+                end
+                //Do the memcpy...
+                //this.grow(1);
+                this.len = this.len + 1;
+                this.d = cast(TYPE*)realloc(
+                    (byte*)this.d,
+                    sizeof(TYPE) * this.len
+                );
+                
+                byte* b = (byte*)this.d;
+                byte* n = malloc(sizeof(TYPE) * this.len);
+                mcpy(
+                    n,
+                    b + where * sizeof(TYPE),
+                    sizeof(TYPE) *
+                    (this.len - where-1)
+                );
+                this.d[where] := a;
+                mcpy(
+                    b + (where+1) * sizeof(TYPE),
+                    n,
+                    sizeof(TYPE) *
+                    (this.len - where-1)
+                );
+                free(n);
+            end
+        end
+    ][
+        TYPE
+    ][
+        char[50] buf
+        u64 ours = cg_seabass_stl_instance_counter++;
+        cgstrcpy(buf, "__tgstlvecimpl__");
+        __builtin_utoa(buf + 16, ours);
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__SEABASS_STL_REPLACEMENT_MAGIC__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(buf);
+            end
+            iter = iter.right
+        end
+        return result;
+    ]
+]
+
+@wksht vec [
+    [
+        [TYPE]
+        @__SEABASS_STL_REPLACEMENT_MAGIC__[TYPE]
+    ][TYPE][
+        char* replacement_text = "STL_VEC_ERROR";
+        //
+        cgstrll* gotten_type
+        @cg_bldr_foldout_arg gotten_type result
+        if(
+            !(
+                gotten_type.d == CG_TOK_IDENT || //is an identifier- typedecl...
+                (   gotten_type.d == CG_TOK_OPERATOR &&
+                    gotten_type.text streq "@"
+                )
+            )|| gotten_type.right != 0
+            
+        )
+            replacement_text = "vec_p"
+        elif(
+            //is metaprogramming...
+            gotten_type.d == CG_TOK_OPERATOR &&
+            gotten_type.text streq "@"
+        )
+            //assume it's a class!
+            replacement_text = "vec_c"
+        else
+            cgast* ast = cg_getast();
+            i64 tid = -1;
+            i64 i = 0;
+            i64 ntd = ast.ntypedecls[0];
+            for(i = 0, i < ntd, i++)
+                //is this it?
+                if(ast.type_table[0][i].name streq gotten_type.text)
+                    tid = i;
+                    break
+                end
+            end
+            if(tid == -1)
+                @pprint[
+                    /   "Seabass vec STL Error!"
+                    /   "Unknown struct type:"
+                    /   (gotten_type.text)
+                    /   "File:"
+                    /   (gotten_type.filename)
+                    /   "Line:"
+                    /int(gotten_type.linenum)
+                    /   "Column:"
+                    /int(gotten_type.colnum)
+                ]
+                __builtin_exit(1);
+            end
+            //we have a tid... check oop metadata
+            i64 a = ast.oop_metadata[0][tid].have_checked;
+            i64 b = ast.oop_metadata[0][tid].dtor_id;
+            i64 c = ast.oop_metadata[0][tid].ctor_id;
+            //Properly implemented class...
+            if(a && b != -1 && c != -1)
+                replacement_text = "vec_c"
+            else//not a properly implemented class
+                replacement_text = "vec_s"
+            end
+        end
+        gotten_type.freelist();
+        
+        //perform the replacement...
+        
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__SEABASS_STL_REPLACEMENT_MAGIC__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(replacement_text);
+            end
+            iter = iter.right
+        end
+        //return the result...
+        return result;
+    ]
+]
+
+/*
+    unique ptr
+*/
+
+@mktemplate[
+    uniqueptr_c
+    typed
+    [
+        [__SEABASS_STL_REPLACEMENT_MAGIC__]
+        @globalscope
+            //vector class...
+            class __SEABASS_STL_REPLACEMENT_MAGIC__
+                
+                TYPE* d
+            end
+            //ctor/dtor
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.ctor:
+                this.d = 0;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.dtor:
+                if(this.d != 0)
+                    this.d.dtor();
+                    free((byte*)this.d)
+                end
+            end
+        end
+    ][
+        TYPE
+    ][
+        char[50] buf
+        u64 ours = cg_seabass_stl_instance_counter++;
+        cgstrcpy(buf, "__tgstlunqimpl__");
+        __builtin_utoa(buf + 16, ours);
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__SEABASS_STL_REPLACEMENT_MAGIC__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(buf);
+            end
+            iter = iter.right
+        end
+        return result;
+    ]
+]
+
+
+@mktemplate[
+    uniqueptr_p
+    typed
+    [
+        [__SEABASS_STL_REPLACEMENT_MAGIC__]
+        @globalscope
+            //vector class...
+            class __SEABASS_STL_REPLACEMENT_MAGIC__
+                
+                TYPE* d
+            end
+            //ctor/dtor
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.ctor:
+                this.d = 0;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.dtor:
+                if(this.d != 0)
+                    free((byte*)this.d)
+                end
+            end
+        end
+    ][
+        TYPE
+    ][
+        char[50] buf
+        u64 ours = cg_seabass_stl_instance_counter++;
+        cgstrcpy(buf, "__tgstlunqimpl__");
+        __builtin_utoa(buf + 16, ours);
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__SEABASS_STL_REPLACEMENT_MAGIC__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(buf);
+            end
+            iter = iter.right
+        end
+        return result;
+    ]
+]
+
+@mktemplate[
+    uniqueptr_s
+    typed
+    [
+        [__SEABASS_STL_REPLACEMENT_MAGIC__]
+        @globalscope
+            //vector class...
+            class __SEABASS_STL_REPLACEMENT_MAGIC__
+                TYPE* d
+            end
+            //ctor/dtor
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.ctor:
+                this.d = 0;
+            end
+            method inline __SEABASS_STL_REPLACEMENT_MAGIC__.dtor:
+                if(this.d != 0)
+                    free((byte*)this.d)
+                end
+            end
+        end
+    ][
+        TYPE
+    ][
+        char[50] buf
+        u64 ours = cg_seabass_stl_instance_counter++;
+        cgstrcpy(buf, "__tgstlunqimpl__");
+        __builtin_utoa(buf + 16, ours);
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__SEABASS_STL_REPLACEMENT_MAGIC__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(buf);
+            end
+            iter = iter.right
+        end
+        return result;
+    ]
+]
+
+
+@wksht uniqueptr [
+    [
+        [TYPE]
+        @__SEABASS_STL_REPLACEMENT_MAGIC__[TYPE]
+    ][TYPE][
+        char* replacement_text = "tgstl_UNIQUEPTR_ERROR";
+        //
+        cgstrll* gotten_type
+        @cg_bldr_foldout_arg gotten_type result
+        if(gotten_type == 0)
+            @pprint[
+                /   "Seabass uniqueptr STL Error!"
+                /   "Empty TYPE field..."
+                /   "(Cannot display line number or anything... sorry!)"
+            ]
+        end
+        if(
+            !(
+                gotten_type.d == CG_TOK_IDENT || //is an identifier- typedecl...
+                (   gotten_type.d == CG_TOK_OPERATOR && //
+                    gotten_type.text streq "@"
+                )
+            )|| gotten_type.right != 0
+            
+        )
+            replacement_text = "uniqueptr_p"
+        elif(
+            //is metaprogramming...
+            gotten_type.d == CG_TOK_OPERATOR &&
+            gotten_type.text streq "@"
+        )
+            //assume it's a class!
+            replacement_text = "uniqueptr_c"
+        else
+            cgast* ast = cg_getast();
+            i64 tid = -1;
+            i64 i = 0;
+            i64 ntd = ast.ntypedecls[0];
+            for(i = 0, i < ntd, i++)
+                //is this it?
+                if(ast.type_table[0][i].name streq gotten_type.text)
+                    tid = i;
+                    break
+                end
+            end
+            if(tid == -1)
+                @pprint[
+                    /   "Seabass uniqueptr STL Error!"
+                    /   "Unknown struct type:"
+                    /   (gotten_type.text)
+                    /   "File:"
+                    /   (gotten_type.filename)
+                    /   "Line:"
+                    /int(gotten_type.linenum)
+                    /   "Column:"
+                    /int(gotten_type.colnum)
+                ]
+                __builtin_exit(1);
+            end
+            //we have a tid... check oop metadata
+            i64 a = ast.oop_metadata[0][tid].have_checked;
+            i64 b = ast.oop_metadata[0][tid].dtor_id;
+            i64 c = ast.oop_metadata[0][tid].ctor_id;
+            //Properly implemented class...
+            if(a && b != -1 && c != -1)
+                replacement_text = "uniqueptr_c"
+            else//not a properly implemented class
+                replacement_text = "uniqueptr_s"
+            end
+        end
+        gotten_type.freelist();
+        
+        //perform the replacement...
+        
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__SEABASS_STL_REPLACEMENT_MAGIC__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(replacement_text);
+            end
+            iter = iter.right
+        end
+        //return the result...
+        return result;
+    ]
+]

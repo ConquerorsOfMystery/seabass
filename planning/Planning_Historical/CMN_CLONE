@@ -1,0 +1,40 @@
+
+I LIKE DRUMMYFISH'S COMUN
+
+It's neat! Cool idea. A forth-like language for small processors.
+
+Seabass -being 64 bit- definitely does not fit this
+description. It was and is designed for powerful
+computers with enormous address spaces and large
+amounts of memory.
+
+Can I write something like Comun that beats it at its own game?
+
+PRINCIPLES:
+
+    1. STACK-ORIENTED
+        The language should work around manipulation of a stack
+        of values. It doesn't necessarily need to use RPN,
+        but the internal representation should definitely
+        be RPN.
+    2. RAW MEMORY ACCESS
+        Pointer memory access is the norm.
+    3. NO STRUCTS
+        Or at least, not in principle- any compound
+        data structure will have to be constructed
+        out of pointer accesses.
+    4. CONTROL FLOW REVOLVES AROUND THE USER MANIPULATED STACK
+        if the user executes 'ret' that will load the return
+        address from the top value. In this way, it's almost
+        like an assembly language.
+    5. 
+        
+        
+CONCLUSION ONE: THERE IS ONLY ONE DATA TYPE: THE INTEGER/POINTER
+
+    Signed and unsigned operations (where relevant) can be
+    distinguished. Non-integer-sized writes can be distinguished
+    with 
+    
+CONCLUSION TWO: WE SHOULD NOT IMITATE FORTH
+    Forth is hard to read for a reason. Variables must be _named_.

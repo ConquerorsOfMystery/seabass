@@ -1,0 +1,24 @@
+
+#include <stdmeta/uast_common.hbas>
+
+/*
+    PLAN: Template a recursive descent parser...
+*/
+codegen u64 testbench_block = 0xff01;
+codegen u64 testbench_stmt = 0xff02;
+codegen u64 testbench_expr = 0xff03;
+codegen u64 testbench_pstmt = 0xff04;
+codegen u64 testbench_expr_terminal = 0xff05;
+codegen u64 testbench_expr_parenthesized = 0xff06;
+codegen u64 testbench_expr_pre = 0xff07;
+codegen u64 testbench_expr_post = 0xff08;
+
+
+/*
+    TODO: Write a toy language in cgrdparse, design some
+    fancy tools for pattern matching and whatnot...
+*/
+
+function codegen codegen_main():
+    
+end

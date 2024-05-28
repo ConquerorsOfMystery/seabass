@@ -1,0 +1,34 @@
+
+SEABASS NEEDS A SUPER DATA STRUCTURE TEMPLATING SYSTEM.
+
+It has occurred to me that the majority of the difficulty
+in implementing many large programs is writing code to
+implement a data structure and manipulations of that data
+structure.
+
+Most of the "tough" code in a codebase is code which creates
+or manipulates or handles a data structure.
+
+Trees. Vectors. Linked Lists. Stacks. Queues. Deques. Hash tables.
+
+
+Furthermore, C++'s STL is inadequate to cover this problem, as
+custom data structures (usually a set of structs combined with
+one or more of the above mentioned data structures) are needed
+for most complex software.
+
+I need more than just a simple STL, i need a data structure creation
+DSL which lets me tailor my data structures to suit my needs, with
+custom structs, unions, etcetera.
+
+You can have a tree of different types of structs with vectors
+and linked lists and all sorts of crazy stuff- just see the AST
+for Seabass. It's a tree with arrays and vectors everywhere.
+
+PART OF THIS can obviously be achieved just by having STL data structures
+like C++. You can write a struct that has a vector as a member. However
+this falls apart when you have something like Seabass's AST where we
+maintain properties like `scopediff` and `vardiff`.
+
+
+

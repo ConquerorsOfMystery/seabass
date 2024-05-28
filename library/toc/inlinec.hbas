@@ -1,0 +1,137 @@
+
+#guard toc_inline_c
+
+#include <stdmeta/tok_manip.hbas>
+
+
+/*
+    Usage: 
+    @inline_C"
+        $myvariable = ((volatile unsigned long*)$myothervariable);
+    "
+*/
+
+@mkbldr [
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        inline_C
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if(inlist == 0 || inlist.d != CG_TOK_STRING)
+        @pprint[
+            /   "ERROR! Inline C requires a _SINGLE_ STRING LITERAL!"
+        ]
+        __builtin_exit(1);
+    end
+    cgstr ff
+    ff.fromstr("");
+    u64 c = 0;
+    u64 i;
+    for(i = 0; inlist.text[i]; i++)
+        char z = inlist.text[i];
+        //Variable reference... $ for local, @ for global, `for member...
+        if(z == '$' || z == '@' || z == '`' || z == '#')
+            u64 calc_begin = i - (c);
+            c = 0;
+            cgstr t
+            if(1)
+                char q = inlist.text[i];
+                inlist.text[i] = 0;
+                t.fromstr(inlist.text + calc_begin);
+                inlist.text[i] = q;
+            end
+            ff:add(t);
+            t.free();
+            //now for the interesting part...
+            if(z == '$')
+                t.s = ("__cbas_local_variable_mangled_name_");
+            elif(z == '`')
+                t.s = ("__CBAS__member__");
+            elif(z == '#')
+                t.s = ("__cbas_mangled_label__");
+            else
+                t.s = ("__CBAS__");
+            end
+            ff:add(t);
+            //Continue our journey!
+            continue
+        end
+        //increment c
+        c++
+    end
+    if(c)
+        u64 calc_begin = i - (c);
+        cgstr t
+        if(1)
+            char q = inlist.text[i];
+            inlist.text[i] = 0;
+            t.fromstr(inlist.text + calc_begin);
+            inlist.text[i] = q;
+        end
+        ff:add(t);
+        t.free();
+    end
+    @initqtok "asm"
+    @pushqtok "("
+    cgstrll* p = (cgstrll*)__builtin_malloc(sizeof(cgstrll));
+    p.d = CG_TOK_STRING;
+    p.text = ff.s; //moved!
+    p.right = 0;
+    p.filename = inlist.filename;
+    p.linenum = inlist.linenum;
+    p.colnum = inlist.colnum;
+    @pushtok [p]
+    @rwalk_skip ;
+    @pushqtok ")"
+    @pushqtok ";"
+    return retval;
+]
+
+/*
+    Usage:
+    
+    @wrap_c_constant uint MY_CONSTANT
+    
+    THIS WRAPPER DOES NO ERROR CHECKING!!!!!
+    BE VERY CAREFUL!!!!
+*/
+
+
+@mkbldrn wrap_c_constant 2 [
+
+    @dupell_inlist
+    
+    cgstrll* type;
+    cgstrll* constant;
+    @foldout_arg type inlist_dupe
+    @foldout_arg constant inlist_dupe
+    
+    //we now have what we need...
+    @initqtok "fn"
+    @pushqtok "inline"
+    @pushqtok "pure"
+    @pushtok [constant.dupe()]
+    //@pushqtok "("
+    //@pushqtok ")"
+    @pushqtok "->"
+    @pushtok [type] //MOVE
+    @rwalk_skip ;
+    @pushqtok ":"
+    @pushqtok "asm"
+    @pushqtok "("
+    //create a string like this:
+    //"return CONSTANT_NAME;"
+        cgstr f
+        f.fromstr("return ");
+        f.addstr(constant.text);
+        constant.freelist();
+        f.addstr(";");
+        cgstrll* p = (cgstrll*)__builtin_malloc(sizeof(cgstrll));
+        p.right = 0;
+        p.text = f.s;
+        p.d = CG_TOK_STRING;
+        @pushtok [p]
+    
+    @pushqtok ")"
+    @pushqtok "end"
+    return retval;
+
+]

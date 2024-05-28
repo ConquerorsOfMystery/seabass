@@ -1,0 +1,2253 @@
+
+//All Glory to the Lord Jesus Christ of Nazareth, who is, and who
+//was, and who is to come, for ever. Amen.
+
+#guard comptime_recursive_descent_parser_library_cbas_metaprogramming
+
+
+
+#include <stdmeta/bldr.hbas>
+#include <stdmeta/uast.hbas>
+
+/*
+    THE RECURSIVE DESCENT PARSER LIBRARY
+    
+    tools for creating and using codegen-time
+    recursive descent parsers.
+*/
+
+
+
+
+/*
+    Rule code.
+*/
+
+
+
+
+class cg_rd_parser_rule
+    noexport
+    cgstr name    //what is the rule called in the spec?
+    cgstr fn_name //what is the function actually called?
+    cgstrll* icode //code for the rule as given
+    cgstrll* ocode //outgoing code.
+    cgstrll* proto //prototype.
+end
+
+class cg_rd_parser_spec
+    noexport
+    cgstr name                  //name of the language.
+    cgstr realname              //name of the struct we make.
+    cgstrll* structcode         //code to define the struct. Variables.
+    cg_rd_parser_rule* rules    //rules for the parser
+    u64 nrules                  //number of rules
+    u64 is_targeting_cgrdparse  //is this targeting cgrdparse?
+                                //if this targets cgrdparse, then this
+                                //generates a parser which generates tokens
+                                //which are then meant to be passed to
+                                //a different cgrdparse instance
+end
+
+fn codegen cgrdparsehook_prototype_donotinvoke(cgstrll* in, cg_rd_parser_spec spec)->cgstrll*:
+    return in;
+end
+
+//find a rule in the rule list and return the index
+//of that rule in the rule list.
+//returns -1 on error.
+
+method codegen cg_rd_parser_spec:get_rule_id(
+    char* rulename
+)->i64:
+    i64 i
+    i64 n
+    n = this.nrules;
+    for(i = 0, i < n, i++)
+        if((this.rules+i).name.s streq rulename)
+            return i;
+        end
+    end
+    return -1;
+end
+
+
+
+
+
+fn codegen cg_rd_parse_fail_match_syntax(char* msg, char* langname, char* rulename):
+    __builtin_puts("RDPARSER_ERROR!");
+    __builtin_puts("match has different syntax.");
+    __builtin_puts("The syntax is:");
+    __builtin_puts("match[ [my_charpointer_expr()]\n code(); \n]");
+    __builtin_puts(msg);
+    __builtin_puts("Language name is");
+    __builtin_puts(langname);
+    __builtin_puts("Rule's name is");
+    __builtin_puts(rulename);
+    __builtin_exit(1);
+end
+fn codegen cg_rd_parse_fail_stringlit_syntax(char* msg, char* langname, char* rulename):
+    __builtin_puts("RDPARSER_ERROR!");
+    __builtin_puts("stringlit's syntax was wrong.");
+    __builtin_puts("The syntax is:");
+    __builtin_puts("stringlit[ mycode(); ]");
+    __builtin_puts(msg);
+    __builtin_puts("Language name is");
+    __builtin_puts(langname);
+    __builtin_puts("Rule's name is");
+    __builtin_puts(rulename);
+    __builtin_exit(1);
+end
+
+@mkbldr[
+    cg__rd__parse__is__stringlit
+    
+    @dupell_inlist ;
+    @initqtok "if"
+    @pushqtok "("
+        @pushqtok "this"
+        @pushqtok "."
+        @pushqtok "tok"
+        @pushqtok "."
+        @pushqtok "d"
+        @pushqtok "=="
+        @pushqtok "CG_TOK_STRING"
+    @pushqtok ")"
+    @pushtok inlist_dupe
+    @rwalk_skip ;
+    @pushqtok "end"
+    return retval;
+]
+@mkbldr[
+    cg__rd__parse__is__ident
+    
+    @dupell_inlist ;
+    @initqtok "if"
+    @pushqtok "("
+        @pushqtok "this"
+        @pushqtok "."
+        @pushqtok "tok"
+        @pushqtok "."
+        @pushqtok "d"
+        @pushqtok "=="
+        @pushqtok "CG_TOK_IDENT"
+    @pushqtok ")"
+    @pushtok inlist_dupe
+    @rwalk_skip ;
+    @pushqtok "end"
+    return retval;
+]
+
+
+codegen u64 cg__rd__p__m_temporary_id = 0;
+
+
+@mkbldr[
+    cg__rd__p__m
+    
+    @dupell_inlist ;
+    //we need a dumy on the front.
+    cgstrll dummy
+    dummy.d = CG_TOK_MACRO;
+    dummy.text = cast(u8*)0;
+    dummy.right = inlist_dupe;
+    
+    cgstr temp_var_name;
+    cgstr temp_var_name2;
+    
+    @initqtok "if"
+
+    @pushqtok "("
+    @pushqtok "1"
+    @pushqtok ")"
+
+        //we now have a scope for variables.
+        if(inlist_dupe.d != CG_TOK_OBRACK)
+            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("match followed by something other than brackets!");
+            __builtin_puts("The syntax is:");
+            __builtin_puts("match[ [my_charpointer_expr()]\n code(); \n]");
+            __builtin_exit(1);
+        end
+        cgstrll* qq
+        qq = dummy:cg_token_foldout_arglist();
+        if(qq.right.d == CG_TOK_CBRACK)
+            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("match with empty string expression!");
+            __builtin_puts("The syntax is:");
+            __builtin_puts("match [ [my_charpointer_expr()] code(); ]");
+            __builtin_exit(1);
+        end
+        qq = cg_tok_arglist_remove_brackets(qq);
+        
+        
+
+        
+        //generate a temporary name.
+        temp_var_name:fromstr("__cg_rd_parse_temp_var_");
+        temp_var_name2:fromstr("__cg_rd_parse_temp_var2_");
+        if(1)
+            char[50] buf
+            cgstr t
+            t.s = buf;
+            __builtin_itoa(buf, cg__rd__p__m_temporary_id++);
+            temp_var_name:add(t);
+            temp_var_name2:add(t);
+        end
+        @pushqtok "char"
+        @pushqtok "*"
+        @pushqtok [temp_var_name.s]
+        
+        @pushqtok "u64"
+        @pushqtok [temp_var_name2.s]
+        @pushqtok "="
+        @pushqtok "0"
+        @pushqtok ";"
+        //expression statement.
+        @pushqtok [temp_var_name.s]
+        @pushqtok "="
+        @pushtok [qq] //this is a move
+        @pushqtok ";"
+        @rwalk_skip ;
+        
+        //OBRACK- 14
+        
+        @pushqtok "if"
+        @pushqtok "("
+            @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_OBRACK"
+            @pushqtok ")"
+            @pushqtok "&&"
+            @pushqtok "("
+                @pushqtok [temp_var_name.s]
+                @pushqtok "streq"
+                @pushqtok "\"[\""
+            @pushqtok ")"
+        @pushqtok ")"
+            @pushqtok [temp_var_name2.s]
+            @pushqtok "="
+            @pushqtok "1"
+
+        //CBRACK- 15
+        @pushqtok "elif"
+        @pushqtok "("
+            @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_CBRACK"
+            @pushqtok ")"
+            @pushqtok "&&"
+            @pushqtok "("
+                @pushqtok [temp_var_name.s]
+                @pushqtok "streq"
+                @pushqtok "\"]\""
+            @pushqtok ")"
+        @pushqtok ")"
+            @pushqtok [temp_var_name2.s]
+            @pushqtok "="
+            @pushqtok "1"
+
+        //OCB-10
+        @pushqtok "elif"
+        @pushqtok "("
+            @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_OCB"
+            @pushqtok ")"
+            @pushqtok "&&"
+            @pushqtok "("
+                @pushqtok [temp_var_name.s]
+                @pushqtok "streq"
+                @pushqtok "\"{\""
+            @pushqtok ")"
+        @pushqtok ")"
+            @pushqtok [temp_var_name2.s]
+            @pushqtok "="
+            @pushqtok "1"
+        //CCB-11
+        @pushqtok "elif"
+        @pushqtok "("
+            @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_CCB"
+            @pushqtok ")"
+            @pushqtok "&&"
+            @pushqtok "("
+                @pushqtok [temp_var_name.s]
+                @pushqtok "streq"
+                @pushqtok "\"}\""
+            @pushqtok ")"
+        @pushqtok ")"
+            @pushqtok [temp_var_name2.s]
+            @pushqtok "="
+            @pushqtok "1"
+        //OPAREN-12
+        @pushqtok "elif"
+        @pushqtok "("
+            @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_OPAREN"
+            @pushqtok ")"
+            @pushqtok "&&"
+            @pushqtok "("
+                @pushqtok [temp_var_name.s]
+                @pushqtok "streq"
+                @pushqtok "\"(\""
+            @pushqtok ")"
+        @pushqtok ")"
+            @pushqtok [temp_var_name2.s]
+            @pushqtok "="
+            @pushqtok "1"
+        //CPAREN- 13
+        @pushqtok "elif"
+        @pushqtok "("
+            @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_CPAREN"
+            @pushqtok ")"
+            @pushqtok "&&"
+            @pushqtok "("
+                @pushqtok [temp_var_name.s]
+                @pushqtok "streq"
+                @pushqtok "\")\""
+            @pushqtok ")"
+        @pushqtok ")"
+            @pushqtok [temp_var_name2.s]
+            @pushqtok "="
+            @pushqtok "1" 
+            
+        //SEMIC-16
+        @pushqtok "elif"
+        @pushqtok "("
+            @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_SEMIC"
+            @pushqtok ")"
+            @pushqtok "&&"
+            @pushqtok "("
+                @pushqtok [temp_var_name.s]
+                @pushqtok "streq"
+                @pushqtok "\";\""
+            @pushqtok ")"
+        @pushqtok ")"
+            @pushqtok [temp_var_name2.s]
+            @pushqtok "="
+            @pushqtok "1"
+            
+            
+        //COMMA-20
+        @pushqtok "elif"
+        @pushqtok "("
+            @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_COMMA"
+            @pushqtok ")"
+            @pushqtok "&&"
+            @pushqtok "("
+                @pushqtok [temp_var_name.s]
+                @pushqtok "streq"
+                @pushqtok "\",\""
+            @pushqtok ")"
+        @pushqtok ")"
+            @pushqtok [temp_var_name2.s]
+            @pushqtok "="
+            @pushqtok "1"            
+
+
+            
+        //IDENT/KEYWORD/OPERATOR
+        @pushqtok "elif"
+            @pushqtok "("
+                @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_IDENT"
+                @pushqtok ")"
+                @pushqtok "||"
+                @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_OPERATOR"
+                @pushqtok ")"
+                @pushqtok "||"
+                @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "d"
+                    @pushqtok "=="
+                    @pushqtok "CG_TOK_KEYWORD"
+                @pushqtok ")"
+            @pushqtok ")"
+                @pushqtok "if"
+                @pushqtok "("
+                    @pushqtok "this"
+                    @pushqtok "."
+                    @pushqtok "tok"
+                    @pushqtok "."
+                    @pushqtok "text"
+                    @pushqtok "streq"
+                    
+                    @pushqtok "("
+                    @pushqtok [temp_var_name.s] 
+                    @pushqtok ")"
+                @pushqtok ")"
+                    @pushqtok [temp_var_name2.s]
+                    @pushqtok "="
+                    @pushqtok "1"
+                @pushqtok "end" //if the text matches
+                //NEWLINE
+        @pushqtok "elif"
+            @pushqtok "("
+                @pushqtok "("
+                        @pushqtok "this"
+                        @pushqtok "."
+                        @pushqtok "tok"
+                        @pushqtok "."
+                        @pushqtok "d"
+                        @pushqtok "=="
+                        @pushqtok "CG_TOK_NEWLINE"
+                @pushqtok ")"
+                @pushqtok "&&"
+                @pushqtok "("
+                    @pushqtok [temp_var_name.s]
+                    @pushqtok "streq"
+                    @pushqtok "\"\\n\""
+                @pushqtok ")"
+            @pushqtok ")"
+                @pushqtok [temp_var_name2.s]
+                @pushqtok "="
+                @pushqtok "1"                
+        //WHITESPACE
+        @pushqtok "elif"
+            @pushqtok "("
+                @pushqtok "("
+                        @pushqtok "this"
+                        @pushqtok "."
+                        @pushqtok "tok"
+                        @pushqtok "."
+                        @pushqtok "d"
+                        @pushqtok "=="
+                        @pushqtok "CG_TOK_SPACE"
+                        @pushqtok "||"
+                        @pushqtok "this"
+                        @pushqtok "."
+                        @pushqtok "tok"
+                        @pushqtok "."
+                        @pushqtok "d"
+                        @pushqtok "=="
+                        @pushqtok "CG_TOK_COMMENT"
+                @pushqtok ")"
+                @pushqtok "&&"
+                @pushqtok "("
+                    @pushqtok [temp_var_name.s]
+                    @pushqtok "streq"
+                    @pushqtok "\" \""
+                @pushqtok ")"
+            @pushqtok ")"
+                @pushqtok [temp_var_name2.s]
+                @pushqtok "="
+                @pushqtok "1"
+
+        
+        @pushqtok "end" //end of giant elif chain..
+        
+
+        @pushqtok "if"
+        @pushqtok "("
+        @pushqtok [temp_var_name2.s]
+        @pushqtok ")"
+            //
+            @pushtok [dummy.right]
+            @rwalk_skip;
+        @pushqtok "end"
+    @pushqtok "end" //if (1)
+    
+    temp_var_name2:free();
+    temp_var_name:free(); //our last usage.
+    return retval;
+]
+
+
+/*
+    the struct we create will have the following hidden variables:
+    
+    cgstrll* tok
+    cgstrll* tok_root
+*/
+
+method codegen cg_rd_parser_spec:init(
+    cgstr* name
+):
+    this.name:fromstr(name.s);
+    this.realname:fromstr("cg_rd_parser_struct_");
+    this.realname:add(this.name);
+    this.structcode = cast(cgstrll*)0;
+    this.rules = cast(cg_rd_parser_rule*)0;
+    this.nrules = 0;
+end
+
+
+
+
+
+
+
+
+method codegen cg_rd_parser_rule:free():
+    this.name:free();
+    this.fn_name:free();
+    this.icode:freelist();
+end
+
+
+method codegen cg_rd_parser_rule:gen_proto(cg_rd_parser_spec* spec):
+    cgstrll* ocode
+    cgstrll* rwalk
+    ocode = cg_qtok("fn"); rwalk = ocode;
+    //pushqtok only needs rwalk...
+    @cg_bldr_pushqtok "codegen"
+    
+    //use fn_name
+    @cg_bldr_pushqtok [this.fn_name.s]
+    @cg_bldr_pushqtok "("
+        @cg_bldr_pushqtok [spec.realname.s]
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok "this"
+    @cg_bldr_pushqtok ")"
+    
+    //if we are the end function, we return a cgstrll*
+    if(this.name.s streq "finish")
+        @cg_bldr_pushqtok "->"
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+    end
+    @cg_bldr_pushqtok ";"
+    
+    
+    this.proto = ocode;
+end
+
+method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
+    
+    //also, emit errors.
+    cgstrll* ocode
+    cgstrll* rwalk
+    cgstrll* in_rwalk
+    u64 has_made_self = 0;
+    
+    
+    ocode = cg_qtok("fn"); rwalk = ocode;
+    @cg_bldr_pushqtok "codegen"
+    //use fn_name
+    @cg_bldr_pushqtok [this.fn_name.s]
+    @cg_bldr_pushqtok "("
+        @cg_bldr_pushqtok [spec.realname.s]
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok "this"
+    @cg_bldr_pushqtok ")"
+    
+    //if we are the end function, we return a cgstrll*
+    if(this.name.s streq "finish")
+        @cg_bldr_pushqtok "->"
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+    end
+    
+    @cg_bldr_pushqtok ":"
+    //For the end function...
+    if(this.name.s streq "head")
+        @cg_bldr_pushqtok "this"
+        @cg_bldr_pushqtok "."
+        @cg_bldr_pushqtok "uast"
+        @cg_bldr_pushqtok "."
+        @cg_bldr_pushqtok "ctor"
+        @cg_bldr_pushqtok "("
+        @cg_bldr_pushqtok ")"
+        @cg_bldr_pushqtok ";"
+    elif(this.name.s streq "finish")
+        //we create special variables...
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "retval"
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok "rwalk"
+        
+        @cg_bldr_pushqtok "retval"
+        @cg_bldr_pushqtok "."
+        @cg_bldr_pushqtok "d"
+        @cg_bldr_pushqtok "="
+        @cg_bldr_pushqtok "cast"
+        @cg_bldr_pushqtok "("
+        @cg_bldr_pushqtok "u8"
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok ")"
+        @cg_bldr_pushqtok "0"
+        @cg_bldr_pushqtok ";" 
+        
+        @cg_bldr_pushqtok "retval"
+        @cg_bldr_pushqtok "."
+        @cg_bldr_pushqtok "right"
+        @cg_bldr_pushqtok "="
+        @cg_bldr_pushqtok "cast"
+        @cg_bldr_pushqtok "("
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok ")"
+        @cg_bldr_pushqtok "0"
+        @cg_bldr_pushqtok ";"
+        
+        @cg_bldr_pushqtok "rwalk"
+        @cg_bldr_pushqtok "="
+        @cg_bldr_pushqtok "retval"
+        @cg_bldr_pushqtok ";"
+    end
+        //build function code...
+        for(
+            in_rwalk = this.icode,
+            cast(uptr)in_rwalk, 
+            in_rwalk=in_rwalk.right
+        )
+            //detect the presence of keywords...
+            //handle the escape character.
+            if(in_rwalk.d == CG_TOK_UNKNOWN)
+                if(in_rwalk.text streq "$")
+                    in_rwalk = in_rwalk.right;
+                    //emit this
+                    @cg_bldr_pushtok [in_rwalk:dupe()]
+                    continue;
+                end
+            end
+            
+            if(in_rwalk.d == CG_TOK_OPERATOR &&
+                in_rwalk.text streq "." &&
+                in_rwalk.right != 0 &&
+                in_rwalk.right.d == CG_TOK_IDENT &&
+                (
+                    in_rwalk.right.text streq "getcapture"
+                    ||
+                    in_rwalk.right.text streq "capture"
+                )
+            )
+                in_rwalk = in_rwalk.right;
+                @cg_bldr_pushqtok "."
+                @cg_bldr_pushqtok "udata_as_cgstrll"
+                @cg_bldr_pushqtok "("
+                @cg_bldr_pushqtok ")"
+                continue
+            end
+            
+            if(in_rwalk.d == CG_TOK_OPERATOR &&
+                in_rwalk.text streq "^" &&
+                in_rwalk.right != 0 &&
+                in_rwalk.right.d == CG_TOK_OPERATOR &&
+                in_rwalk.right.text streq "^" 
+            )
+                cgstrll* failcode = 0;
+                in_rwalk = in_rwalk.right;
+                in_rwalk = in_rwalk.right;
+                if(in_rwalk == 0 || (in_rwalk.d != CG_TOK_IDENT && in_rwalk.d != CG_TOK_STRING))
+                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("^^CAPTURE syntax requires STRING LITERAL or IDENTIFER!");
+                    __builtin_puts("Parser's name is:");
+                    __builtin_puts(spec.name.s);
+                    __builtin_puts("Current Rule's name is:");
+                    __builtin_puts(this.name.s);
+                    __builtin_exit(1);
+                end
+                @cg_bldr_pushqtok "if"
+                @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok "!="
+                    @cg_bldr_pushqtok "0"
+                @cg_bldr_pushqtok ")"
+                if(in_rwalk.d == CG_TOK_IDENT)
+                    //difficult case...
+                    if(!has_made_self)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("^^CAPTURE requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    @cg_bldr_pushqtok "if"
+                    @cg_bldr_pushqtok "("
+
+                    if(in_rwalk.text streq "IDENT")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_IDENT"
+                    elif(in_rwalk.text streq "KEYW" ||in_rwalk.text streq "KEYWORD")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_KEYWORD"
+                    elif(in_rwalk.text streq "STRING")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_STRING"
+                    elif(in_rwalk.text streq "NOTSTRING")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "!="
+                        @cg_bldr_pushqtok "CG_TOK_STRING"
+                    elif(in_rwalk.text streq "NUM" || in_rwalk.text streq "NUMBER")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_INT_CONST"
+                        @cg_bldr_pushqtok "||"
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_FLOAT_CONST"
+                    elif(in_rwalk.text streq "INT")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_INT_CONST"
+                    elif(in_rwalk.text streq "FLOAT")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_FLOAT_CONST"
+                    elif(in_rwalk.text streq "SYM")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_OPERATOR"
+                        
+                        @cg_bldr_pushqtok "||"
+                        
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_UNKNOWN"
+                        
+                        @cg_bldr_pushqtok "||"
+                        
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_MACRO_OP"
+                    elif(in_rwalk.text streq "UNK" || in_rwalk.text streq "UNKNOWN")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_UNKNOWN"
+                    elif(in_rwalk.text streq "OP" || in_rwalk.text streq "OPERATOR")
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_OPERATOR"                        
+                        @cg_bldr_pushqtok "||"
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "d"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "CG_TOK_MACRO_OP"
+                    elif(in_rwalk.text streq "ANY")
+                        @cg_bldr_pushqtok "1"
+                    else
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("^^CAPTURE syntax unknown identifier!!");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    @cg_bldr_pushqtok ")"
+                    //TODO: insert acceptance code here....
+                        @cg_bldr_pushqtok ";"
+                        @cg_bldr_pushqtok "self"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "udata"
+                        @cg_bldr_pushqtok "="
+                        @cg_bldr_pushqtok "cast"
+                        @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "u8"
+                        @cg_bldr_pushqtok "*"
+                        @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok ":"
+                        @cg_bldr_pushqtok "dupe"
+                        @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok ";"
+                        //eat..
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "="
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "right"
+                        @cg_bldr_pushqtok ";"
+                    if(in_rwalk.right.d == CG_TOK_OBRACK)
+                        @cg_bldr_pushqtok "else"
+                        failcode = in_rwalk:cg_token_foldout_arglist();
+                        failcode = cg_tok_arglist_remove_brackets(failcode);
+                        @cg_bldr_pushtok [failcode:dupell()]
+                        @cg_bldr_rwalk_skip ;
+                    end
+                    @cg_bldr_pushqtok "end"
+                elif(in_rwalk.d == CG_TOK_STRING)
+                    //easy case...
+                    @cg_bldr_pushqtok "@"
+                    @cg_bldr_pushqtok "cg__rd__p__m"
+                    @cg_bldr_pushqtok "["
+                    @cg_bldr_pushqtok "["
+                    @cg_bldr_pushtok [in_rwalk:dupe()]
+                    @cg_bldr_pushqtok "]"
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "right"
+                    @cg_bldr_pushqtok ";"
+                    if(in_rwalk.right.d == CG_TOK_OBRACK)
+                        @cg_bldr_pushqtok "else"
+                        failcode = in_rwalk:cg_token_foldout_arglist();
+                        failcode = cg_tok_arglist_remove_brackets(failcode);
+                        @cg_bldr_pushtok [failcode:dupell()]
+                        @cg_bldr_rwalk_skip ;
+                    end
+                    @cg_bldr_pushqtok "]"
+                end
+                if(failcode != 0)
+                    @cg_bldr_pushqtok "else"
+                    @cg_bldr_pushtok [failcode] //move!
+                    @cg_bldr_rwalk_skip ;
+                end
+                @cg_bldr_pushqtok "end"
+                //in_rwalk actually points just past whatever
+                //we captured...
+                continue
+            end
+            
+            /*
+                TODO: Handle more special stuff for rules.
+                
+                It needs to be easier to write your own rules. I would like it
+                to be nice and quick to write programming languages...
+            */
+            //Now that that's handled, let's deal with the elephant in the room, shall we?
+            if(in_rwalk.d == CG_TOK_IDENT)
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                if(in_rwalk.text streq "do")
+                    //The next thing must be a rule!
+                    in_rwalk = in_rwalk.right;
+                    //Make sure this thing has text...
+                    if(in_rwalk == cast(cgstrll*)0)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("do at end of rule definition.");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    if(in_rwalk.text == cast(char*)0)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("do on something that has no text?");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_puts("Go investigate that!");
+                        __builtin_exit(1);
+                    end
+                    //it does, now we look for the rule...
+                    i64 ruleid
+                    ruleid = spec:get_rule_id(in_rwalk.text);
+                    if(ruleid == -1)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("do on non-rule!");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_puts("And there is no rule called:");
+                        __builtin_puts(in_rwalk.text);
+                        __builtin_puts("defined yet. You may not use a rule");
+                        __builtin_puts("unless you have defined it!");
+                        __builtin_exit(1);
+                    end
+                    //we have a rule, now invoke it!
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok [(spec.rules+ruleid).fn_name.s]
+                    @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ";"
+                    //this will handle the name on the stream. DO NOT go ahead!
+                    continue;
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "go")
+                    //The next thing must be a rule!
+                    in_rwalk = in_rwalk.right;
+                    //Make sure this thing has text...
+                    if(in_rwalk == cast(cgstrll*)0)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("go at end of rule definition.");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    if(in_rwalk.text == cast(char*)0)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("go on something that has no text?");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_puts("Go investigate that!");
+                        __builtin_exit(1);
+                    end
+                    //it does, now we look for the rule...
+                    i64 ruleid
+                    ruleid = spec:get_rule_id(in_rwalk.text);
+                    if(ruleid == -1)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("go on non-rule!");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_puts("And there is no rule called:");
+                        __builtin_puts(in_rwalk.text);
+                        __builtin_puts("defined yet. You may not use a rule");
+                        __builtin_puts("unless you have defined it!");
+                        __builtin_exit(1);
+                    end
+                    //we have a rule, now invoke it!
+                    @cg_bldr_pushqtok "tail"
+                    @cg_bldr_pushqtok [(spec.rules+ruleid).fn_name.s]
+                    //this will handle the name on the stream. DO NOT go ahead!
+                    continue;
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "tok_has_text")
+                    @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "cast"
+                        @cg_bldr_pushqtok "("
+                            @cg_bldr_pushqtok "uptr" //TODO: uptr
+                        @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok "("
+                            @cg_bldr_pushqtok "this"
+                            @cg_bldr_pushqtok "."
+                            @cg_bldr_pushqtok "tok"
+                            @cg_bldr_pushqtok "."
+                            @cg_bldr_pushqtok "text"
+                        @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ")"
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "tok_is_stringlit")
+                    @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "("
+                            @cg_bldr_pushqtok "this"
+                            @cg_bldr_pushqtok "."
+                            @cg_bldr_pushqtok "tok"
+                            @cg_bldr_pushqtok "."
+                            @cg_bldr_pushqtok "d"
+                            @cg_bldr_pushqtok "=="
+                            @cg_bldr_pushqtok "("
+                                @cg_bldr_pushqtok "cast"
+                                @cg_bldr_pushqtok "("
+                                    @cg_bldr_pushqtok "u8"
+                                    @cg_bldr_pushqtok "*"
+                                @cg_bldr_pushqtok ")"
+                                @cg_bldr_pushqtok "2"
+                            @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ")"
+                    continue                
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "uast")
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok ")"
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "uastnode")
+                    @cg_bldr_pushqtok "cg_uastnode"
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "mkself")
+                    @cg_bldr_pushqtok "cg_uastnode"
+                    @cg_bldr_pushqtok "self"
+                    has_made_self = 1;
+                    continue
+                elif(in_rwalk.text streq "getcapture")
+                    if(!has_made_self)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("getcapture requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "self"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "udata_as_cgstrll"
+                        @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ")"
+                    continue
+                elif(in_rwalk.text streq "capture")
+                    if(!has_made_self)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("capture requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "self"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "udata"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "cast"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "u8"
+                    @cg_bldr_pushqtok "*"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok ":"
+                        @cg_bldr_pushqtok "dupe"
+                        @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ";"
+                    continue
+                elif(in_rwalk.text streq "stash")
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok_stash"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok ";"
+                    continue
+                elif(in_rwalk.text streq "tok_stash")
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok_stash"
+                    @cg_bldr_pushqtok ")"
+                    continue
+                elif(in_rwalk.text streq "tok_stash_ptr")
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok ".&"
+                    @cg_bldr_pushqtok "tok_stash"
+                    @cg_bldr_pushqtok ")"
+                    continue
+                elif(in_rwalk.text streq "reset")
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok_stash"
+                    @cg_bldr_pushqtok ";"
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "stpop")
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "stackpop"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ")"
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "stpush")
+                    if(in_rwalk.right == 0 ||
+                    in_rwalk.right != CG_TOK_OPAREN)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("stpush must be followed by a");
+                        __builtin_puts("parenthesized expression! use like so:");
+                        __builtin_puts("u64 myvar = stackpush(my_node_variable);");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "stackpush"
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "addnode")
+                    in_rwalk = in_rwalk.right;
+                    if(in_rwalk == 0 ||
+                    in_rwalk.d != CG_TOK_IDENT)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("addnode on non-identifier!");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    //we have an addnode command...
+                    //ensure this is compatible with expressions...
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "push_node"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushtok [in_rwalk:dupe()]
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ")"
+                    //continue will consume it for us...
+                    continue
+                elif(in_rwalk.text streq "addself")
+                    if(!has_made_self)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("addself requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    //we have an addnode command...
+                    //ensure this is compatible with expressions...
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "push_node"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "self"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ")"
+                    //continue will consume it for us...
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "addpushnode")
+                    in_rwalk = in_rwalk.right;
+                    if(in_rwalk == 0 ||
+                    in_rwalk.d != CG_TOK_IDENT)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("addpushnode on non-identifier!");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    @cg_bldr_pushqtok "if"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "1"
+                    @cg_bldr_pushqtok ")"
+                    
+                    @cg_bldr_pushqtok "u64"
+                    @cg_bldr_pushqtok "__cgrdparse_temporary_value__"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "push_node"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushtok [in_rwalk:dupe()]
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ";"
+                    
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "stackpush"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "__cgrdparse_temporary_value__"
+                    @cg_bldr_pushqtok ")"
+                    
+                    @cg_bldr_pushqtok "end"
+                    //continue will consume it for us...
+                
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "addpushself")
+                    if(!has_made_self)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("addpushself requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    @cg_bldr_pushqtok "if"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "1"
+                    @cg_bldr_pushqtok ")"
+                    
+                    @cg_bldr_pushqtok "u64"
+                    @cg_bldr_pushqtok "__cgrdparse_temporary_value__"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "push_node"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "self"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ";"
+                    
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "stackpush"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "__cgrdparse_temporary_value__"
+                    @cg_bldr_pushqtok ")"
+                    
+                    @cg_bldr_pushqtok "end"
+                    //continue will consume it for us...
+                
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "match")
+
+                    //investigate syntactical correctness...
+                    cgstrll* investigator
+                    investigator = in_rwalk.right;
+                    
+                    //step 1: verify that in_rwalk points at an OBRACK.
+                    if(investigator == cast(cgstrll*)0)
+                        cg_rd_parse_fail_match_syntax("match at end of rule?", spec.name.s, this.name.s);
+                    end
+                    if(investigator.d != CG_TOK_OBRACK)
+                        cg_rd_parse_fail_match_syntax("match without opening obrack.", spec.name.s, this.name.s);
+                    end
+                    
+                    //step 2: verify the presence of another opening bracket.
+                    investigator = investigator.right;
+                    if(investigator == cast(cgstrll*)0)
+                        cg_rd_parse_fail_match_syntax("match bracket matching failure (1)", spec.name.s, this.name.s);
+                    end
+                    if(investigator.d != CG_TOK_OBRACK)
+                        cg_rd_parse_fail_match_syntax("match syntax failure- no second opening brace.", spec.name.s, this.name.s);
+                    end
+                    //alright, that's good enough.
+                    
+                    //finally, emit
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "@"
+                    @cg_bldr_pushqtok "cg__rd__p__m"
+                    continue
+                    
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "stringlit")
+                    cgstrll* investigator
+                    investigator = in_rwalk.right;
+                    
+                    //step 1: verify that in_rwalk points at an OBRACK.
+                    if(investigator == cast(cgstrll*)0)
+                        cg_rd_parse_fail_stringlit_syntax("stringlit at end of rule?", spec.name.s, this.name.s);
+                    end
+                    if(investigator.d != CG_TOK_OBRACK)
+                        cg_rd_parse_fail_stringlit_syntax("stringlit without opening obrack.", spec.name.s, this.name.s);
+                    end
+                    //finally, emit
+                    @cg_bldr_pushqtok "@"
+                    @cg_bldr_pushqtok "cg__rd__parse__is__stringlit"
+                    continue            
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "ident")
+                    cgstrll* investigator
+                    investigator = in_rwalk.right;
+                    
+                    //step 1: verify that in_rwalk points at an OBRACK.
+                    if(investigator == cast(cgstrll*)0)
+                        cg_rd_parse_fail_stringlit_syntax("ident at end of rule?", spec.name.s, this.name.s);
+                    end
+                    if(investigator.d != CG_TOK_OBRACK)
+                        cg_rd_parse_fail_stringlit_syntax("ident without opening obrack.", spec.name.s, this.name.s);
+                    end
+                    //finally, emit
+                    @cg_bldr_pushqtok "@"
+                    @cg_bldr_pushqtok "cg__rd__parse__is__ident"
+                    continue
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "eat")
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "right"
+                    @cg_bldr_pushqtok ";"
+                    continue;
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(
+                    in_rwalk.text streq "tok_null" ||
+                    in_rwalk.text streq "tok_is_null"
+                )
+                    @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "("
+                            @cg_bldr_pushqtok "this"
+                            @cg_bldr_pushqtok "."
+                            @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "0"
+                    @cg_bldr_pushqtok ")"
+                    continue;
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(
+                    in_rwalk.text streq "finish_on_tok_null"
+                )
+                    @cg_bldr_pushqtok "if"
+                    @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "("
+                            @cg_bldr_pushqtok "this"
+                            @cg_bldr_pushqtok "."
+                            @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok "=="
+                        @cg_bldr_pushqtok "0"
+                    @cg_bldr_pushqtok ")"
+                        if(this.name.s strneq "finish")
+                            @cg_bldr_pushqtok "return"
+                            @cg_bldr_pushqtok ";"
+                        else
+                            @cg_bldr_pushqtok "return"
+                            @cg_bldr_pushqtok "retval"
+                            @cg_bldr_pushqtok "."
+                            @cg_bldr_pushqtok "right"
+                            @cg_bldr_pushqtok ";"
+                        end
+                    @cg_bldr_pushqtok "end"
+                    continue;
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(
+                    in_rwalk.text streq "tok_not_null" ||
+                    in_rwalk.text streq "tok_is_not_null"
+                )
+                    @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok "("
+                            @cg_bldr_pushqtok "this"
+                            @cg_bldr_pushqtok "."
+                            @cg_bldr_pushqtok "tok"
+                        @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok "!="
+                        @cg_bldr_pushqtok "0"
+                    @cg_bldr_pushqtok ")"
+                    continue;
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "emit")
+                    if(this.name.s strneq "finish")
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("Cannot emit anywhere except finish rule");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    //step ahead
+                    //Check for errors...
+                    if(in_rwalk.right == cast(cgstrll*)0)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("emit at end of end rule definition.");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Go investigate that!");
+                        __builtin_exit(1);
+                    end
+                    if(in_rwalk.right.d != CG_TOK_OBRACK)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("emit not followed by bracketed token list.");
+                        __builtin_puts("emit must be followed by a bracketed expression");
+                        __builtin_puts("The expression must evaluate to a cgstrll*");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_puts("Go investigate that!");
+                        __builtin_exit(1);
+                    end
+                    //equivalence
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "@"
+                    @cg_bldr_pushqtok "cg_bldr_pushtok"
+                    continue; //We need to expand anything like TOK on the line...
+                    //so we let ourselves do that.
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "emitq")
+                    if(this.name.s strneq "finish")
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("Cannot emitq anywhere except finish rule");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    //step ahead
+                    //Check for errors...
+                    if(in_rwalk.right == cast(cgstrll*)0)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("emitq at end of end rule definition.");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Go investigate that!");
+                        __builtin_exit(1);
+                    end
+                    //equivalence
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "@"
+                    @cg_bldr_pushqtok "cg_bldr_pushqtok"
+                    continue; //We need to expand anything like TOK on the line...
+                    //so we let ourselves do that.
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "emit_skip")
+                    if(this.name.s strneq "finish")
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("Cannot emit_skip anywhere except finish rule");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Current Rule's name is:");
+                        __builtin_puts(this.name.s);
+                        __builtin_exit(1);
+                    end
+                    //step ahead
+                    //Check for errors...
+                    if(in_rwalk.right == cast(cgstrll*)0)
+                        __builtin_puts("RDPARSER_ERROR!");
+                        __builtin_puts("emit_skip at end of end rule definition.");
+                        __builtin_puts("Parser's name is:");
+                        __builtin_puts(spec.name.s);
+                        __builtin_puts("Go investigate that!");
+                        __builtin_exit(1);
+                    end
+                    //equivalence
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "@"
+                    @cg_bldr_pushqtok "cg_bldr_rwalk_skip"
+                    @cg_bldr_pushqtok ";"
+                    continue; //We need to expand anything like TOK on the line...
+                    //so we let ourselves do that.
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "finish")
+                    if(this.name.s strneq "finish")
+
+                        @cg_bldr_pushqtok "return"
+                        @cg_bldr_pushqtok ";"
+                    else
+                        @cg_bldr_pushqtok ";"
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "uast"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "dtor"
+                        @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok ";"
+                        @cg_bldr_pushqtok "return"
+                        @cg_bldr_pushqtok "retval"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "right"
+                        @cg_bldr_pushqtok ";"
+                    end
+                    continue;
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "tok")
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok ")"
+                    continue;
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                elif(in_rwalk.text streq "tokptr")
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok ".&"
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok ")"
+                    continue;
+                end
+            end
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            
+            //default: push the token.
+            //we literally push it, so that
+            //string literals are preserved.
+            @cg_bldr_pushtok [in_rwalk:dupe()]
+            //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        end//end of for
+    //if we are the finish rule,
+    //we must destroy the uast...
+    if(this.name.s streq "finish")
+        @cg_bldr_pushqtok ";"
+        @cg_bldr_pushqtok "this"
+        @cg_bldr_pushqtok "."
+        @cg_bldr_pushqtok "uast"
+        @cg_bldr_pushqtok "."
+        @cg_bldr_pushqtok "dtor"
+        @cg_bldr_pushqtok "("
+        @cg_bldr_pushqtok ")"
+        @cg_bldr_pushqtok ";"
+    end
+    @cg_bldr_pushqtok "end"
+    this.ocode = ocode;
+    
+    //DEBUG PRINT
+end
+
+method codegen cg_rd_parser_spec:push_rule(
+    cgstr* name, //name of the rule. Have to duplicate it, we don't own it.
+    cgstrll* icode
+):
+    cgstr assigned_name //don't free this, we move it
+    cg_rd_parser_rule* p
+    cgstr underscore
+    underscore.s = "__";
+    
+    assigned_name:fromstr("cg_rd_parser_");
+    assigned_name:add(this.name);
+    assigned_name:add(underscore);
+    assigned_name:add(name);
+    
+    this.rules = cast(cg_rd_parser_rule*)__builtin_realloc(
+        cast(u8*)this.rules,
+        sizeof(cg_rd_parser_rule) * (++this.nrules)
+    );
+    
+    p = (this.rules + (this.nrules-1));
+    p.name := name; //move.
+    p.fn_name := assigned_name; //move.
+    p.icode = icode;
+    
+    //DON'T GENERATE CODE JUST YET!
+    //we want to wait until later to do that.
+end
+
+method codegen cg_rd_parser_spec:gen_struct()->cgstrll*:
+    cgstrll* retval
+    cgstrll* rwalk
+        
+    retval = cg_qtok("struct");
+    rwalk = retval;
+    @cg_bldr_pushqtok [this.realname.s]
+    
+        //code to define the struct is pushed on.
+        
+        @cg_bldr_pushtok [this.structcode]
+        @cg_bldr_rwalk_skip ;
+        //tok variable: 
+        @cg_bldr_pushqtok "noexport"
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok "tok"
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok "tok_stash"
+        
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok "tok_root"
+        @cg_bldr_pushqtok "cg_uast"
+        @cg_bldr_pushqtok "uast"
+        if(this.is_targeting_cgrdparse)
+            @cg_bldr_pushqtok "cg_rd_parser_spec"
+            @cg_bldr_pushqtok "*"
+            @cg_bldr_pushqtok "tgt_spec"
+        end
+    rwalk:push_end(cg_qtok("end"));
+    return retval;
+end
+
+method codegen cg_rd_parser_spec:free():
+    this.name:free();
+    this.realname:free();
+    //this was moved.
+    //this.structcode:freelist();
+    u64 i
+    u64 nr
+    nr = this.nrules;
+    for(i = 0, i < nr, i++)
+        (this.rules+i):free();
+    end
+    __builtin_free(cast(u8*)this.rules);
+end
+
+
+
+
+/*
+    TODO: parse the parser specification.
+    
+    First, we have to parse the entire rd parser call.
+    
+    Second, we emit the struct.
+    
+    Third, we emit function predeclarations
+    
+    Fourth, we emit the function bodies
+    
+    Finally, we emit the builder which prepares and invokes head.
+
+    Through all of this, we need to make sure that the parser
+    as specified is complete (Must have head and finish).
+    
+    Without either of those functions, it is incomplete.
+*/
+
+fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
+    cgstrll* retval
+    cgstrll* in_rwalk
+    cgstrll* rwalk
+    cg_rd_parser_spec spec
+    spec.is_targeting_cgrdparse = 0;
+    
+    //Note to self:
+    //we don't need to pack retval with a dummy,
+    //we already know that our output will start
+    //with `struct`.
+    
+    //make it so we own input.
+    input = input:dupell();
+    
+    //1. the name
+    if(input.d != CG_TOK_IDENT)
+        __builtin_puts("RDPARSER_ERROR");
+        __builtin_puts("A valid identifier was not provided for the language name.");
+        __builtin_puts("Here is the code:");
+        input:debug_print();
+        __builtin_exit(1);
+    end
+
+    
+    if(1)
+        cgstr q
+        q.s = input.text;
+        spec:init(
+            q
+        );
+    end
+        
+    if(input.right == cast(cgstrll*)0)
+        __builtin_puts("RDPARSER_ERROR");
+        __builtin_puts("No variables portion.");
+        __builtin_puts("Language name is:");
+        __builtin_puts(spec.name.s);
+        __builtin_exit(1);
+    end
+    
+    //foldout arglist.
+    cgstrll* t
+    t = input:cg_token_foldout_arglist();
+    if(!cast(uptr)t)
+        __builtin_puts("RDPARSER_ERROR");
+        __builtin_puts("No arglist?");
+        __builtin_puts("Language name is:");
+        __builtin_puts(spec.name.s);
+        __builtin_exit(1);
+    end
+    if(t.right.d == CG_TOK_CBRACK)
+        __builtin_puts("RDPARSER_ERROR");
+        __builtin_puts("Empty Variable list.");
+        __builtin_puts("If you don't want variables,");
+        __builtin_puts("just put a semicolon in.");
+        __builtin_puts("[;]");
+        __builtin_puts("Language name is:");
+        __builtin_puts(spec.name.s);
+        __builtin_exit(1);
+    end
+    
+    t = cg_tok_arglist_remove_brackets(t);
+    spec.structcode = t;
+    
+    
+    //Now, we have to walk right.
+    in_rwalk = input.right;
+    while(1)
+        cgstr current_rulename
+        cgstrll* rule_icode
+        if(in_rwalk == 0)
+            break;
+        end
+            /*
+                TODO: support writing custom
+                parsehooks in cgrdparse...
+            */
+            
+        if(
+            in_rwalk.d == CG_TOK_OPERATOR &&
+            in_rwalk.text streq "@"
+        )
+            cgsymdecl* ss
+            u64 found = 0;
+
+            in_rwalk = in_rwalk.right;
+            if( //short circuiting!
+                in_rwalk == 0 ||
+                in_rwalk.text == 0 ||
+                in_rwalk.d != CG_TOK_IDENT
+            )
+                __builtin_puts("RDPARSER_ERROR");
+                __builtin_puts("expected identifer after @");
+                __builtin_puts("The language being parsed is...");
+                __builtin_puts(spec.name.s);
+                __builtin_exit(1);
+            end
+            char* ident_name = in_rwalk.text;
+            if(1)
+                cgstr tmp
+                cgstr tmp2
+                tmp.s = ident_name;
+                tmp2:fromstr("cgrdparsehook_");
+                tmp2:add(tmp);
+                ident_name = tmp2.s; //move
+            end
+            //Search for the parsehook...
+            if(1)
+                cgast* aa = (cgast*)__builtin_get_ast();
+                u64 i
+                u64 nsymbols = aa.nsymbols[0];
+                for(i = 0; i < nsymbols; i++)
+                if(ident_name streq (aa.symbol_table[0]+i)[0].name)
+                    found = 1;
+                    ss = (aa.symbol_table[0]+i)[0];
+                    //TODO: Call this function...
+                    if(ss.t.is_function == 0 ||
+                        ss.nargs != 2 ||
+                        ss.is_codegen == 0 ||
+                        ss.t.basetype != CG_BASE_STRUCT ||
+                        ss.t.pointerlevel != 1 ||
+                        (ss.fargs+0).basetype != CG_BASE_STRUCT ||
+                        (ss.fargs+0).pointerlevel != 1 ||
+                        (ss.fargs+1).basetype != CG_BASE_STRUCT ||
+                        (ss.fargs+1).pointerlevel != 1 
+                    )
+                        __builtin_puts("RDPARSER_ERROR");
+                        __builtin_puts("cgrdparsehook has invalid prototype...");
+                        __builtin_puts("The correct prototype is as follows:");
+                        __builtin_puts("fn codegen cgrdparsehook_myparser_ext(cgstrll* in)->cgstrll*;");
+                        __builtin_puts("Take a look at the prototype at the top of cgrdparse.hbas...");
+                        __builtin_puts("The language being parsed is...");
+                        __builtin_puts(spec.name.s);
+                        __builtin_exit(1);
+                    end
+                    break
+                end //eof if ident_name streq....
+                end //eof for
+            end //eof searching for the parsehook...
+            if(!found)
+                __builtin_puts("RDPARSER_ERROR");
+                __builtin_puts("cgrdparsehook not found!");
+                __builtin_puts("Maybe you named it wrong? It should look like this:");
+                __builtin_puts("fn codegen cgrdparsehook_myparser_ext(cgstrll* in)->cgstrll*;");
+                __builtin_puts("Take a look at the prototype at the top of cgrdparse.hbas...");
+                __builtin_puts("The language being parsed is...");
+                __builtin_puts(spec.name.s);
+                __builtin_puts("I was searching for...");
+                __builtin_puts(ident_name);
+                __builtin_exit(1);
+            end
+            __builtin_free(ident_name); //recall that we have actually replaced ident name...
+            
+            /*We now have an identifier to call, which we will*/
+            if( //short circuiting!
+                in_rwalk.right == 0 ||
+                in_rwalk.right.d != CG_TOK_OBRACK
+            )
+                __builtin_puts("RDPARSER_ERROR");
+                __builtin_puts("expected '[' after cgrdparsehook invocation...");
+                __builtin_puts("The language being parsed is...");
+                __builtin_puts(spec.name.s);
+                __builtin_exit(1);
+            end
+            /*
+                Perform a delicate operation on in_rwalk to retrieve the bracketed argument...
+            */
+            cgstrll* qq;
+            cgstrll* qq2;
+            qq = in_rwalk.cg_token_foldout_arglist();
+            qq = cg_tok_arglist_remove_brackets(qq);
+            /*
+                We feed the input into the parsehook by using callfnptr...
+            */
+            qq = callfnptr[cgrdparsehook_prototype_donotinvoke]((char*)ss)(qq, spec);
+            if(qq == 0)
+                //we have nothing to insert!
+                in_rwalk = in_rwalk.right;
+                continue
+            end
+            //perform an insertion....
+            if(1)
+                cgstrll* rold
+                rold = in_rwalk.right;
+                in_rwalk.right = qq;
+                cgstrll* tt = in_rwalk
+                while(tt.right != 0)
+                    tt = tt.right
+                end
+                tt.right = rold;
+                in_rwalk = in_rwalk.right;
+            end
+            continue
+        end //EOF parsehook handling...
+        
+        if(in_rwalk.d != CG_TOK_IDENT)
+            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("expected rulename, head, end,");
+            __builtin_puts("or the end of the spec.");
+            __builtin_puts("The language being parsed is...");
+            __builtin_puts(spec.name.s);
+            __builtin_puts("Here is in_rwalk:");
+            in_rwalk:debug_print();
+            __builtin_exit(1);
+        end
+        //check for this special case...
+        if(in_rwalk.text streq "cgrdparse")
+            spec.is_targeting_cgrdparse = 1;
+            in_rwalk = in_rwalk.right;
+            continue
+        end
+        //this will be moved.
+        current_rulename:fromstr(in_rwalk.text);
+        
+        if(in_rwalk.right == cast(cgstrll*)0)
+            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("rulename at end of spec.");
+            __builtin_puts("The language being parsed is...");
+            __builtin_puts(spec.name.s);
+            __builtin_puts("Here is in_rwalk:");
+            in_rwalk:debug_print();
+            __builtin_exit(1);            
+        end
+        if(in_rwalk.right.d != CG_TOK_OBRACK)
+            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("expected opening square bracket.");
+            __builtin_puts(spec.name.s);
+            __builtin_puts("The rule is...");
+            __builtin_puts(current_rulename.s);
+            __builtin_puts("Here is in_rwalk:");
+            in_rwalk:debug_print();
+            __builtin_exit(1);
+        end
+        
+        //cleanup
+        rule_icode = in_rwalk:cg_token_foldout_arglist();
+        
+        //test for the unusual cases...
+        if(rule_icode == cast(cgstrll*)0)
+            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("cg_token_foldout_arglist() returned null.");
+            __builtin_puts("spec is:");
+            __builtin_puts(spec.name.s);
+            __builtin_puts("The rule is...");
+            __builtin_puts(current_rulename.s);
+            __builtin_puts("Here is in_rwalk:");
+            in_rwalk:debug_print();
+            __builtin_exit(1);        
+        end 
+        if(rule_icode.right.d == CG_TOK_CBRACK)
+            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("Rule definition has no code!");
+            __builtin_puts("To have an empty rule, just put");
+            __builtin_puts("A semicolon in there.");
+            __builtin_puts("[;]");
+            __builtin_puts("spec is:");
+            __builtin_puts(spec.name.s);
+            __builtin_puts("The rule is...");
+            __builtin_puts(current_rulename.s);
+            __builtin_puts("Here is in_rwalk:");
+            in_rwalk:debug_print();
+            __builtin_exit(1);        
+        end
+        rule_icode = cg_tok_arglist_remove_brackets(rule_icode);
+        //assume it succeeded...
+        spec:push_rule(
+            current_rulename,
+            rule_icode
+        );
+        (spec.rules + (spec.nrules-1)):gen_proto(spec);
+        //walk right...
+        in_rwalk = in_rwalk.right;
+        //continue...
+    end
+    retval = spec:gen_struct(); rwalk = retval; @cg_bldr_rwalk_skip ;
+    
+    u64 ruleid_head
+    ruleid_head = spec:get_rule_id("head");
+    u64 ruleid_finish 
+    ruleid_finish = spec:get_rule_id("finish");
+    if(1)
+        u8 has_head
+        u8 has_fin
+        has_head = (ruleid_head != -1);
+        has_fin = (ruleid_finish != -1);
+        if(!has_head || !has_fin)
+            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("The essential rule(s):");
+            if(!has_head) __builtin_puts("head");  end
+            if(!has_fin)  __builtin_puts("finish");end
+            __builtin_puts("Is/Are missing!");
+            __builtin_puts("spec is:");
+            __builtin_puts(spec.name.s);
+            __builtin_puts("Here is in_rwalk:");
+            in_rwalk:debug_print();
+            __builtin_exit(1);       
+        end
+    end
+    
+    u64 i
+    u64 nrules
+    nrules = spec.nrules;
+    for(i = 0, i < nrules, i++)
+        rwalk:push_end((spec.rules + i).proto); //moved!
+        (spec.rules + i):gen_ocode(spec);
+    end
+    
+    
+    for(i = 0, i < nrules, i++)
+        rwalk:push_end((spec.rules + i).ocode); //moved!
+        @cg_bldr_rwalk_skip ;
+    end
+    
+    input:freelist();
+    
+    
+    if(spec.is_targeting_cgrdparse == 0)
+        @cg_bldr_pushqtok "@"
+        @cg_bldr_pushqtok "mkbldr"
+        @cg_bldr_pushqtok "["
+            //name of bldr
+            @cg_bldr_pushqtok [spec.name.s]
+            
+            //vars
+            @cg_bldr_pushqtok [spec.realname.s]
+            @cg_bldr_pushqtok "the_struct"
+            
+            //assign inlist to the struct's root node.
+            @cg_bldr_pushqtok "the_struct"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "tok_root"
+            @cg_bldr_pushqtok "="
+            @cg_bldr_pushqtok "inlist"
+            @cg_bldr_pushqtok ":"
+            @cg_bldr_pushqtok "dupell"
+            @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok ")"
+            @cg_bldr_pushqtok ";"
+            @cg_bldr_pushqtok "the_struct"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "tok"
+            @cg_bldr_pushqtok "="
+            @cg_bldr_pushqtok "the_struct"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "tok_root"
+            @cg_bldr_pushqtok ";"
+            
+            //invoke head.
+            @cg_bldr_pushqtok [(spec.rules+ruleid_head).fn_name.s]
+            @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok "the_struct"
+            @cg_bldr_pushqtok ")"
+            @cg_bldr_pushqtok ";"
+            
+            //cleanup. We don't need the list any more.
+            @cg_bldr_pushqtok "the_struct"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "tok_root"
+            @cg_bldr_pushqtok ":"
+            @cg_bldr_pushqtok "freelist"
+            @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok ")"
+            @cg_bldr_pushqtok ";"
+            
+            @cg_bldr_pushqtok "the_struct"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "tok_root"
+            @cg_bldr_pushqtok "="
+            @cg_bldr_pushqtok "cast"
+            @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok "cgstrll"
+            @cg_bldr_pushqtok "*"
+            @cg_bldr_pushqtok ")"
+            @cg_bldr_pushqtok "0"
+            @cg_bldr_pushqtok ";"
+                    
+            @cg_bldr_pushqtok "the_struct"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "tok"
+            @cg_bldr_pushqtok "="
+            @cg_bldr_pushqtok "cast"
+            @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok "cgstrll"
+            @cg_bldr_pushqtok "*"
+            @cg_bldr_pushqtok ")"
+            @cg_bldr_pushqtok "0"
+            @cg_bldr_pushqtok ";"
+            
+            //invoke finish.
+            @cg_bldr_pushqtok "return"
+            @cg_bldr_pushqtok [(spec.rules+ruleid_finish).fn_name.s]
+            @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok "the_struct"
+            @cg_bldr_pushqtok ")"
+            @cg_bldr_pushqtok ";"
+            
+        @cg_bldr_pushqtok "]"
+    else
+        //write a cgrdparsehook...
+        @cg_bldr_pushqtok "fn"
+        @cg_bldr_pushqtok "codegen"
+            //name of bldr
+        if(1)
+            cgstr a1
+            cgstr a2
+            a1.fromstr("cgrdparsehook_");
+            a2.s = spec.name.s;
+            a1:add(a2);
+            
+            @cg_bldr_pushqtok [a1.s]
+            a1:free();
+        end
+        @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok "cgstrll"
+            @cg_bldr_pushqtok "*"
+            @cg_bldr_pushqtok "inlist"
+        @cg_bldr_pushqtok ","
+            @cg_bldr_pushqtok "cg_rd_parser_spec"
+            @cg_bldr_pushqtok "*"
+            @cg_bldr_pushqtok "spec"
+        @cg_bldr_pushqtok ")"
+        @cg_bldr_pushqtok "->"
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok ":"
+        /*
+        *   We actually _own_ inlist, unlike the previous case. 
+        */
+            @cg_bldr_pushqtok [spec.realname.s]
+            @cg_bldr_pushqtok "the_struct"
+        //assign inlist to the struct's root node.
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok_root"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "inlist"
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok_root"
+                    @cg_bldr_pushqtok ";"
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tgt_spec"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "spec"
+                    @cg_bldr_pushqtok ";"
+                    
+                    //invoke head.
+                    @cg_bldr_pushqtok [(spec.rules+ruleid_head).fn_name.s]
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ";"
+                    
+                    //cleanup. We don't need the list any more.
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok_root"
+                    @cg_bldr_pushqtok ":"
+                    @cg_bldr_pushqtok "freelist"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ";"
+                    
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok_root"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "cast"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "cgstrll"
+                    @cg_bldr_pushqtok "*"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok "0"
+                    @cg_bldr_pushqtok ";"
+                            
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "tok"
+                    @cg_bldr_pushqtok "="
+                    @cg_bldr_pushqtok "cast"
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "cgstrll"
+                    @cg_bldr_pushqtok "*"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok "0"
+                    @cg_bldr_pushqtok ";"
+                    
+                    //invoke finish.
+                    @cg_bldr_pushqtok "return"
+                    @cg_bldr_pushqtok [(spec.rules+ruleid_finish).fn_name.s]
+                    @cg_bldr_pushqtok "("
+                    @cg_bldr_pushqtok "the_struct"
+                    @cg_bldr_pushqtok ")"
+                    @cg_bldr_pushqtok ";"
+        
+        @cg_bldr_pushqtok "end"
+    end
+    //emit a call...
+    //@cg_bldr_pushqtok "@"
+    //@cg_bldr_pushqtok "cg_rd_parser__internal__clean_match_spec_passer"
+    spec:free();
+    return retval;
+end
+
+@mkbldr [ cgrdparser
+    //literally just this.
+    return cg_rd_parser_parse_spec(inlist);
+]

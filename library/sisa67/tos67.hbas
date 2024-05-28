@@ -1,0 +1,240 @@
+
+#guard Compile_Cbas_To_Sisa67
+
+#include <meta>
+
+//global assembly block- may be needed by some code.
+codegen char* cg_Cemitter_gasm = 0;
+
+
+codegen u64 cg_Cemitter_Switch_DtableGen = 0;//variable for the following function...
+
+fn codegen cg_Cemitter_make_dtable_name()->char*:
+    cgstr retval
+    cgstr a
+    char[50] buf
+    /*
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        IMPL_README
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        This is a location where name mangling
+        occurs. Please verify that this name mangling
+        scheme is compatible with your target platform.
+    */
+    retval:fromstr("dtable_");
+    __builtin_itoa(buf, cg_Cemitter_Switch_DtableGen++);
+    a.s = buf;
+    retval:add(a);
+    a.s = "_____";
+    retval:add(a);
+    return retval.s;
+end
+
+fn codegen cg_Cemitter_mangle_global_name(char* s)->char*:
+    cgstr r
+    r.fromstr("CBAS_____");
+    r.addstr(s);
+    return r.s;
+end
+
+fn codegen cg_Cemitter_mangle_local_variable_name(char* f, char* s)->char*:
+    cgstr r
+    r.fromstr("local_");
+    r.addstr(f);
+    r.addstr("_____");
+    r.addstr(s);
+    return r.s;
+end
+
+fn codegen cg_Cemitter_mangle_local_label_name(char* f, char* s)->char*:
+    cgstr r
+    r.fromstr("lbl_");
+    r.addstr(f);
+    r.addstr("_____");
+    r.addstr(s);
+    return r.s;
+end
+
+
+fn codegen cg_qemit(char* str, u64 indent_level):
+    u64 i
+    for(i = 0, i < indent_level*4, i++)
+        __builtin_emit(" ",1);
+    end
+    cgstr q
+    q.s = str;
+    __builtin_emit(str, q:len());
+    __builtin_emit("\n",1);
+end
+
+
+
+fn codegen cg_Cemitter_emit_binop(char* opname, char* regname1, char* regname2):
+    char[50] buf
+    cgstr o
+    o.fromstr(opname);
+    o.addstr(" ");
+    o.addstr(regname1);
+    o.addstr(" ");
+    o.addstr(regname2);
+    cg_qemit(o.s);
+    o.free();
+end
+
+fn codegen cg_Cemitter_emit_unop(char* opname, char* regname1,):
+    char[50] buf
+    cgstr o
+    o.fromstr(opname);
+    o.addstr(" ");
+    o.addstr(regname1);
+    cg_qemit(o.s);
+    o.free();
+end
+
+
+/*
+    Register allocator
+*/
+
+
+
+
+//traversal code
+cgstmt** cg_Cemitter_loopstack = 0;
+cgscope** cg_Cemitter_scopestack = 0;
+
+
+method predecl codegen cgsymdecl:gen_code(cgast* ast, char is_local, u64 my_symid)->char*;
+method predecl codegen cgstmt:gen_code(cgast* ast, char* disptablename, u64 active_fun_symid)->char*;
+
+//TODO: Traverse the tree
+
+/*
+
+we to implement these:
+
+fn codegen cg_codegen_walkFunction_TEMPLATE_takes_scopefptr(cgscope* ss);
+fn codegen cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr(cgstmt* ss);
+fn codegen cg_codegen_walkFunction_TEMPLATE_takes_exprfptr(cgexpr_node* ee);
+fn codegen cg_codegen_walkFunction_TEMPLATE_takes_fnfptr(cgsymdecl* ff);
+
+for this:
+
+fn codegen cg_codegen_walkFunction(
+    cgsymdecl* funk, //the function
+    byte* visit_scope_fptr,
+    byte* retreat_scope_fptr,
+    byte* revisit_scope_fptr,
+    byte* visit_stmt_fptr, 
+    byte* retreat_stmt_fptr,
+    byte* revisit_stmt_fptr,
+    byte* visit_expr_fptr,
+    byte* retreat_expr_fptr,
+    byte* revisit_expr_fptr,
+    byte* visit_inline_function_fptr,
+    byte* retreat_inline_function_fptr,
+    byte* visit_fn_ptr,
+    byte* retreat_fn_ptr
+)
+
+*/
+
+//information about a loop
+struct cg_Cemitter_loop
+    noexport
+    cgstmt* s
+    char* testlabel
+    char* endlabel
+end
+
+//information about a function
+struct cg_Cemitter_fn
+    noexport
+    cgsymdecl* sym
+    char* prefix //prefix for all local symbols in the fn
+    char is_inline //is this an inline fn?
+end
+
+struct cg_Cemitter_rgstk_elem
+    noexport
+    char* name
+    char is_local_temporary //is this an expression-local temporary value?
+end
+
+@cgvec[cg_Cemitter_rgstk_elem] cg_Cemitter_expr_regstack;//expression temporary register stack-
+                                                         //Note that when an expression ends,
+                                                         //it is not safe to clear this, because
+                                                         //an inlined function call causes a
+                                                         //whole function to be placed inside of
+                                                         //a single expression.
+                                                         
+                                                         /*HOW DO WE DO THE VALUE STACK FOR EXPRESSIONS?
+                                                         
+                                                         -> Lvalue is always removed by a cast. Lvalue
+                                                         removal for LSYM does nothing, but Lvalue removal
+                                                         for EXPR_INDEX and EXPR_GSYM does an ldXX insn
+                                                         
+                                                         -> We treat inline functions as being within
+                                                         the expression they are called in. Return values
+                                                         are written to a temporary allocated outside
+                                                         the inlined function body, arguments are written
+                                                         to the argument variables, which are also allocated
+                                                         outside the inlined function body.
+                                                         
+                                                         -> Tail calls inside of an inline function
+                                                         must be converted to normal calls with assignment
+                                                         to the return value temporary
+                                                         
+                                                         -> Temporaries must have strict lifetimes so that
+                                                         the optimizer can go to town on it, so to speak. We
+                                                         also need to avoid making too many redundant duplicates
+                                                         
+                                                         -> Any time that Lvalue removal happens on an Lsym,
+                                                         the result is a temporary. If the temporary is never
+                                                         modified, this should be optimized down to being the
+                                                         original variable by the read-only-copy optimization
+                                                         in the Sisa67 assembler.
+                                                         
+                                                         */
+@cgvec[cg_Cemitter_loop] cg_Cemitter_loopstack;
+@cgvec[cg_Cemitter_fn] cg_Cemitter_fnstack;
+
+/*
+struct cg_Cemitter_scope
+    cgscope* s
+end
+*/
+
+//prototypes
+fn codegen cg_Cemitter_visitScope(cgscope* ss);
+fn codegen cg_Cemitter_retreatScope(cgscope* ss);
+fn codegen cg_Cemitter_revisitScope(cgscope* ss);
+
+fn codegen cg_Cemitter_visitStmt(cgstmt* ss);
+fn codegen cg_Cemitter_revisitStmt(cgstmt* ss);
+fn codegen cg_Cemitter_retreatStmt(cgstmt* ss);
+
+fn codegen cg_Cemitter_visitExpr(cgexpr_node* ee);
+fn codegen cg_Cemitter_revisitExpr(cgexpr_node* ee);
+fn codegen cg_Cemitter_retreatExpr(cgexpr_node* ee);
+
+fn codegen cg_Cemitter_visitInlineFn(cgsymdecl* ff);
+fn codegen cg_Cemitter_retreatInlineFn(cgsymdecl* ff);
+
+fn codegen cg_Cemitter_visitFn(cgsymdecl* ff);
+fn codegen cg_Cemitter_retreatFn(cgsymdecl* ff);
+    
+
+
+
+//API call
+fn codegen cg_emits67(char* pref):
+    cg_Cemitter_regstack.ctor();
+    //TODO: generate sisa67 assembly language.
+    
+    
+    
+    
+    cg_Cemitter_regstack.dtor();
+end
+

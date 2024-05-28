@@ -1,0 +1,613 @@
+
+#guard Mini_Abstraction_Library_Seabass
+
+/*
+    MINIATURE ABSTRACTIONS LIBRARY
+    
+    Tiny extensions to the language to make various operations easier,
+    lime large sequences of comparisons...
+    
+    Small things.
+*/
+
+
+#include <stdmeta/tbas.hbas>
+
+
+/*
+    EQOR-
+    
+    @eqor
+        a `7
+          `(3+5)
+          `(5*37)
+    This is followed by neqand,
+    streqor, and strneqand.
+         
+*/
+
+/*
+    Implemented to match the parser...
+*/
+fn codegen parsehook_eqor:
+    cgstrll* pp = cg_peek().dupe();
+    cgstrll* ppw = pp;
+    cgstrll* arg = 0;
+    cgstrll* argw = 0;
+    __builtin_consume();
+    if(ppw.d != CG_TOK_OPAREN)
+        @pprint[
+            /"EQOR SYNTAX ERROR!"
+            /"Expected Parentheses!"
+            /   "File, Line, Col is below:"
+            /   (ppw.filename)
+            /int(ppw.linenum)
+            /int(ppw.colnum)
+        ]
+        __builtin_exit(1);
+    else
+        i64 counter = 1;
+        //walk until we hit zero...
+        cgstrll* w
+        for(w = cg_peek(); counter != 0; 0)
+            if(w.d == CG_TOK_OPAREN)
+                counter++
+            elif(w.d == CG_TOK_CPAREN)
+                counter--
+            end
+            ppw.right = w.dupe();
+            ppw = ppw.right;
+            __builtin_consume();
+            w = cg_peek();
+        end
+    end
+
+    //we have now obtained the left hand side....
+    //begin parsing question marks...
+    if(!(cg_peek().d == CG_TOK_UNKNOWN && cg_peek().text streq "`"))
+        @pprint[
+            /   "EQOR SYNTAX ERROR"
+            /   "Expected grave!"
+            /   "eqor requires at least one thing to compare to!"
+            /   "File, Line, Col is below:"
+            /   (cg_peek().filename)
+            /int(cg_peek().linenum)
+            /int(cg_peek().colnum)
+        ]
+        __builtin_exit(1);
+    end
+
+    __builtin_consume(); //eat that question mark!
+    @cg_bldr_inittok [pp.dupell()]
+    @cg_bldr_rwalk_skip ;
+    @cg_bldr_pushqtok "=="
+    //retrieve the argument...
+    arg = cg_peek().dupe();
+    argw = arg;
+    __builtin_consume();
+
+    if(argw.d != CG_TOK_OPAREN)
+        @pprint[
+            /"EQOR SYNTAX ERROR!"
+            /"Expected Parentheses!"
+            /   "File, Line, Col is below:"
+            /   (argw.filename)
+            /int(argw.linenum)
+            /int(argw.colnum)
+        ]
+        __builtin_exit(1);
+    else
+        i64 counter = 1;
+        //walk until we hit zero...
+        cgstrll* w
+        for(w = cg_peek(); counter != 0; 0)
+            if(w.d == CG_TOK_OPAREN)
+                counter++
+            elif(w.d == CG_TOK_CPAREN)
+                counter--
+            end
+            argw.right = w.dupe();
+            argw = argw.right;
+            __builtin_consume();
+            w = cg_peek();
+        end
+    end
+
+    @cg_bldr_pushtok [arg]
+    @cg_bldr_rwalk_skip ;
+    while(cg_peek().d == CG_TOK_UNKNOWN && cg_peek().text streq "`")
+        __builtin_consume(); //eat that question mark!
+        @cg_bldr_pushqtok "||"
+        //repeat all this....
+        @cg_bldr_pushtok [pp.dupell()]
+        @cg_bldr_rwalk_skip ;
+        @cg_bldr_pushqtok "=="
+        //retrieve the argument...
+        arg = cg_peek().dupe();
+        argw = arg;
+        __builtin_consume();
+        if(argw.d != CG_TOK_OPAREN)
+            @pprint[
+                /"EQOR SYNTAX ERROR!"
+                /"Expected Parentheses!"
+                /   "File, Line, Col is below:"
+                /   (argw.filename)
+                /int(argw.linenum)
+                /int(argw.colnum)
+            ]
+            __builtin_exit(1);
+        else
+            i64 counter = 1;
+            //walk until we hit zero...
+            cgstrll* w
+            for(w = cg_peek(); counter != 0; 0)
+                if(w.d == CG_TOK_OPAREN)
+                    counter++
+                elif(w.d == CG_TOK_CPAREN)
+                    counter--
+                end
+                argw.right = w.dupe();
+                argw = argw.right;
+                __builtin_consume();
+                w = cg_peek();
+            end
+        end
+        @cg_bldr_pushtok [arg]
+        @cg_bldr_rwalk_skip ;
+    end
+    
+    pp.freelist();
+    ppw = 0;
+    pp = 0;
+    //code emission...
+    if(1)
+        //retrieve the next variable from the compiler...
+        cgstrll** nxt = cg_getnext();
+        //retrieve what next was...
+        cgstrll* oldpeek = nxt[0];
+        //assign nxt to be our generated code....
+        nxt[0] = retval;
+        //append the code after properly (rwalk should point to the last right-child of retval...)
+        rwalk.right = oldpeek;
+    end
+end
+
+/*
+    
+*/
+fn codegen parsehook_neqand:
+    cgstrll* pp = cg_peek().dupe();
+    cgstrll* ppw = pp;
+    cgstrll* arg = 0;
+    cgstrll* argw = 0;
+    __builtin_consume();
+    if(ppw.d != CG_TOK_OPAREN)
+        @pprint[
+            /"NEQAND SYNTAX ERROR!"
+            /"Expected Parentheses!"
+            /   "File, Line, Col is below:"
+            /   (ppw.filename)
+            /int(ppw.linenum)
+            /int(ppw.colnum)
+        ]
+        __builtin_exit(1);
+    else
+        i64 counter = 1;
+        //walk until we hit zero...
+        cgstrll* w
+        for(w = cg_peek(); counter != 0; 0)
+            if(w.d == CG_TOK_OPAREN)
+                counter++
+            elif(w.d == CG_TOK_CPAREN)
+                counter--
+            end
+            ppw.right = w.dupe();
+            ppw = ppw.right;
+            __builtin_consume();
+            w = cg_peek();
+        end
+    end
+
+    //we have now obtained the left hand side....
+    //begin parsing question marks...
+    if(!(cg_peek().d == CG_TOK_UNKNOWN && cg_peek().text streq "`"))
+        @pprint[
+            /   "NEQAND SYNTAX ERROR"
+            /   "Expected grave!"
+            /   "neqand requires at least one thing to compare to!"
+            /   "File, Line, Col is below:"
+            /   (cg_peek().filename)
+            /int(cg_peek().linenum)
+            /int(cg_peek().colnum)
+        ]
+        __builtin_exit(1);
+    end
+
+    __builtin_consume(); //eat that question mark!
+    @cg_bldr_inittok [pp.dupell()]
+    @cg_bldr_rwalk_skip ;
+    @cg_bldr_pushqtok "!="
+    //retrieve the argument...
+    arg = cg_peek().dupe();
+    argw = arg;
+    __builtin_consume();
+
+    if(argw.d != CG_TOK_OPAREN)
+        @pprint[
+            /"NEQAND SYNTAX ERROR!"
+            /"Expected Parentheses!"
+            /   "File, Line, Col is below:"
+            /   (argw.filename)
+            /int(argw.linenum)
+            /int(argw.colnum)
+        ]
+        __builtin_exit(1);
+    else
+        i64 counter = 1;
+        //walk until we hit zero...
+        cgstrll* w
+        for(w = cg_peek(); counter != 0; 0)
+            if(w.d == CG_TOK_OPAREN)
+                counter++
+            elif(w.d == CG_TOK_CPAREN)
+                counter--
+            end
+            argw.right = w.dupe();
+            argw = argw.right;
+            __builtin_consume();
+            w = cg_peek();
+        end
+    end
+
+    @cg_bldr_pushtok [arg]
+    @cg_bldr_rwalk_skip ;
+    while(cg_peek().d == CG_TOK_UNKNOWN && cg_peek().text streq "`")
+        __builtin_consume(); //eat that question mark!
+        @cg_bldr_pushqtok "&&"
+        //repeat all this....
+        @cg_bldr_pushtok [pp.dupell()]
+        @cg_bldr_rwalk_skip ;
+        @cg_bldr_pushqtok "!="
+        //retrieve the argument...
+        arg = cg_peek().dupe();
+        argw = arg;
+        __builtin_consume();
+        if(argw.d != CG_TOK_OPAREN)
+            @pprint[
+                /"NEQAND SYNTAX ERROR!"
+                /"Expected Parentheses!"
+                /   "File, Line, Col is below:"
+                /   (argw.filename)
+                /int(argw.linenum)
+                /int(argw.colnum)
+            ]
+            __builtin_exit(1);
+        else
+            i64 counter = 1;
+            //walk until we hit zero...
+            cgstrll* w
+            for(w = cg_peek(); counter != 0; 0)
+                if(w.d == CG_TOK_OPAREN)
+                    counter++
+                elif(w.d == CG_TOK_CPAREN)
+                    counter--
+                end
+                argw.right = w.dupe();
+                argw = argw.right;
+                __builtin_consume();
+                w = cg_peek();
+            end
+        end
+        @cg_bldr_pushtok [arg]
+        @cg_bldr_rwalk_skip ;
+    end
+    
+    pp.freelist();
+    ppw = 0;
+    pp = 0;
+    //code emission...
+    if(1)
+        //retrieve the next variable from the compiler...
+        cgstrll** nxt = cg_getnext();
+        //retrieve what next was...
+        cgstrll* oldpeek = nxt[0];
+        //assign nxt to be our generated code....
+        nxt[0] = retval;
+        //append the code after properly (rwalk should point to the last right-child of retval...)
+        rwalk.right = oldpeek;
+    end
+end
+
+fn codegen parsehook_streqor:
+    cgstrll* pp = cg_peek().dupe();
+    cgstrll* ppw = pp;
+    cgstrll* arg = 0;
+    cgstrll* argw = 0;
+    __builtin_consume();
+    if(ppw.d != CG_TOK_OPAREN)
+        @pprint[
+            /"STREQOR SYNTAX ERROR!"
+            /"Expected Parentheses!"
+            /   "File, Line, Col is below:"
+            /   (ppw.filename)
+            /int(ppw.linenum)
+            /int(ppw.colnum)
+        ]
+        __builtin_exit(1);
+    else
+        i64 counter = 1;
+        //walk until we hit zero...
+        cgstrll* w
+        for(w = cg_peek(); counter != 0; 0)
+            if(w.d == CG_TOK_OPAREN)
+                counter++
+            elif(w.d == CG_TOK_CPAREN)
+                counter--
+            end
+            ppw.right = w.dupe();
+            ppw = ppw.right;
+            __builtin_consume();
+            w = cg_peek();
+        end
+    end
+
+    //we have now obtained the left hand side....
+    //begin parsing question marks...
+    if(!(cg_peek().d == CG_TOK_UNKNOWN && cg_peek().text streq "`"))
+        @pprint[
+            /   "STREQOR SYNTAX ERROR"
+            /   "Expected grave!"
+            /   "streqor requires at least one thing to compare to!"
+            /   "File, Line, Col is below:"
+            /   (cg_peek().filename)
+            /int(cg_peek().linenum)
+            /int(cg_peek().colnum)
+        ]
+        __builtin_exit(1);
+    end
+
+    __builtin_consume(); //eat that question mark!
+    @cg_bldr_inittok [pp.dupell()]
+    @cg_bldr_rwalk_skip ;
+    @cg_bldr_pushqtok "streq"
+    //retrieve the argument...
+    arg = cg_peek().dupe();
+    argw = arg;
+    __builtin_consume();
+
+    if(argw.d != CG_TOK_OPAREN)
+        @pprint[
+            /"STREQOR SYNTAX ERROR!"
+            /"Expected Parentheses!"
+            /   "File, Line, Col is below:"
+            /   (argw.filename)
+            /int(argw.linenum)
+            /int(argw.colnum)
+        ]
+        __builtin_exit(1);
+    else
+        i64 counter = 1;
+        //walk until we hit zero...
+        cgstrll* w
+        for(w = cg_peek(); counter != 0; 0)
+            if(w.d == CG_TOK_OPAREN)
+                counter++
+            elif(w.d == CG_TOK_CPAREN)
+                counter--
+            end
+            argw.right = w.dupe();
+            argw = argw.right;
+            __builtin_consume();
+            w = cg_peek();
+        end
+    end
+
+    @cg_bldr_pushtok [arg]
+    @cg_bldr_rwalk_skip ;
+    while(cg_peek().d == CG_TOK_UNKNOWN && cg_peek().text streq "`")
+        __builtin_consume(); //eat that question mark!
+        @cg_bldr_pushqtok "||"
+        //repeat all this....
+        @cg_bldr_pushtok [pp.dupell()]
+        @cg_bldr_rwalk_skip ;
+        @cg_bldr_pushqtok "streq"
+        //retrieve the argument...
+        arg = cg_peek().dupe();
+        argw = arg;
+        __builtin_consume();
+        if(argw.d != CG_TOK_OPAREN)
+            @pprint[
+                /"STREQOR SYNTAX ERROR!"
+                /"Expected Parentheses!"
+                /   "File, Line, Col is below:"
+                /   (argw.filename)
+                /int(argw.linenum)
+                /int(argw.colnum)
+            ]
+            __builtin_exit(1);
+        else
+            i64 counter = 1;
+            //walk until we hit zero...
+            cgstrll* w
+            for(w = cg_peek(); counter != 0; 0)
+                if(w.d == CG_TOK_OPAREN)
+                    counter++
+                elif(w.d == CG_TOK_CPAREN)
+                    counter--
+                end
+                argw.right = w.dupe();
+                argw = argw.right;
+                __builtin_consume();
+                w = cg_peek();
+            end
+        end
+        @cg_bldr_pushtok [arg]
+        @cg_bldr_rwalk_skip ;
+    end
+    
+    pp.freelist();
+    ppw = 0;
+    pp = 0;
+    //code emission...
+    if(1)
+        //retrieve the next variable from the compiler...
+        cgstrll** nxt = cg_getnext();
+        //retrieve what next was...
+        cgstrll* oldpeek = nxt[0];
+        //assign nxt to be our generated code....
+        nxt[0] = retval;
+        //append the code after properly (rwalk should point to the last right-child of retval...)
+        rwalk.right = oldpeek;
+    end
+end
+
+
+
+fn codegen parsehook_strneqand:
+    cgstrll* pp = cg_peek().dupe();
+    cgstrll* ppw = pp;
+    cgstrll* arg = 0;
+    cgstrll* argw = 0;
+    __builtin_consume();
+    if(ppw.d != CG_TOK_OPAREN)
+        @pprint[
+            /"STRNEQAND SYNTAX ERROR!"
+            /"Expected Parentheses!"
+            /   "File, Line, Col is below:"
+            /   (ppw.filename)
+            /int(ppw.linenum)
+            /int(ppw.colnum)
+        ]
+        __builtin_exit(1);
+    else
+        i64 counter = 1;
+        //walk until we hit zero...
+        cgstrll* w
+        for(w = cg_peek(); counter != 0; 0)
+            if(w.d == CG_TOK_OPAREN)
+                counter++
+            elif(w.d == CG_TOK_CPAREN)
+                counter--
+            end
+            ppw.right = w.dupe();
+            ppw = ppw.right;
+            __builtin_consume();
+            w = cg_peek();
+        end
+    end
+
+    //we have now obtained the left hand side....
+    //begin parsing question marks...
+    if(!(cg_peek().d == CG_TOK_UNKNOWN && cg_peek().text streq "`"))
+        @pprint[
+            /   "STRNEQAND SYNTAX ERROR"
+            /   "Expected grave!"
+            /   "streqor requires at least one thing to compare to!"
+            /   "File, Line, Col is below:"
+            /   (cg_peek().filename)
+            /int(cg_peek().linenum)
+            /int(cg_peek().colnum)
+        ]
+        __builtin_exit(1);
+    end
+
+    __builtin_consume(); //eat that question mark!
+    @cg_bldr_inittok [pp.dupell()]
+    @cg_bldr_rwalk_skip ;
+    @cg_bldr_pushqtok "strneq"
+    //retrieve the argument...
+    arg = cg_peek().dupe();
+    argw = arg;
+    __builtin_consume();
+
+    if(argw.d != CG_TOK_OPAREN)
+        @pprint[
+            /"STRNEQAND SYNTAX ERROR!"
+            /"Expected Parentheses!"
+            /   "File, Line, Col is below:"
+            /   (argw.filename)
+            /int(argw.linenum)
+            /int(argw.colnum)
+        ]
+        __builtin_exit(1);
+    else
+        i64 counter = 1;
+        //walk until we hit zero...
+        cgstrll* w
+        for(w = cg_peek(); counter != 0; 0)
+            if(w.d == CG_TOK_OPAREN)
+                counter++
+            elif(w.d == CG_TOK_CPAREN)
+                counter--
+            end
+            argw.right = w.dupe();
+            argw = argw.right;
+            __builtin_consume();
+            w = cg_peek();
+        end
+    end
+
+    @cg_bldr_pushtok [arg]
+    @cg_bldr_rwalk_skip ;
+    while(cg_peek().d == CG_TOK_UNKNOWN && cg_peek().text streq "`")
+        __builtin_consume(); //eat that question mark!
+        @cg_bldr_pushqtok "&&"
+        //repeat all this....
+        @cg_bldr_pushtok [pp.dupell()]
+        @cg_bldr_rwalk_skip ;
+        @cg_bldr_pushqtok "strneq"
+        //retrieve the argument...
+        arg = cg_peek().dupe();
+        argw = arg;
+        __builtin_consume();
+        if(argw.d != CG_TOK_OPAREN)
+            @pprint[
+                /"STRNEQAND SYNTAX ERROR!"
+                /"Expected Parentheses!"
+                /   "File, Line, Col is below:"
+                /   (argw.filename)
+                /int(argw.linenum)
+                /int(argw.colnum)
+            ]
+            __builtin_exit(1);
+        else
+            i64 counter = 1;
+            //walk until we hit zero...
+            cgstrll* w
+            for(w = cg_peek(); counter != 0; 0)
+                if(w.d == CG_TOK_OPAREN)
+                    counter++
+                elif(w.d == CG_TOK_CPAREN)
+                    counter--
+                end
+                argw.right = w.dupe();
+                argw = argw.right;
+                __builtin_consume();
+                w = cg_peek();
+            end
+        end
+        @cg_bldr_pushtok [arg]
+        @cg_bldr_rwalk_skip ;
+    end
+    
+    pp.freelist();
+    ppw = 0;
+    pp = 0;
+    //code emission...
+    if(1)
+        //retrieve the next variable from the compiler...
+        cgstrll** nxt = cg_getnext();
+        //retrieve what next was...
+        cgstrll* oldpeek = nxt[0];
+        //assign nxt to be our generated code....
+        nxt[0] = retval;
+        //append the code after properly (rwalk should point to the last right-child of retval...)
+        rwalk.right = oldpeek;
+    end
+end
+
+
+
+
+
+

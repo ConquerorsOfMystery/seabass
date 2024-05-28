@@ -1,0 +1,2343 @@
+
+
+/*
+    USER-MODE STANDARD LIBRARY FOR SEABASS- BASIC INTERFACE.
+    
+    Should provide the basic functionality...
+    
+    Make sure to include a bitXX.hbas file...
+    
+    such as bit64.hbas or bit32.hbas
+*/
+
+#guard SEABASS_STDLIB_USERMODE_C
+#include <meta>
+#include <toc/toc.hbas>
+#include <toc/inlinec.hbas>
+
+//The glories of a multi-line string literal!
+data codegen string SEABASS_STDLIB_PREFIX "
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <math.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <dirent.h>
+//#include <unistd.h>
+/*for unsupported platforms...*/
+#ifdef __APPLE__
+#define __CBAS_SINGLE_THREADED__
+#endif
+
+#ifndef __CBAS_SINGLE_THREADED__
+#include <pthread.h>
+typedef struct {
+    pthread_mutex_t myMutex;
+    pthread_barrier_t myBarrier;
+    pthread_t myThread;
+    int isThreadLive;
+    int shouldKillThread;
+    int state;
+    void (*execute)(unsigned char*);
+    unsigned char* argument;
+} lsthread;
+static inline void init_lsthread(lsthread* t);
+static inline void start_lsthread(lsthread* t);
+static inline void kill_lsthread(lsthread* t);
+static inline void destroy_lsthread(lsthread* t);
+static inline void lock(lsthread* t);
+static inline void step(lsthread* t);
+static void* lsthread_func(void* me_void);
+static inline void init_lsthread(lsthread* t){
+    pthread_mutex_init(&t->myMutex, NULL);
+    pthread_barrier_init(&t->myBarrier, NULL, 2);
+    t->isThreadLive = 0;
+    t->shouldKillThread = 0;
+    t->state = 0;
+    t->execute = NULL;
+    t->argument = NULL;
+}
+static inline void destroy_lsthread(lsthread* t){
+    pthread_mutex_destroy(&t->myMutex);
+    pthread_barrier_destroy(&t->myBarrier);
+}
+static inline void lock(lsthread* t){
+    if(t->state == 1)return;
+    if(!t->isThreadLive)return;
+    pthread_barrier_wait(&t->myBarrier);
+    if(pthread_mutex_lock(&t->myMutex))
+        exit(1);
+    t->state = 1;
+}
+
+static inline void step(lsthread* t){
+    if(t->state == -1)return;
+    if(!t->isThreadLive)return;
+    if(pthread_mutex_unlock(&(t->myMutex)))
+        exit(1);
+    pthread_barrier_wait(&t->myBarrier);
+    t->state = -1;
+}
+static inline void kill_lsthread(lsthread* t){
+    if(!t->isThreadLive)return;
+    if(t->state != 1){
+        lock(t);
+    }
+    t->shouldKillThread = 1;
+    step(t);
+    
+    pthread_join(t->myThread,NULL);
+    
+    t->isThreadLive = 0;
+    t->shouldKillThread = 0;
+}
+static void* lsthread_func(void* me_void){
+    lsthread* me = (lsthread*) me_void;
+    if (!me)pthread_exit(NULL);
+    while (1) {
+        pthread_barrier_wait(&me->myBarrier);
+        pthread_mutex_lock(&me->myMutex);
+        if (!(me->shouldKillThread) && me->execute)
+            me->execute(me->argument);
+        else if(me->shouldKillThread){
+            pthread_mutex_unlock(&me->myMutex);
+            pthread_exit(NULL);
+        }
+
+        pthread_mutex_unlock(&me->myMutex);
+        pthread_barrier_wait(&me->myBarrier);
+    }
+    pthread_exit(NULL);
+}
+static inline void start_lsthread(lsthread* t){
+    if(t->isThreadLive)return;
+    t->isThreadLive = 1;
+    t->shouldKillThread = 0;
+    if(pthread_mutex_lock(&t->myMutex))
+        exit(1);
+    t->state = 1;/*LOCKED*/
+    pthread_create(
+        &t->myThread,
+        NULL,
+        lsthread_func,
+        (void*)t
+    );
+}
+
+#endif
+
+static inline double __CBAS__atof(unsigned char* text){
+    return strtod((char*)text, NULL);
+}
+static inline TGT_UMAX __CBAS__atou(unsigned char* text){
+#ifndef SEABASS_16_BIT
+    return _STRTOU_((char*)text, NULL, 0);
+#else
+    return _STRTOU_((char*)text);
+#endif
+}
+static inline TGT_IMAX __CBAS__atoi(unsigned char* text){
+#ifndef SEABASS_16_BIT
+    return _STRTOI_((char*)text, NULL, 0);
+#else
+    return _STRTOI_((char*)text);
+#endif
+}
+static inline void __CBAS__srand(u32 seed){
+    srand(seed);
+}
+static inline i32 __CBAS__rand(){
+    return rand();
+}
+static inline TGT_IMAX __CBAS__strcmp(unsigned char* a, unsigned char* b){
+    return strcmp((char*)a,(char*)b);
+}
+static inline TGT_IMAX __CBAS__memcmp(unsigned char* a, unsigned char* b, TGT_UMAX sz){
+    return memcmp((char*)a,(char*)b, sz);
+}
+static inline TGT_UMAX __CBAS__strlen(unsigned char* s){
+    return strlen((char*)s);
+}
+static inline void __CBAS__strcpy(unsigned char* d, unsigned char* s){
+    strcpy((char*)d, (char*)s);
+}
+
+static inline TGT_UMAX __CBAS__fopen(unsigned char* fname, unsigned char* mode){
+    return (TGT_UMAX)fopen((char*)fname, (char*)mode);
+}
+
+static inline i32 __CBAS__fclose(TGT_UMAX p){
+    return fclose((FILE*)p);
+}
+static inline i32 __CBAS__fflush(TGT_UMAX p){
+    return fflush((FILE*)p);
+}
+
+static inline TGT_UMAX __CBAS__popen(unsigned char* fname, unsigned char* mode){
+    return (TGT_UMAX)popen((char*)fname, (char*)mode);
+}
+
+static inline i32 __CBAS__pclose(TGT_UMAX p){
+    return pclose((FILE*)p);
+}
+
+/*fn predecl noexport getdirlist(char* dirname, char*** entry_listing, u32* nentries)->i32;*/
+static inline i32 __CBAS__getdirlist(unsigned char* dirname, unsigned char*** entry_listing, u32* nentries){
+    DIR* dir;
+    struct dirent* de;
+    dir = opendir((char*)dirname);
+    if(dir == NULL) return 1; 
+    nentries[0] = 0;
+    entry_listing[0] = 0;
+    while(1){
+        de = readdir(dir);
+        if(de == NULL) break;
+        entry_listing[0] = realloc(entry_listing[0], sizeof(void*) * ++(nentries[0]));
+        entry_listing[0][nentries[0]-1] = (unsigned char*)strdup(de->d_name);
+    }
+    closedir(dir);
+    return 0;
+}
+
+static inline TGT_UMAX __CBAS__system(unsigned char* cmd){
+    return system((char*)cmd);
+}
+
+static inline TGT_UMAX __CBAS__get_stdout_handle(){
+    return (TGT_UMAX)stdout;
+}
+
+static inline TGT_UMAX __CBAS__get_stdin_handle(){
+    return (TGT_UMAX)stdin;
+}
+
+static inline TGT_UMAX __CBAS__get_stderr_handle(){
+    return (TGT_UMAX)stderr;
+}
+
+static inline TGT_UMAX __CBAS__fwrite(TGT_UMAX fhandle, unsigned char* buf, TGT_UMAX nbytes){
+    return fwrite(buf, 1, nbytes,(FILE*)fhandle);
+}
+
+static inline TGT_UMAX __CBAS__fread(TGT_UMAX fhandle, unsigned char* buf, TGT_UMAX nbytes){
+    return fread(buf, 1, nbytes,(FILE*)fhandle);
+}
+static inline i32 __CBAS__feof(TGT_UMAX fhandle){
+    return feof((FILE*)fhandle);
+}
+static inline TGT_IMAX __CBAS__ftell(TGT_UMAX fhandle){
+    return ftell((FILE*)fhandle);
+}
+static inline i32 __CBAS__fseek(TGT_UMAX fhandle, TGT_IMAX offset, i32 whence){
+    return fseek((FILE*)fhandle, offset, whence);
+}
+static inline i32 __CBAS__fremove(unsigned char* fname){
+    return remove((char*)fname);
+}
+static inline i32 __CBAS__frename(unsigned char* fname_old, unsigned char* fname_new){
+    return rename((char*)fname_old, (char*)fname_new);
+}
+static inline void __CBAS__frewind(TGT_UMAX fhandle){
+    rewind((FILE*)fhandle);
+}
+static inline void __CBAS__perror(unsigned char* msg){
+    perror((char*)msg);
+}
+static inline void __CBAS__fclearerr(TGT_UMAX fhandle){
+    clearerr((FILE*)fhandle);
+}
+static inline TGT_UMAX __CBAS__L_tmpnam(){
+    return L_tmpnam;
+}
+static inline unsigned char* __CBAS__tmpnam(unsigned char* s){
+    return (unsigned char*)tmpnam((char*)s);
+}
+static inline TGT_UMAX __CBAS__unixtime(){
+    return time(0);
+}
+static inline TGT_UMAX __CBAS__time(TGT_UMAX* a){
+    time_t qq;
+    qq = *a;
+    time_t retval = time(&qq);
+    *a = qq;
+    return retval;
+}
+static inline unsigned char* __CBAS__ctime(TGT_UMAX* a){
+    time_t qq;
+    qq = *a;
+    unsigned char* retval = (unsigned char*)ctime(&qq);
+    *a = qq;
+    return retval;
+}
+static inline double __CBAS__difftime(TGT_UMAX a, TGT_UMAX b){
+    return difftime(a,b);
+}
+static inline TGT_UMAX __CBAS__clock(){
+    return clock();
+}
+static inline TGT_UMAX __CBAS__CLOCKS_PER_SEC(){
+    return CLOCKS_PER_SEC;
+}
+static inline unsigned char* __CBAS__localtime(TGT_UMAX a){
+    time_t tt = a;
+    struct tm * timeinfo;
+    timeinfo = localtime(&tt);
+    return (unsigned char*)timeinfo;
+}
+static inline unsigned char* __CBAS__gmtime(TGT_UMAX a){
+    time_t tt = a;
+    struct tm * timeinfo;
+    timeinfo = gmtime(&tt);
+    return (unsigned char*)timeinfo;
+}
+static inline unsigned char* __CBAS__asctime(unsigned char* tm_struct){
+   struct tm timeinfo;
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return (unsigned char*)asctime(&timeinfo);
+}
+
+static inline i32 __CBAS__tm_sec(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_sec;
+}
+static inline i32 __CBAS__tm_min(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_min;
+}
+static inline i32 __CBAS__tm_hour(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_hour;
+}
+static inline i32 __CBAS__tm_mday(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_mday;
+}
+static inline i32 __CBAS__tm_mon(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_mon;
+}
+static inline i32 __CBAS__tm_year(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_year;
+}
+static inline i32 __CBAS__tm_wday(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_wday;
+}
+static inline i32 __CBAS__tm_yday(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_yday;
+}
+static inline i32 __CBAS__tm_isdst(unsigned char* tm_struct){
+   struct tm timeinfo;
+   
+   memcpy(&timeinfo, tm_struct, sizeof(struct tm));
+   return timeinfo.tm_isdst;
+}
+#define __CBAS__errno (errno)
+/*
+static inline i32 __CBAS__pipe(i32* pipefd){
+    int pd[2];
+    int retval;
+    pd[0] = pipefd[0];
+    pd[1] = pipefd[1];
+    retval = pipe(pd);
+    pipefd[0] = pd[0];
+    pipefd[1] = pd[1];
+    return retval;
+}*/
+static inline void __CBAS__mcpy(unsigned char* dst, unsigned char* src, TGT_UMAX sz){
+    memcpy(dst, src, sz);
+}
+static inline void __CBAS__mmove(unsigned char* dst, unsigned char* src, TGT_UMAX sz){
+    memmove(dst, src, sz);
+}
+static inline void __CBAS__memclear(unsigned char* buf, TGT_UMAX sz){
+    memset(buf, 0, sz);
+}
+static inline unsigned char* __CBAS__malloc(TGT_UMAX amt){
+    return malloc(amt);
+}
+static inline void __CBAS__free(unsigned char* p){
+    free(p);
+}
+static inline unsigned char* __CBAS__realloc(unsigned char* b, TGT_UMAX amt){
+    return realloc(b, amt);
+}
+static inline void __CBAS__println(unsigned char* s){
+    puts((char*)s);
+}
+static inline void __CBAS__sys_exit(i32 a){
+    exit(a);
+}
+    static inline double __CBAS__sin(double a){
+        return sin(a);
+    }
+
+    static inline double __CBAS__cos(double a){
+        return cos(a);
+    }
+
+    static inline double __CBAS__tan(double a){
+        return tan(a);
+    }
+
+    static inline float __CBAS__sinf(float a){
+        return sinf(a);
+    }
+
+    static inline float __CBAS__cosf(float a){
+        return cosf(a);
+    }
+
+    static inline float __CBAS__tanf(float a){
+        return tanf(a);
+    }
+
+    static inline double __CBAS__asin(double a){
+        return asin(a);
+    }
+
+    static inline double __CBAS__acos(double a){
+        return acos(a);
+    }
+
+    static inline double __CBAS__atan(double a){
+        return atan(a);
+    }
+
+    static inline float __CBAS__asinf(float a){
+        return asinf(a);
+    }
+
+    static inline float __CBAS__acosf(float a){
+        return acosf(a);
+    }
+
+    static inline float __CBAS__atanf(float a){
+        return atanf(a);
+    }
+    static inline double __CBAS__atan2(double a, double b){
+        return atan2(a, b);
+    }
+    static inline float __CBAS__atan2f(float a, float b){
+        return atan2f(a, b);
+    }
+    static inline double __CBAS__sinh(double a){
+        return sinh(a);
+    }
+    static inline double __CBAS__cosh(double a){
+        return cosh(a);
+    }
+    static inline double __CBAS__tanh(double a){
+        return tanh(a);
+    }
+    static inline float __CBAS__sinhf(float a){
+        return sinhf(a);
+    }
+    static inline float __CBAS__coshf(float a){
+        return coshf(a);
+    }
+    static inline float __CBAS__tanhf(float a){
+        return tanhf(a);
+    }
+    static inline double __CBAS__asinh(double a){
+        return asinh(a);
+    }
+    static inline double __CBAS__acosh(double a){
+        return acosh(a);
+    }
+    static inline double __CBAS__atanh(double a){
+        return atanh(a);
+    }
+    static inline float __CBAS__asinhf(float a){
+        return asinhf(a);
+    }
+    static inline float __CBAS__acoshf(float a){
+        return acoshf(a);
+    }
+    static inline float __CBAS__atanhf(float a){
+        return atanhf(a);
+    }
+    static inline double __CBAS__exp(double a){
+        return exp(a);
+    }
+    static inline float __CBAS__expf(float a){
+        return expf(a);
+    }
+    
+    static inline double __CBAS__frexp(double a, i32* b){
+        int cc = *b;
+        double retval = frexp(a,&cc);
+        *b = cc;
+        return retval;
+    }
+    static inline float __CBAS__frexpf(float a, i32* b){
+        int cc = *b;
+        float retval = frexpf(a,&cc);
+        *b = cc;
+        return retval;
+    }
+    static inline double __CBAS__ldexp(double a, i32 b){
+        return ldexp(a,b);
+    }
+    static inline float __CBAS__ldexpf(float a, i32 b){
+        return ldexp(a,b);
+    }
+    static inline double __CBAS__log(double a){
+        return log(a);
+    }
+    static inline float __CBAS__logf(float a){
+        return logf(a);
+    }
+    static inline double __CBAS__log10(double a){
+        return log10(a);
+    }
+    static inline float __CBAS__log10f(float a){
+        return log10f(a);
+    }
+    static inline double __CBAS__log2(double a){
+        return log2(a);
+    }
+    static inline float __CBAS__log2f(float a){
+        return log2f(a);
+    }
+    static inline double __CBAS__logb(double a){
+        return logb(a);
+    }
+    static inline float __CBAS__logbf(float a){
+        return logbf(a);
+    }
+    static inline double __CBAS__log1p(double a){
+        return log1p(a);
+    }
+    static inline float __CBAS__log1pf(float a){
+        return log1pf(a);
+    }
+    static inline double __CBAS__modf(double a, double* b){
+        return modf(a, b);
+    }
+    static inline float __CBAS__modff(float a, float* b){
+        return modff(a, b);
+    }
+    static inline double __CBAS__exp2(double a){
+        return exp2(a);
+    }
+    static inline float __CBAS__exp2f(float a){
+        return exp2f(a);
+    }
+    static inline double __CBAS__expm1(double a){
+        return expm1(a);
+    }
+    static inline float __CBAS__expm1f(float a){
+        return expm1f(a);
+    }
+    static inline i32 __CBAS__ilogb(double a){
+        return ilogb(a);
+    }
+    static inline i32 __CBAS__ilogbf(float a){
+        return ilogbf(a);
+    }
+    static inline double __CBAS__scalbn(double a, i32 n){
+        return scalbn(a,n);
+    }
+    static inline float __CBAS__scalbnf(float a, i32 n){
+        return scalbnf(a,n);
+    }
+    static inline double __CBAS__pow(double a, double b){
+        return pow(a, b);
+    }
+    static inline float __CBAS__powf(float a, float b){
+        return powf(a, b);
+    }
+    static inline double __CBAS__sqrt(double a){
+        return sqrt(a);
+    }
+    static inline float __CBAS__sqrtf(float a){
+        return sqrtf(a);
+    }
+    static inline double __CBAS__cbrt(double a){
+        return cbrt(a);
+    }
+    static inline float __CBAS__cbrtf(float a){
+        return cbrtf(a);
+    }
+    static inline double __CBAS__hypot(double a, double b){
+        return hypot(a, b);
+    }
+    static inline float __CBAS__hypotf(float a, float b){
+        return hypotf(a, b);
+    }
+    static inline double __CBAS__erf(double a){
+        return erf(a);
+    }
+    static inline float __CBAS__erff(float a){
+        return erff(a);
+    }
+    static inline double __CBAS__erfc(double a){
+        return erfc(a);
+    }
+    static inline float __CBAS__erfcf(float a){
+        return erfcf(a);
+    }
+    static inline double __CBAS__tgamma(double a){
+        return tgamma(a);
+    }
+    static inline float __CBAS__tgammaf(float a){
+        return tgammaf(a);
+    }
+    static inline double __CBAS__lgamma(double a){
+        return lgamma(a);
+    }
+    static inline float __CBAS__lgammaf(float a){
+        return lgammaf(a);
+    }
+    static inline double __CBAS__ceil(double a){
+        return ceil(a);
+    }
+    static inline float __CBAS__ceilf(float a){
+        return ceilf(a);
+    }
+    static inline double __CBAS__floor(double a){
+        return floor(a);
+    }
+    static inline float __CBAS__floorf(float a){
+        return floorf(a);
+    }    
+    static inline double __CBAS__trunc(double a){
+        return trunc(a);
+    }
+    static inline float __CBAS__truncf(float a){
+        return truncf(a);
+    }
+    static inline double __CBAS__round(double a){
+        return round(a);
+    }
+    static inline float __CBAS__roundf(float a){
+        return roundf(a);
+    }
+    static inline double __CBAS__fmod(double a, double b){
+        return fmod(a,b);
+    }
+    static inline float __CBAS__fmodf(float a, float b){
+        return fmodf(a,b);
+    }
+    static inline double __CBAS__nearbyint(double a){
+        return nearbyint(a);
+    }
+    static inline float __CBAS__nearbyintf(float a){
+        return nearbyintf(a);
+    }
+    static inline double __CBAS__remainder(double a, double b){
+        return remainder(a,b);
+    }
+    static inline float __CBAS__remainderf(float a, float b){
+        return remainderf(a,b);
+    }    
+    static inline double __CBAS__remquo(double a, double b, i32* q){
+        int p = *q;
+        double retval = remquo(a,b,&p);
+        *q = p;
+        return retval;
+    }
+    static inline float __CBAS__remquof(float a, float b, i32* q){
+        int p = *q;
+        float retval = remquof(a,b,&p);
+        *q = p;
+        return retval;
+    }
+    static inline double __CBAS__copysign(double a, double b){
+        return copysign(a,b);
+    }
+    static inline float __CBAS__copysignf(float a, float b){
+        return copysignf(a,b);
+    }
+    static inline double __CBAS__nan(unsigned char* tagp){
+        return nan((const char*)tagp);
+    }
+    static inline float __CBAS__nanf(unsigned char* tagp){
+        return nanf((const char*)tagp);
+    }
+    static inline double __CBAS__nextafter(double a, double b){
+        return nextafter(a,b);
+    }
+    static inline float __CBAS__nextafterf(float a, float b){
+        return nextafterf(a,b);
+    }
+    static inline double __CBAS__fdim(double a, double b){
+        return fdim(a,b);
+    }
+    static inline float __CBAS__fdimf(float a, float b){
+        return fdimf(a,b);
+    }
+    static inline double __CBAS__fmax(double a, double b){
+        return fmax(a,b);
+    }
+    static inline float __CBAS__fmaxf(float a, float b){
+        return fmaxf(a,b);
+    }
+    static inline double __CBAS__fmin(double a, double b){
+        return fmin(a,b);
+    }
+    static inline float __CBAS__fminf(float a, float b){
+        return fminf(a,b);
+    }
+    static inline double __CBAS__fabs(double a){
+        return fabs(a);
+    }
+    static inline float __CBAS__fabsf(float a){
+        return fabsf(a);
+    }
+    static inline double __CBAS__fma(double a, double b, double z){
+        return fma(a,b,z);
+    }
+    static inline float __CBAS__fmaf(float a, float b, float z){
+        return fmaf(a,b,z);
+    }
+    static inline i32 __CBAS__fpclassify(double q){
+        return fpclassify(q);
+    }
+    static inline i32 __CBAS__isfinite(double q){
+        return isfinite(q);
+    }
+    static inline i32 __CBAS__isinf(double q){
+        return isinf(q);
+    }
+    static inline i32 __CBAS__isnan(double q){
+        return isnan(q);
+    }
+    static inline i32 __CBAS__isnormal(double q){
+        return isnormal(q);
+    }
+    static inline i32 __CBAS__signbit(double q){
+        return signbit(q);
+    }
+    static inline i32 __CBAS__fpclassifyf(float q){
+        return fpclassify(q);
+    }
+    static inline i32 __CBAS__isfinitef(float q){
+        return isfinite(q);
+    }
+    static inline i32 __CBAS__isinff(float q){
+        return isinf(q);
+    }
+    static inline i32 __CBAS__isnanf(float q){
+        return isnan(q);
+    }
+    static inline i32 __CBAS__isnormalf(float q){
+        return isnormal(q);
+    }
+    static inline i32 __CBAS__signbitf(float q){
+        return signbit(q);
+    }
+
+    static inline i32 __CBAS__isunordered(double a, double b){
+        return isunordered(a,b);
+    }
+    static inline i32 __CBAS__isunorderedf(float a, float b){
+        return isunordered(a,b);
+    }
+
+    static inline float __CBAS__INFINITY(){
+        return INFINITY;
+    }
+    static inline float __CBAS__NAN(){
+        return NAN;
+    }
+    static inline double __CBAS__HUGE_VAL(){
+        return HUGE_VAL;
+    }
+    static inline float __CBAS__HUGE_VALF(){
+        return HUGE_VALF;
+    }
+
+/*MULTITHREADING LIBRARY*/
+#ifndef __CBAS_SINGLE_THREADED__
+
+
+static inline unsigned char* __CBAS__thread_new(){
+    lsthread* p = malloc(sizeof(lsthread));
+    init_lsthread(p);
+    return (unsigned char*)p;
+}
+static inline void __CBAS__thread_delete(unsigned char* tr){
+    lsthread* p = (lsthread*)tr;
+    destroy_lsthread(p);
+    free(p);
+    return;
+}
+
+static inline void __CBAS__thread_assign_fn(unsigned char* tr, unsigned char* funk){
+    lsthread* p = (lsthread*)tr;
+    void* fnk = funk;
+    p->execute = fnk;
+}
+
+static inline void __CBAS__thread_assign_arg(unsigned char* tr, unsigned char* arg){
+    lsthread* p = (lsthread*)tr;
+    p->argument = arg;
+}
+
+static inline void __CBAS__thread_start(unsigned char* tr){
+    lsthread* p = (lsthread*)tr;
+    start_lsthread(p);
+}
+static inline void __CBAS__thread_kill(unsigned char* tr){
+    lsthread* p = (lsthread*)tr;
+    kill_lsthread(p);
+}
+
+static inline void __CBAS__thread_step(unsigned char* tr){
+    lsthread* p = (lsthread*)tr;
+    step(p);
+}
+
+static inline void __CBAS__thread_lock(unsigned char* tr){
+    lsthread* p = (lsthread*)tr;
+    lock(p);
+}
+
+static inline unsigned char* __CBAS__mutex_new(){
+    pthread_mutex_t* m = malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(m, NULL);
+    return (unsigned char*)m;
+}
+
+static inline void __CBAS__mutex_delete(unsigned char* mtx){
+    pthread_mutex_t* m = (pthread_mutex_t*)mtx;
+    pthread_mutex_destroy(m);
+    free(m);
+}
+
+static inline void __CBAS__mutex_lock(unsigned char* mtx){
+    pthread_mutex_t* m = (pthread_mutex_t*)mtx;
+    pthread_mutex_lock(m);
+}
+static inline void __CBAS__mutex_unlock(unsigned char* mtx){
+    pthread_mutex_t* m = (pthread_mutex_t*)mtx;
+    pthread_mutex_unlock(m);
+}
+#else
+static inline unsigned char* __CBAS__thread_new(){
+    return malloc(sizeof(char*) * 2);
+}
+static inline void __CBAS__thread_delete(unsigned char* tr){
+    free(tr);
+    return;
+}
+
+static inline void __CBAS__thread_assign_fn(unsigned char* tr, unsigned char* funk){
+    void** t = (void**)tr;
+    t[0] = funk;
+}
+
+static inline void __CBAS__thread_assign_arg(unsigned char* tr, unsigned char* arg){
+    void** t = (void**)tr;
+    t[1] = arg;
+}
+
+static inline void __CBAS__thread_start(unsigned char* tr){
+    return;
+}
+static inline void __CBAS__thread_kill(unsigned char* tr){
+    return;
+}
+
+static inline void __CBAS__thread_step(unsigned char* tr){
+    void** t = (void**)tr;
+    /*get thread function...*/
+    void (*execute)(unsigned char*);
+    execute = (void*)(t[0]);
+    execute(t[1]);
+    return;
+}
+
+static inline void __CBAS__thread_lock(unsigned char* tr){
+    return;
+}
+
+static inline unsigned char* __CBAS__mutex_new(){
+    return NULL;
+}
+
+static inline void __CBAS__mutex_delete(unsigned char* mtx){
+    free(mtx);
+}
+
+static inline void __CBAS__mutex_lock(unsigned char* mtx){
+    return;
+}
+static inline void __CBAS__mutex_unlock(unsigned char* mtx){
+    return;
+}
+
+#endif\n";
+//stdlib functions...
+fn predecl pure noexport atof(char* text)->double;
+fn predecl pure noexport atou(char* text)->TGT_UMAX;
+fn predecl pure noexport atoi(char* text)->TGT_IMAX;
+fn predecl noexport rand()->i32;
+fn predecl noexport srand(u32 seed);
+fn predecl noexport pure strcmp(char* a, char* b)->TGT_IMAX;
+fn predecl noexport pure memcmp(char* a, char* b, TGT_UMAX sz)->TGT_IMAX;
+fn predecl noexport pure strlen(char* s)->TGT_UMAX;
+fn predecl noexport pure strcpy(char* d, char* s);
+
+
+fn predecl noexport fopen(char* fname, char* mode)->TGT_UMAX; //returns a handle...
+fn predecl noexport fclose(TGT_UMAX p)->int;
+fn predecl noexport fflush(TGT_UMAX p)->int;
+fn predecl noexport fclearerr(TGT_UMAX fhandle);
+
+fn predecl noexport popen(char* fname, char* mode)->TGT_UMAX; //returns a handle...
+fn predecl noexport pclose(TGT_UMAX p)->int;
+fn predecl noexport perror(char* msg);
+fn predecl noexport L_tmpnam()->TGT_UMAX;
+fn predecl noexport tmpnam(char* s)->char*;
+
+fn predecl noexport getdirlist(char* dirname, char*** entry_listing, u32* nentries)->i32;
+fn predecl noexport system(char* cmd)->TGT_IMAX;
+
+
+fn predecl noexport get_stdout_handle()->TGT_UMAX;
+fn predecl noexport get_stdin_handle()->TGT_UMAX;
+fn predecl noexport get_stderr_handle()->TGT_UMAX;
+
+//returns number of bytes read/written
+fn predecl noexport fwrite(TGT_UMAX fhandle, char* buf, TGT_UMAX nbytes)->TGT_UMAX;
+fn predecl noexport fread(TGT_UMAX fhandle, char* buf, TGT_UMAX nbytes)->TGT_UMAX;
+fn predecl noexport feof(TGT_UMAX fhandle)->int;
+fn predecl noexport fseek(TGT_UMAX fhandle, TGT_IMAX offset, i32 whence)->i32;
+fn inline SEEK_SET()->TGT_IMAX:
+    asm("return SEEK_SET;")
+end
+fn inline SEEK_CUR()->TGT_IMAX:
+    asm("return SEEK_CUR;")
+end
+fn inline SEEK_END()->TGT_IMAX:
+    asm("return SEEK_END;")
+end
+fn inline EOF()->TGT_IMAX:
+    asm("return EOF;")
+end
+fn inline PI()->double:
+    //more than you will ever need!
+    asm("return 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513;")
+end
+fn inline M_PI()->double:
+    return PI;
+end
+fn predecl noexport ftell(TGT_UMAX fhandle)->TGT_IMAX;
+fn predecl noexport fremove(char* fname)->i32;
+fn predecl noexport frename(char* fname_old, char* fname_new)->i32;
+fn predecl noexport frewind(TGT_UMAX fhandle);
+//time library...
+fn predecl pure noexport unixtime()->TGT_UMAX;
+fn predecl pure noexport time(TGT_UMAX* a)->TGT_UMAX;
+//ctime is not pure! It modifies an internal buffer..
+fn predecl noexport ctime(TGT_UMAX* a)->char*;
+fn predecl pure noexport difftime(TGT_UMAX a, TGT_UMAX b)->double;
+fn predecl pure noexport clock()->TGT_UMAX;
+fn predecl pure noexport CLOCKS_PER_SEC()->TGT_UMAX;
+//Dealing with the `tm` struct...
+//these functions are not pure...
+fn predecl noexport localtime(TGT_UMAX a)->byte*;
+fn predecl noexport gmtime(TGT_UMAX a)->byte*;
+fn predecl noexport asctime(byte* tm_struct)->char*;
+//accessing members of the tm struct...
+fn predecl pure noexport tm_sec(byte* tm_struct)->int;
+fn predecl pure noexport tm_min(byte* tm_struct)->int;
+fn predecl pure noexport tm_hour(byte* tm_struct)->int;
+fn predecl pure noexport tm_mday(byte* tm_struct)->int;
+fn predecl pure noexport tm_mon(byte* tm_struct)->int;
+fn predecl pure noexport tm_year(byte* tm_struct)->int;
+fn predecl pure noexport tm_wday(byte* tm_struct)->int;
+fn predecl pure noexport tm_yday(byte* tm_struct)->int;
+fn predecl pure noexport tm_isdst(byte* tm_struct)->int;
+fn predecl noexport pipe(int* pipefd)->int;
+
+
+
+fn inline pure E2BIG()->int:
+    asm("return E2BIG;")
+end
+fn inline pure EACCES()->int:
+    asm("return EACCES;")
+end
+fn inline pure EADDRINUSE()->int:
+    asm("return EADDRINUSE;")
+end
+fn inline pure EADDRNOTAVAIL()->int:
+    asm("return EADDRNOTAVAIL;")
+end
+fn inline pure EAFNOSUPPORT()->int:
+    asm("return EAFNOSUPPORT;")
+end
+fn inline pure EAGAIN()->int:
+    asm("return EAGAIN;")
+end
+fn inline pure EALREADY()->int:
+    asm("return EALREADY;")
+end
+fn inline pure EBADF()->int:
+    asm("return EBADF;")
+end
+fn inline pure EBADMSG()->int:
+    asm("return EBADMSG;")
+end
+fn inline pure EBUSY()->int:
+    asm("return EBUSY;")
+end
+fn inline pure ECANCELED()->int:
+    asm("return ECANCELED;")
+end
+fn inline pure ECHILD()->int:
+    asm("return ECHILD;")
+end
+fn inline pure ECONNABORTED()->int:
+    asm("return ECONNABORTED;")
+end
+fn inline pure ECONNREFUSED()->int:
+    asm("return ECONNREFUSED;")
+end
+fn inline pure ECONNRESET()->int:
+    asm("return ECONNRESET;")
+end
+fn inline pure EDEADLK()->int:
+    asm("return EDEADLK;")
+end
+fn inline pure EDESTADDRREQ()->int:
+    asm("return EDESTADDRREQ;")
+end
+//@wrap_c_constant int EDOM
+//@wrap_c_constant int EDQUOT
+fn inline pure EDOM()->int:
+    asm("return EDOM;")
+end
+fn inline pure EEXIST()->int:
+    asm("return EEXIST;")
+end
+fn inline pure EFAULT()->int:
+    asm("return EFAULT;")
+end
+fn inline pure EFBIG()->int:
+    asm("return EFBIG;")
+end
+fn inline pure EHOSTUNREACH()->int:
+    asm("return EHOSTUNREACH;")
+end
+fn inline pure EIDRM()->int:
+    asm("return EIDRM;")
+end
+fn inline pure EILSEQ()->int:
+    asm("return EILSEQ;")
+end
+fn inline pure EINPROGRESS()->int:
+    asm("return EINPROGRESS;")
+end
+fn inline pure EINTR()->int:
+    asm("return EINTR;")
+end
+fn inline pure EINVAL()->int:
+    asm("return EINVAL;")
+end
+fn inline pure EIO()->int:
+    asm("return EIO;")
+end
+fn inline pure EISCONN()->int:
+    asm("return EISCONN;")
+end
+fn inline pure EISDIR()->int:
+    asm("return EISDIR;")
+end
+fn inline pure ELOOP()->int:
+    asm("return ELOOP;")
+end
+fn inline pure EMFILE()->int:
+    asm("return EMFILE;")
+end
+fn inline pure EMLINK()->int:
+    asm("return EMLINK;")
+end
+fn inline pure EMSGSIZE()->int:
+    asm("return EMSGSIZE;")
+end
+/*
+fn inline pure EMULTIHOP()->int:
+    asm("return EMULTIHOP;")
+end
+*/
+fn inline pure ENAMETOOLONG()->int:
+    asm("return ENAMETOOLONG;")
+end
+fn inline pure ENETDOWN()->int:
+    asm("return ENETDOWN;")
+end
+fn inline pure ENETRESET()->int:
+    asm("return ENETRESET;")
+end
+fn inline pure ENETUNREACH()->int:
+    asm("return ENETUNREACH;")
+end
+fn inline pure ENFILE()->int:
+    asm("return ENFILE;")
+end
+fn inline pure ENOBUFS()->int:
+    asm("return ENOBUFS;")
+end
+fn inline pure ENODEV()->int:
+    asm("return ENODEV;")
+end
+fn inline pure ENOEXEC()->int:
+    asm("return ENOEXEC;")
+end
+fn inline pure ENOLCK()->int:
+    asm("return ENOLCK;")
+end
+fn inline pure ENOLINK()->int:
+    asm("return ENOLINK;")
+end
+fn inline pure ENOMEM()->int:
+    asm("return ENOMEM;")
+end
+fn inline pure ENOMSG()->int:
+    asm("return ENOMSG;")
+end
+fn inline pure ENOPROTOOPT()->int:
+    asm("return ENOPROTOOPT;")
+end
+fn inline pure ENOSPC()->int:
+    asm("return ENOSPC;")
+end
+fn inline pure ENOSYS()->int:
+    asm("return ENOSYS;")
+end
+fn inline pure ENOTCONN()->int:
+    asm("return ENOTCONN;")
+end
+fn inline pure ENOTDIR()->int:
+    asm("return ENOTDIR;")
+end
+fn inline pure ENOTEMPTY()->int:
+    asm("return ENOTEMPTY;")
+end
+fn inline pure ENOTRECOVERABLE()->int:
+    asm("return ENOTRECOVERABLE;")
+end
+fn inline pure ENOTSOCK()->int:
+    asm("return ENOTSOCK;")
+end
+fn inline pure ENOTSUP()->int:
+    asm("return ENOTSUP;")
+end
+fn inline pure ENOTTY()->int:
+    asm("return ENOTTY;")
+end
+fn inline pure ENXIO()->int:
+    asm("return ENXIO;")
+end
+fn inline pure EOPNOTSUPP()->int:
+    asm("return EOPNOTSUPP;")
+end
+fn inline pure EOVERFLOW()->int:
+    asm("return EOVERFLOW;")
+end
+fn inline pure EOWNERDEAD()->int:
+    asm("return EOWNERDEAD;")
+end
+fn inline pure EPERM()->int:
+    asm("return EPERM;")
+end
+fn inline pure EPIPE()->int:
+    asm("return EPIPE;")
+end
+fn inline pure EPROTO()->int:
+    asm("return EPROTO;")
+end
+fn inline pure EPROTONOSUPPORT()->int:
+    asm("return EPROTONOSUPPORT;")
+end
+fn inline pure EPROTOTYPE()->int:
+    asm("return EPROTOTYPE;")
+end
+fn inline pure ERANGE()->int:
+    asm("return ERANGE;")
+end
+fn inline pure EROFS()->int:
+    asm("return EROFS;")
+end
+fn inline pure ESPIPE()->int:
+    asm("return ESPIPE;")
+end
+fn inline pure ESRCH()->int:
+    asm("return ESRCH;")
+end
+/*
+fn inline pure ESTALE()->int:
+    asm("return ESTALE;")
+end
+*/
+fn inline pure ETIMEDOUT()->int:
+    asm("return ETIMEDOUT;")
+end
+fn inline pure ETXTBSY()->int:
+    asm("return ETXTBSY;")
+end
+fn inline pure EWOULDBLOCK()->int:
+    asm("return EWOULDBLOCK;")
+end
+fn inline pure EXDEV()->int:
+    asm("return EXDEV;")
+end
+
+
+noexport atomic int errno;
+
+
+
+
+//memcpy...
+fn predecl pure noexport mcpy(char* dst, char* src, TGT_UMAX sz);
+fn inline pure memcpy(char* dst, char* src, TGT_UMAX sz):
+    mcpy(dst, src, sz);
+end
+
+fn predecl pure noexport mmove(char* dst, char* src, TGT_UMAX sz);
+fn inline pure memmove(char* dst, char* src, TGT_UMAX sz):
+    mmove(dst, src, sz);
+end
+fn predecl pure noexport memclear(char* dest, TGT_UMAX sz);
+
+
+fn predecl noexport println(char* s);
+
+//this is needed to get proper compiler optimization...
+fn predecl noexport malloc(TGT_UMAX amt)->char*;
+fn predecl noexport free(char* p);
+fn predecl noexport realloc(char* p, TGT_UMAX amt)->char*;
+
+fn predecl noexport sys_exit(int a);
+/*
+    TODO: port termios....
+*/
+//trig
+fn predecl pure noexport sin(double a)->double;
+fn predecl pure noexport cos(double a)->double;
+fn predecl pure noexport tan(double a)->double;
+
+fn predecl pure noexport sinf(f32 a)->f32;
+fn predecl pure noexport cosf(f32 a)->f32;
+fn predecl pure noexport tanf(f32 a)->f32;
+
+//arcs...
+fn predecl pure noexport asin(double a)->double;
+fn predecl pure noexport acos(double a)->double;
+fn predecl pure noexport atan(double a)->double;
+
+fn predecl pure noexport asinf(f32 a)->f32;
+fn predecl pure noexport acosf(f32 a)->f32;
+fn predecl pure noexport atanf(f32 a)->f32;
+//atan2
+fn predecl pure noexport atan2(double a, double b)->double;
+fn predecl pure noexport atan2f(f32 a, f32 b)->f32;
+
+//hyperbolics...
+fn predecl pure noexport sinh(double a)->double;
+fn predecl pure noexport cosh(double a)->double;
+fn predecl pure noexport tanh(double a)->double;
+fn predecl pure noexport asinh(double a)->double;
+fn predecl pure noexport acosh(double a)->double;
+fn predecl pure noexport atanh(double a)->double;
+
+fn predecl pure noexport sinhf(f32 a)->f32;
+fn predecl pure noexport coshf(f32 a)->f32;
+fn predecl pure noexport tanhf(f32 a)->f32;
+fn predecl pure noexport asinhf(f32 a)->f32;
+fn predecl pure noexport acoshf(f32 a)->f32;
+fn predecl pure noexport atanhf(f32 a)->f32;
+//exponentiation...
+fn predecl pure noexport exp(double a)->double;
+fn predecl pure noexport expf(f32 a)->f32;
+//frexp
+fn predecl pure noexport frexp(f64 a, i32* b)->f64;
+fn predecl pure noexport frexpf(f32 a, i32* b)->f32;
+//ldexp (Notice: Not pointers in the second argument...)
+fn predecl pure noexport ldexp(f64 a, i32 b)->f64;
+fn predecl pure noexport ldexpf(f32 a, i32 b)->f32;
+//log
+fn predecl pure noexport log(double a)->double;
+fn predecl pure noexport logf(f32 a)->f32;
+fn predecl pure noexport log10(double a)->double;
+fn predecl pure noexport log10f(f32 a)->f32;
+fn predecl pure noexport log2(double a)->double;
+fn predecl pure noexport log2f(f32 a)->f32;
+fn predecl pure noexport logb(double a)->double;
+fn predecl pure noexport logbf(f32 a)->f32;
+//modf
+fn predecl pure noexport modf(f64 a, f64* b)->f64;
+fn predecl pure noexport modff(f32 a, f32* b)->f32;
+//exponentiation2...
+fn predecl pure noexport exp2(double a)->double;
+fn predecl pure noexport exp2f(f32 a)->f32;
+fn predecl pure noexport expm1(double a)->double;
+fn predecl pure noexport expm1f(f32 a)->f32;
+//ilogb
+fn predecl pure noexport ilogbf(f32 a)->int;
+fn predecl pure noexport ilogb(f64 a)->int;
+
+fn predecl pure noexport log1p(double a)->double;
+fn predecl pure noexport log1pf(f32 a)->f32;
+fn predecl pure noexport scalbn(f64 a, i32 n)->f64;
+fn predecl pure noexport scalbnf(f32 a, i32 n)->f32;
+//pow
+fn predecl pure noexport pow(double a, double b)->double;
+fn predecl pure noexport powf(f32 a, f32 b)->f32;
+//roots
+fn predecl pure noexport sqrt(double a)->double;
+fn predecl pure noexport sqrtf(f32 a)->f32;
+fn predecl pure noexport cbrt(double a)->double;
+fn predecl pure noexport cbrtf(f32 a)->f32;
+
+fn predecl pure noexport hypot(double a, double b)->double;
+fn predecl pure noexport hypotf(f32 a, f32 b)->f32;
+
+fn predecl pure noexport erf(double a)->double;
+fn predecl pure noexport erff(f32 a)->f32;
+
+fn predecl pure noexport erfc(double a)->double;
+fn predecl pure noexport erfcf(f32 a)->f32;
+fn predecl pure noexport tgamma(double a)->double;
+fn predecl pure noexport tgammaf(f32 a)->f32;
+fn predecl pure noexport lgamma(double a)->double;
+fn predecl pure noexport lgammaf(f32 a)->f32;
+
+fn predecl pure noexport ceil(double a)->double;
+fn predecl pure noexport ceilf(f32 a)->f32;
+fn predecl pure noexport floor(double a)->double;
+fn predecl pure noexport floorf(f32 a)->f32;
+fn predecl pure noexport trunc(double a)->double;
+fn predecl pure noexport truncf(f32 a)->f32;
+fn predecl pure noexport round(double a)->double;
+fn predecl pure noexport roundf(f32 a)->f32;
+//fmod
+fn predecl pure noexport fmod(f64 a, f64 b)->f64;
+fn predecl pure noexport fmodf(f32 a, f32 b)->f32;
+//nearby int
+fn predecl pure noexport nearbyint(double a)->double;
+fn predecl pure noexport nearbyintf(f32 a)->f32;
+//remainder
+fn predecl pure noexport remainder(f64 a, f64 b)->f64;
+fn predecl pure noexport remainderf(f32 a, f32 b)->f32;
+fn predecl pure noexport remquo(f64 a, f64 b, i32* q)->f64;
+fn predecl pure noexport remquof(f32 a, f32 b, i32* q)->f32;
+//copysign
+fn predecl pure noexport copysign(f64 a, f64 b)->f64;
+fn predecl pure noexport copysignf(f32 a, f32 b)->f32;
+//nan
+fn predecl pure noexport nan(char* tagp)->f64;
+fn predecl pure noexport nanf(char* tagp)->f32;
+//nextafter
+fn predecl pure noexport nextafter(f64 a, f64 b)->f64;
+fn predecl pure noexport nextafterf(f32 a, f32 b)->f32;
+//fdim
+fn predecl pure noexport fdim(f64 a, f64 b)->f64;
+fn predecl pure noexport fdimf(f32 a, f32 b)->f32;
+//fmaxmin
+fn predecl pure noexport fmax(f64 a, f64 b)->f64;
+fn predecl pure noexport fmaxf(f32 a, f32 b)->f32;
+fn predecl pure noexport fmin(f64 a, f64 b)->f64;
+fn predecl pure noexport fminf(f32 a, f32 b)->f32;
+//fabs
+fn predecl pure noexport fabs(double a)->double;
+fn predecl pure noexport fabsf(f32 a)->f32;
+
+fn predecl pure noexport fma(f64 a, f64 b, f64 z)->f64;
+fn predecl pure noexport fmaf(f32 a, f32 b, f32 z)->f32;
+//double-only float classification functions...
+fn predecl pure noexport fpclassify(f64 q)->i32;
+fn predecl pure noexport isfinite(f64 q)->i32;
+fn predecl pure noexport isinf(f64 q)->i32;
+fn predecl pure noexport isnan(f64 q)->i32;
+fn predecl pure noexport isnormal(f64 q)->i32;
+fn predecl pure noexport signbit(f64 q)->i32;
+//float-only float classification functions...
+fn predecl pure noexport fpclassifyf(f32 q)->i32;
+fn predecl pure noexport isfinitef(f32 q)->i32;
+fn predecl pure noexport isinff(f32 q)->i32;
+fn predecl pure noexport isnanf(f32 q)->i32;
+fn predecl pure noexport isnormalf(f32 q)->i32;
+fn predecl pure noexport signbitf(f32 q)->i32;
+//comparison functions... didn't bother porting isgreater et al
+fn predecl pure noexport isunordered(f64 a, f64 b)->i32;
+fn predecl pure noexport isunorderedf(f32 a, f32 b)->i32;
+//get constants...
+fn predecl pure noexport INFINITY()->f32;
+fn predecl pure noexport NAN()->f32;
+fn predecl pure noexport HUGE_VAL()->f64;
+fn predecl pure noexport HUGE_VALF()->f32;
+
+
+
+
+/*
+
+
+    MULTITHREADING
+*/
+
+//allocate a thread object...
+fn predecl pure noexport thread_new()->byte*;
+//assign the function that a thread uses.
+fn predecl pure noexport thread_assign_fn(byte* tr, byte* funk);
+fn predecl pure noexport thread_assign_arg(byte* tr, byte* arg);
+fn predecl pure noexport thread_start(byte* tr);
+fn predecl noexport thread_step(byte* tr);
+fn predecl noexport thread_lock(byte* tr);
+fn predecl noexport thread_kill(byte* tr);
+fn predecl pure noexport thread_delete(byte* tr);
+
+
+//mutex stuff
+fn predecl pure noexport mutex_new()->byte*;
+fn predecl pure noexport mutex_delete(byte* mtx);
+fn predecl noexport mutex_lock(byte* mtx);
+fn predecl noexport mutex_unlock(byte* mtx);
+
+
+
+
+/*
+    String library...
+*/
+//we assume that both the pointers passed in are non-null...
+fn inline pure impl_streq(char* a, char* b)->TGT_IMAX:
+    return strcmp(a,b) == 0
+end
+
+//compare two equal-length memory buffers...
+fn inline pure memeq(char* a, char* b, TGT_UMAX l)->TGT_IMAX:
+    return memcmp(a,b,l) == 0
+end
+
+//UTF8 library
+fn inline pure utf8_strlen(char* s)->TGT_UMAX:
+    TGT_UMAX l = 0;
+    while(s[0])
+        //all non-continuation bytes
+        //represent UTF8 characters.
+        if((s[0]>>6)&3 != 2)
+            l++
+        end
+    end
+    return l
+end
+
+//Is this utf8 string purely ascii?
+fn inline pure utf8_isascii(char* s)->TGT_IMAX:
+    while(s[0])
+        if((s[0]>>7)&1)
+            return 0
+        end
+    end
+    return 1
+end
+
+//given a dest buf, copy out a single utf8 character.
+fn inline pure utf8_getchar(char* dest, char* src, char** endptr, TGT_IMAX* lenout)->TGT_IMAX:
+    TGT_IMAX len = 0
+    if((src[0] >> 7)&1 == 0)
+        len = 1;
+        dest[0] = src[0];
+        dest++;
+        src++;
+        goto setendptr
+    end
+    //A continuation byte is NOT a valid character...
+    if((src[0] >> 6)&3 == 2)
+        goto onerr
+    end
+    //calculate the number of bytes...
+    //we already know the top two bits are 11, since if
+    //the top bit was 0, it was a single-byte (ASCII),
+    //and if it was 2, it was an erroneous continuation byte.
+    TGT_IMAX nb = 2;
+    if((src[0] >> 5) & 1) nb++ else goto end_of_len_cal end
+    if((src[0] >> 4) & 1) nb++ else goto end_of_len_cal end
+    :end_of_len_cal
+    len = nb;
+    while(nb)
+        if((src[0] >> 6)&3 != 2)
+            //This is not a continuation byte!
+            goto onerr
+        end
+        dest[0] = src[0];
+        dest++;src++;
+        nb--;
+    end
+    
+    :setendptr
+    dest[0] = 0;
+    if(endptr != 0)
+        endptr[0] = src
+    end
+    if(lenout != 0)
+        lenout[0] = len
+    end
+    //A-OK
+    return 0;
+    
+    :onerr
+    dest[0] = 0;
+    if(endptr != 0)
+        endptr[0] = src
+    end
+    if(lenout != 0)
+        lenout[0] = len
+    end
+    //NOT-OK
+    return 1
+end
+
+
+class str
+    char* d
+    TGT_UMAX len
+end
+class pstr
+    char* d
+    TGT_UMAX len
+end
+
+method inline pure str.ctor():
+    this.d = 0;
+    this.len = 0;
+end
+
+method inline str.dtor():
+    if(this.d != 0)
+        free(this.d);
+    end
+    //calling the constructor in the destructor? OF COURSE!
+    this.ctor();
+end
+method inline pure pstr.ctor():
+    this.d = 0;
+    this.len = 0;
+end
+
+method inline pstr.dtor():
+    if(this.d != 0)
+        free(this.d);
+    end
+    //calling the constructor in the destructor? OF COURSE!
+    this.ctor();
+end
+
+//free self...
+method inline str.free():
+    this.dtor();
+    free((u8*)this);
+end
+//free self...
+method inline pstr.free():
+    this.dtor();
+    free((u8*)this);
+end
+
+method inline pure str.equal(str o)->TGT_IMAX:
+    if(this.len != o.len) return 0 end //can't be equal if they're not even the same length!
+    if(this.len == 0) return 1 end //they are both length zero, meaning they are equal.
+    return (memcmp(this.d, o.d, this.len) == 0)
+end
+method inline pure str.nequal(str o)->TGT_IMAX:
+    return !this.equal(o)
+end
+
+method inline pure pstr.equal(pstr o)->TGT_IMAX:
+    if(this.len != o.len) return 0 end //can't be equal if they're not even the same length!
+    if(this.len == 0) return 1 end //they are both length zero, meaning they are equal.
+    return (memcmp(this.d, o.d, this.len) == 0)
+end
+method inline pure pstr.nequal(pstr o)->TGT_IMAX:
+    return !this.equal(o)
+end
+
+//copy from another string
+method inline str.copy(str* o)->str*:
+    this.dtor();
+    this.len = o.len;
+    this.d = realloc((byte*)0,o.len+1);
+    if(this.d == 0)
+        //an error has occurred!
+        return (str*)0;
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(this.d, o.d, this.len+1);
+    return this
+end
+//string copy from pstr
+method inline str.frompstr(pstr* o)->str*:
+    this.dtor();
+    this.len = o.len;
+    this.d = realloc((byte*)0,o.len+1);
+    if(this.d == 0)
+        //an error has occurred!
+        return (str*)0;
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(this.d, o.d, this.len);
+    //we need to add the null terminator...
+    this.d[this.len] = 0;
+    this.len = strlen(this.d);
+    return this
+end
+
+//pstr copy from another pascal string
+method inline pstr.copy(pstr* o)->pstr*:
+    this.dtor();
+    this.len = o.len;
+    this.d = realloc((byte*)0,o.len);
+    if(this.d == 0)
+        //an error has occurred!
+        return (pstr*)0;
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(this.d, o.d, this.len);
+    return this
+end
+//pascal string copying c string
+method inline pstr.fromstr(str* o)->pstr*:
+    this.dtor();
+    this.len = o.len;
+    this.d = realloc((byte*)0,o.len);
+    if(this.d == 0)
+        //an error has occurred!
+        return (pstr*)0;
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(this.d, o.d, this.len);
+    return this
+end
+
+method inline str.new(char* o)->str*:
+    this.dtor();
+    TGT_UMAX qq;
+    qq = strlen(o);
+    //qq is now strlen
+    this.len = qq;
+    this.d = realloc((byte*)0, qq+1);
+    if(this.d == 0)
+        //an error has occurred!
+        return (str*)0;
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(this.d, o, qq+1);
+    return this
+end
+//pascal string from charpy
+method inline pstr.new(char* o)->pstr*:
+    this.dtor();
+    TGT_UMAX qq;
+    qq = strlen(o);
+    //qq is now strlen
+    this.len = qq;
+    this.d = realloc((byte*)0, qq);
+    if(this.d == 0)
+        //an error has occurred!
+        return (pstr*)0;
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(this.d, o, qq);
+    return this
+end
+
+method inline str.copyto(str* o):
+    o.copy(this);
+end
+
+method inline pstr.copyto(pstr* o):
+    o.copy(this);
+end
+
+method inline pure str.move(str* o):
+    this.d = o.d;
+    this.len = o.len;
+    o.d = 0;
+    o.len = 0;
+end
+
+method inline pure pstr.move(pstr* o):
+    this.d = o.d;
+    this.len = o.len;
+    o.d = 0;
+    o.len = 0;
+end
+
+method inline pure str.moveto(str* o):
+    o.move(this);
+end
+
+method inline pure pstr.moveto(pstr* o):
+    o.move(this);
+end
+
+method inline str.clone()->str*:
+    str* p
+    p = (str*)malloc(sizeof(str));
+    if(p == 0)
+        //an error has occurred!
+        return (str*)0;
+    end
+    //MALLOC NEVER FAILS...
+    p.copy(this);
+    return p;
+end
+method inline pstr.clone()->pstr*:
+    pstr* p
+    p = (pstr*)malloc(sizeof(pstr));
+    if(p == 0)
+        //an error has occurred!
+        return (pstr*)0;
+    end
+    //MALLOC NEVER FAILS...
+    p.copy(this);
+    return p;
+end
+
+method inline pure str.isnull()->TGT_UMAX:
+    return this.d == 0
+end
+method inline pure pstr.isnull()->TGT_UMAX:
+    return this.d == 0
+end
+
+method inline pure str.isempty()->TGT_UMAX:
+    if(this.len == 0 || this.d == 0) return 1 end
+    return 0
+end
+method inline pure str.empty()->TGT_UMAX:
+    return this.isempty()
+end
+
+method inline pure pstr.isempty()->TGT_UMAX:
+    if(this.len == 0 || this.d == 0) return 1 end
+    return 0
+end
+method inline pure pstr.empty()->TGT_UMAX:
+    return this.isempty()
+end
+
+//is this string prefixed by another?
+method inline pure str.prefixed(str o)->TGT_UMAX:
+    if(o.isempty()) return 1 end
+    //he's not empty, but we are? CANCEL!
+    if(this.isempty()) return 0 end
+    //can't be prefixed by a string longer than ourselves!
+    if(o.len > this.len) return 0 end
+    //neither of us are empty, meaning we both have valid pointers...
+    //perform the check...
+    char* a = o.d;
+    char* b = this.d;
+    while(1)
+        if(a[0] == 0) return 1 end
+        if(a[0] != b[0]) return 0 end
+        a++; b++;
+    end
+end
+//is this string prefixed by another?
+method inline pure pstr.prefixed(pstr o)->TGT_UMAX:
+    if(o.isempty()) return 1 end
+    //he's not empty, but we are? CANCEL!
+    if(this.isempty()) return 0 end
+    //can't be prefixed by a string longer than ourselves!
+    if(o.len > this.len) return 0 end
+    //neither of us are empty, meaning we both have valid pointers...
+    //perform the check...
+    char* a = o.d;
+    char* b = this.d;
+    TGT_UMAX i
+    for(i = 0, i < o.len, i++)
+        if(a[0] != b[0]) return 0 end
+        a++;
+        b++;
+    end
+    //they are in fact equal...
+    return 1
+end
+
+method inline pure str.postfixed(str o)->TGT_UMAX:
+    if(o.isempty()) return 1 end
+    //he's not empty, but we are? CANCEL!
+    if(this.isempty()) return 0 end
+    //can't be postfixed by a string longer than ourselves!
+    if(o.len > this.len) return 0 end
+    char* a = o.d;
+    char* b = this.d + (this.len-o.len);
+    while(1)
+        if(a[0] == 0) return 1 end
+        if(a[0] != b[0]) return 0 end
+        a++; b++;
+    end
+end
+
+method inline pure pstr.postfixed(pstr o)->TGT_UMAX:
+    if(o.isempty()) return 1 end
+    //he's not empty, but we are? CANCEL!
+    if(this.isempty()) return 0 end
+    //can't be postfixed by a string longer than ourselves!
+    if(o.len > this.len) return 0 end
+    char* a = o.d;
+    char* b = this.d + (this.len-o.len);
+    TGT_UMAX i
+    for(i = 0, i < o.len, i++)
+        if(a[0] != b[0]) return 0 end
+        a++; 
+        b++;
+    end
+    return 1
+end
+
+//find an instance from a particular location...
+method inline pure str.findfrom(str findme, TGT_UMAX where)->TGT_IMAX:
+    TGT_IMAX retval = -1;
+    if(findme.isempty()) return 0 end
+    if(this.isempty()) return -1 end
+    if(findme.len > this.len) return -1 end
+    if(where >= this.len) return -1 end
+    char* text = this.d;
+    char* subtext = findme.d;
+    
+    TGT_IMAX ti = where;
+    TGT_IMAX si = 0;
+    TGT_IMAX st = findme.len;
+    for(0,text[ti] != 0,ti++)
+        if(text[ti] == subtext[si])
+            si++
+            if(subtext[si] == 0) 
+                return (ti-st)+1
+            end
+        else
+            if(subtext[si] == 0) 
+                return (ti-st)+1
+            end
+            ti = ti - si; si = 0;
+        end
+    end
+    return -1
+end
+//find an instance from a particular location...
+method inline pure pstr.findfrom(pstr findme, TGT_UMAX where)->TGT_IMAX:
+    TGT_IMAX retval = -1;
+    if(findme.isempty()) return 0 end
+    if(this.isempty()) return -1 end
+    if(findme.len > this.len) return -1 end
+    if(where >= this.len) return -1 end
+    char* text = this.d;
+    char* subtext = findme.d;
+    
+    TGT_IMAX ti = where;
+    TGT_IMAX si = 0;
+    TGT_IMAX st = findme.len;
+    for(0,ti < this.len,ti++)
+        if(text[ti] == subtext[si])
+            si++
+            if(si >= (findme.len))
+                return (ti-st)+1
+            end
+        else
+            if(si >= (findme.len))
+                return (ti-st)+1
+            end
+            ti = ti - si; si = 0;
+        end
+    end
+    return -1
+end
+
+//from the top!
+method inline pure str.find(str findme)->TGT_IMAX:
+    return this.findfrom(findme, 0);
+end
+
+//from the top!
+method inline pure pstr.find(pstr findme)->TGT_IMAX:
+    return this.findfrom(findme, 0);
+end
+
+
+
+method inline str.add(str o)->TGT_UMAX:
+    //add to this string without consuming o...
+    TGT_UMAX old_len = this.len;
+    if(o.isempty()) return 0 end
+    this.len = o.len+this.len+1;
+    this.d = realloc(this.d, this.len+o.len+1);
+    if(this.d == 0)
+        //an error has occurred!
+        return 1
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(this.d + old_len, o.d, o.len+1);
+    return 0
+end
+
+//pascal string addition...
+method inline pstr.add(pstr o)->TGT_UMAX:
+    //add to this string without consuming o...
+    TGT_UMAX old_len = this.len;
+    if(o.isempty()) return 0 end
+    this.len = o.len+this.len;
+    this.d = realloc(this.d, this.len+o.len);
+    if(this.d == 0)
+        //an error has occurred!
+        return 1
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(this.d + old_len, o.d, o.len);
+    return 0
+end
+
+//add a C-string....
+method inline str.addc(char* oo)->TGT_UMAX:
+    TGT_UMAX qq = 0;
+    //if there is nothing to add...
+    if(oo == 0) return 0 end
+    qq = strlen(oo);
+    if(qq == 0) return 0 end
+    TGT_UMAX old_len = this.len;
+    this.len = qq+this.len+1;
+    this.d = realloc(this.d, this.len+qq+1);
+    if(this.d == 0)
+        //an error has occurred!
+        return 1;
+    end
+    mcpy(this.d + old_len, oo, qq+1);
+    return 0
+end
+//pascal string, add a C-string....
+method inline pstr.addc(char* oo)->TGT_UMAX:
+    TGT_UMAX qq = 0;
+    //if there is nothing to add...
+    if(oo == 0) return 0 end
+    qq = strlen(oo);
+    if(qq == 0) return 0 end
+    TGT_UMAX old_len = this.len;
+    this.len = qq+this.len;
+    this.d = realloc(this.d, this.len+qq);
+    if(this.d == 0)
+        //an error has occurred!
+        return 1;
+    end
+    mcpy(this.d + old_len, oo, qq);
+    return 0
+end
+
+method inline str.substr(TGT_UMAX beginning, TGT_UMAX howmuch)->str*:
+    if(
+        beginning >= this.len ||
+        beginning+howmuch >= this.len
+    )
+        return (str*)0
+    end
+    //They want a zero-length string? You got it!
+    if(howmuch == 0)
+        str* p2 = (str*)malloc(sizeof(str));
+        if(p2 == 0)
+            return (str*)0
+        end
+        //MALLOC NEVER FAILS...
+        p2.ctor()
+        return p2
+    end
+    //They actually want us to get this string for them...
+    char* b = malloc(howmuch+1);
+    if(b == 0)
+        return (str*)0
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(b, this.d+beginning, howmuch);
+    b[howmuch] = 0; //null terminator!
+    str* p = (str*)malloc(sizeof(str));
+    if(p == 0)
+        free(b);
+        return (str*)0
+    end
+    //MALLOC NEVER FAILS...
+    p.d = b;
+    p.len = howmuch;
+    return p;
+end
+
+method inline pstr.substr(TGT_UMAX beginning, TGT_UMAX howmuch)->pstr*:
+    if(
+        beginning >= this.len ||
+        beginning+howmuch >= this.len
+    )
+        return (pstr*)0
+    end
+    //They want a zero-length string? You got it!
+    if(howmuch == 0)
+        pstr* p2 = (pstr*)malloc(sizeof(pstr));
+        if(p2 == 0)
+            return (pstr*)0
+        end
+        //MALLOC NEVER FAILS...
+        p2.ctor()
+        return p2
+    end
+    //They actually want us to get this string for them...
+    char* b = malloc(howmuch);
+    if(b == 0)
+        return (pstr*)0
+    end
+    //MALLOC NEVER FAILS...
+    mcpy(b, this.d+beginning, howmuch);
+    pstr* p = (pstr*)malloc(sizeof(str));
+    if(p == 0)
+        free(b);
+        return (pstr*)0
+    end
+    //MALLOC NEVER FAILS...
+    p.d = b;
+    p.len = howmuch;
+    return p;
+end
+
+//replace the very first instance of what with with.
+method inline str.replace_first_from(str what, str with, TGT_UMAX maxwhere)->TGT_IMAX:
+
+    if(what.empty()) return -1 end //error!
+    if(maxwhere >= this.len) return -1 end //error!
+    if(this.empty()) return 0 end //we're done already!
+
+
+    TGT_IMAX where = this.findfrom(what,maxwhere);
+    if(where == -1) return -2 end //there is nothing to replace!
+    
+    TGT_UMAX is_shorter = with.len < what.len;
+    TGT_UMAX is_equal = with.len == what.len;
+    if(is_equal)
+        //an in-place replacement....
+        mcpy(this.d + where, with.d, with.len);
+        return where;
+    elif(is_shorter)
+        mcpy(this.d + where, with.d, with.len);
+/*      DIAGRAM OF WHAT'S HAPPENING....
+                                    where+what.len
+                              where |
+                              V     v
+       _hello! I am replacing needle with knee0
+                              knee   [get this]
+                                  ^
+                                  where+with.len
+*/
+        mmove(
+            this.d + where + with.len, //right after where we put the string
+            this.d + where + what.len, //right after where the old string was
+            this.len - (where+what.len) + 1 //[get this]
+        );
+        this.len = where + with.len +  (this.len-(where+what.len));
+        return where;
+    else
+        //it's larger!
+        char* resbuf;
+        ///why does valgrind want me to add two?!?!
+        resbuf = realloc((char*)0,this.len + (with.len - what.len) + 1);
+        if(resbuf == 0)
+            return -1
+        end
+        //the before part...
+        mcpy(resbuf, this.d, where);
+        //the middle part...
+        mcpy(resbuf + where, with.d, with.len);
+        //the last part...
+        mcpy(
+            resbuf + where + with.len,//to right after the new string...
+            this.d + where + what.len,//from after the old string...
+            this.len - (where+what.len)+1 //[get this]
+        );
+        free(this.d);
+        this.d = resbuf;
+        this.len = where + with.len +  (this.len - (where+what.len));
+        return where;
+    end
+end
+
+//pascal string version...
+method inline pstr.replace_first_from(pstr what, pstr with, TGT_UMAX maxwhere)->TGT_IMAX:
+
+    if(what.empty()) return -1 end //error!
+    if(maxwhere >= this.len) return -1 end //error!
+    if(this.empty()) return 0 end //we're done already!
+
+
+    TGT_IMAX where = this.findfrom(what,maxwhere);
+    if(where == -1) return -2 end //there is nothing to replace!
+    
+    TGT_UMAX is_shorter = with.len < what.len;
+    TGT_UMAX is_equal = with.len == what.len;
+    if(is_equal)
+        //an in-place replacement....
+        mcpy(this.d + where, with.d, with.len);
+        return where;
+    elif(is_shorter)
+        mcpy(this.d + where, with.d, with.len);
+/*      DIAGRAM OF WHAT'S HAPPENING....
+                                    where+what.len
+                              where |
+                              V     v
+       _hello! I am replacing needle with knee
+                              knee   [getthis]
+                                  ^
+                                  where+with.len
+*/
+        mmove(
+            this.d + where + with.len, //right after where we put the string
+            this.d + where + what.len, //right after where the old string was
+            this.len - (where+what.len) //[getthis]
+        );
+        this.len = where + with.len +  (this.len-(where+what.len));
+        return where;
+    else
+        //it's larger!
+        char* resbuf;
+        ///why does valgrind want me to add two?!?!
+        resbuf = realloc((char*)0,this.len + (with.len - what.len));
+        if(resbuf == 0)
+            return -1
+        end
+        //the before part...
+        mcpy(resbuf, this.d, where);
+        //the middle part...
+        mcpy(resbuf + where, with.d, with.len);
+        //the last part...
+        mcpy(
+            resbuf + where + with.len,//to right after the new string...
+            this.d + where + what.len,//from after the old string...
+            this.len - (where+what.len) //[getthis]
+        );
+        free(this.d);
+        this.d = resbuf;
+        this.len = where + with.len +  (this.len - (where+what.len));
+        return where;
+    end
+end
+
+
+
+method inline str.replace_first(str what, str with)->TGT_IMAX:
+    return this.replace_first_from(what, with, 0)
+end
+
+method inline pstr.replace_first(pstr what, pstr with)->TGT_IMAX:
+    return this.replace_first_from(what, with, 0)
+end
+
+
+method inline str.replace(str what, str with)->TGT_IMAX:
+    if(what.empty()) return -1 end //error!
+    if(this.empty()) return 0 end //we're done already!
+    TGT_IMAX w = 0;
+    while(1)
+        TGT_IMAX w_new = this.replace_first_from(what, with, w);
+        
+        if(w_new == -1) return 0 end
+        if(w_new == -2) return 0 end
+        if(w_new == w) return 0 end //why would this happen?
+        w = w_new + with.len //after what we just replaced...
+    end
+end
+
+
+method inline pstr.replace(pstr what, pstr with)->TGT_IMAX:
+    if(what.empty()) return -1 end //error!
+    if(this.empty()) return 0 end //we're done already!
+    TGT_IMAX w = 0;
+    while(1)
+        TGT_IMAX w_new = this.replace_first_from(what, with, w);
+        
+        if(w_new == -1) return 0 end
+        if(w_new == -2) return 0 end
+        if(w_new == w) return 0 end //why would this happen?
+        w = w_new + with.len //after what we just replaced...
+    end
+end
+
+//string functions...
+fn inline pure utoa(char* dest, TGT_UMAX value):
+    if(value == 0)
+        dest[0] = '0';
+        dest[1] = 0;
+        return 
+    end
+    /*Determine the highest powerer of 10.*/
+    if(1)
+        TGT_UMAX power
+        power = 1;
+        while(value/power >= 10)
+            power = power * 10; 
+        end
+        /*found the highest powerer of 10*/
+        while(power)
+            uint temp
+            temp = value/power; /*if we had the number 137, we would have gotten
+            100 as our power. We now divide by power to get the highest digit.*/
+            
+            dest[0] = (temp + ('0')); dest++;
+            
+            value = value - temp * power; /*Get rid of the highest digit.*/
+            
+            power = power / 10 /*Divide power by 10.*/
+        end
+    end
+
+    :ending
+    dest[0] = 0
+
+    return;
+end
+
+fn inline pure itoa(char* dest, TGT_IMAX value):
+    if(value >= 0) 
+        utoa(dest, value);
+    else
+        dest[0] = '-';
+        utoa(dest+1, -value);
+    end
+end
+
+
+
+//emits double as string, (suppose to be safe for serialization)
+fn inline pure ftoa_n(char* dest, double v, i32 ndigits):
+    TGT_UMAX is_neg = 0;
+    TGT_UMAX dg = 0;
+    TGT_IMAX pow10 = 0;
+    TGT_UMAX dgi = 0;
+    ndigits++; 
+    //cannot be zero...
+    if(ndigits <= 0)
+        dest[0] = 'E';
+        dest[1] = 'R';
+        dest[2] = 'R';
+        dest[3] = 0;
+        return
+    end
+    //define the error margin....
+    double ftoa_errmargin
+    if(signbit(v))
+        is_neg = 1;
+        dest[0] = '-';
+        dest++;
+        v = -v;
+    end
+    if(isnan(v))
+        dest[0] = 'N';
+        dest[1] = 'A';
+        dest[2] = 'N';
+        dest[3] = 0;
+        return
+    end
+    if(!isfinite(v))
+        dest[0] = 'I';
+        dest[1] = 'N';
+        dest[2] = 'F';
+        dest[3] = 0;
+        return
+    end
+    if(v == 0)
+        dest[0] = '0';
+        dest[1] = 0;
+        return
+    end
+    pow10 = log10(v);
+    //check for the case that pow10 is greater than ndigits....
+    if(pow10 >= (ndigits+1))
+        goto science
+    elif(pow10 <= -(ndigits+1))
+        goto science
+    else
+        while(pow10 >= 0)
+            TGT_IMAX temp = v/pow(10,pow10); /*if we had the number 137.45, we would have gotten
+            100 as our pow. We now divide by it to get the highest digit.*/
+            dest[0] = ( cast(TGT_IMAX)temp + ('0')); dest++;
+            ndigits--; //decrease ndigits...
+            /*we now subtract off the 100 from 137.45 to get 37.45*/
+            v = v - (
+                (double)temp * pow(10,pow10)
+            ); /*Get rid of the highest digit.*/
+            pow10--; /*Divide pow by 10.*/
+        end
+        /*Now print the insignificant portion.*/
+        if(v == 0 || ndigits == 0)
+            dest[0] = '.';dest++;
+            dest[0] = '0';dest++;
+            dest[0] = 0
+            return
+        end
+        dest[0] = '.';dest++;
+        while(ndigits > 0)
+            TGT_IMAX temp;
+            v = v * 10;
+            temp = v;
+            dest[0] = ( (TGT_IMAX)temp + ('0')); dest++;
+            v = v - temp;
+            ndigits--;
+        end
+        dest[0] = 0
+        return
+    end
+    
+
+    return;
+    :science
+    //Our job here is to emit SCIENTIFIC NOTATION...
+    if(1)
+        TGT_IMAX dgc = 0;
+        v = v / pow(10, pow10); //normalize v
+        while(ndigits > 0)
+            TGT_IMAX temp;
+            temp = v;
+            dest[0] = ( (TGT_IMAX)temp + ('0')); dest++;
+            v = v - temp;
+            ndigits--;
+            if(dgc == 0 && ndigits != 0)
+                dest[0] = '.';
+                dest++
+            end
+            dgc++;
+            v = v * 10;
+        end
+        dest[0] = 'E';dest++;
+        itoa(dest, pow10);
+        return;
+    end
+end
+
+
+fn inline pure ftoa(char* dest, double v):
+    ftoa_n(dest, v, 54); //54 is probably good enough...
+end
+
+//
+
+#include<toc/stl.hbas>
+

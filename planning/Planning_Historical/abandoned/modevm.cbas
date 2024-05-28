@@ -1,0 +1,585 @@
+/*
+    RGVM64- Register VM 64
+    A 64 BIT SUCCESSOR TO SISA16 THAT IS BETTER THAN SISA64
+    
+    The goal is to achieve memory safety just like SISA16 did,
+    while also not making its "big endian only" mistake, and also
+    allowing more memory.
+    
+    It will be 64 bit...
+    
+    64 bit in that it has 64 bit registers and double math,
+    not 64 bits of addressable memory. Pointers can be as small
+    as 32 bit or 64 bit. I think for the sake of porting SEABASS
+    itself, I will 
+    
+    We'll use a per-process memory model like SISA16, but with
+    512M of memory per-process rather than a mere 16 megs.
+    
+    
+    
+    
+*/
+
+#include <meta>
+#include <toc_native_user>
+
+@wksht prnt[
+    [
+        @pprint [println itoa ARG1]
+    ][
+        ARG1
+    ]
+]
+//4 processes + kernel
+#define MAX_PROCESSES 4
+#define PROCESS_MEMORY_AMT (512*1024*1024)//512 megs of memory... 
+#define PROCESS_MEMORY_MASK (PROCESS_MEMORY_AMT - 1)
+#define PROCESS_MEMORY_AMT_PLUS_PAD (PROCESS_MEMORY_AMT + 32)//plus some padding to ensure neighboring processes never overread/write...
+//you get 
+#define PREEMPT_TIMER 0xffFFff
+
+class rfile
+    u64[4] gpregs //abcd
+    u64 pc
+    u64 stp
+end
+
+fn inline msk(u64 addr)->u64:
+    return addr & (PROCESS_MEMORY_MASK);
+end
+
+fn inline bios(u64 a, u64 b, u64 c, u64 d, byte* M)->u64:
+
+
+    return a;
+end
+
+byte* MG;
+
+fn exec:
+    u64 a = 0
+    u64 b = 0
+    u64 c = 0
+    u64 d = 0
+    u64 pc = 0
+    u64 stp = 0
+    u64 active_user = 0
+    byte is_privileged = 1
+    u64 tck = 0;
+    u64 R = 0;
+    //memory base pointer...
+    byte* M = MG;
+    rfile[MAX_PROCESSES+1] regfile_caches;
+    
+    #define D pc++; tck++;\
+    if(!is_privileged && (tck > PREEMPT_TIMER))\
+        R=0xFF; /*Preempted*/\
+        goto become_privileged\
+    end\
+    pc = pc & (PROCESS_MEMORY_AMT - 1);\
+    switch(M[pc])\
+        /*256 insns- 32 * 8 */\
+        hlt nop        nop nop         nop nop            nop nop /*R0*/\
+        nop nop        nop nop         nop nop            nop nop /*R1*/\
+        nop nop        nop nop         nop nop            nop nop /*R2*/\
+        nop nop        nop nop         nop nop            nop nop /*R3*/\
+        nop nop        nop nop         nop nop            nop nop /*R4*/\
+        nop nop        nop nop         nop nop            nop nop /*R5*/\
+        nop nop        nop nop         nop nop            nop nop /*R6*/\
+        nop nop        nop nop         nop nop            nop nop /*R7*/\
+        nop nop        nop nop         nop nop            nop nop /*R8*/\
+        nop nop        nop nop         nop nop            nop nop /*R9*/\
+        nop nop        nop nop         nop nop            nop nop /*R10*/\
+        nop nop        nop nop         nop nop            nop nop /*R11*/\
+        nop nop        nop nop         nop nop            nop nop /*R12*/\
+        nop nop        nop nop         nop nop            nop nop /*R13*/\
+        nop nop        nop nop         nop nop            nop nop /*R14*/\
+        nop nop        nop nop         nop nop            nop nop /*R15*/\
+        nop nop        nop nop         nop nop            nop nop /*R16*/\
+        nop nop        nop nop         nop nop            nop nop /*R17*/\
+        nop nop        nop nop         nop nop            nop nop /*R18*/\
+        nop nop        nop nop         nop nop            nop nop /*R19*/\
+        nop nop        nop nop         nop nop            nop nop /*R20*/\
+        nop nop        nop nop         nop nop            nop nop /*R21*/\
+        nop nop        nop nop         nop nop            nop nop /*R22*/\
+        nop nop        nop nop         nop nop            nop nop /*R23*/\
+        nop nop        nop nop         nop nop            nop nop /*R24*/\
+        nop nop        nop nop         nop nop            nop nop /*R25*/\
+        nop nop        nop nop         nop nop            nop nop /*R26*/\
+        nop nop        nop nop         nop nop            nop nop /*R27*/\
+        nop nop        nop nop         nop nop            nop nop /*R28*/\
+        nop nop        nop nop         nop nop            nop nop /*R29*/\
+        nop nop        nop nop         nop nop            nop nop /*R30*/\
+        nop nop        nop nop         nop nop            nop nop /*R31*/\
+        nop nop        nop nop         nop nop            nop nop /*R32*/\
+    ;
+    
+    :nop D
+    :hlt
+    if(!is_privileged)
+        //TODO
+    else
+        return
+    end
+    
+    //register-register xfr
+    :ab a = b; D
+    :ac a = c; D
+    :ad a = d; D
+    
+    :ba b = a; D
+    :bc b = c; D
+    :bd b = d; D
+    
+    :ca c = a; D
+    :cb c = b; D
+    :cd c = d; D
+    
+    :da d = a; D
+    :db d = b; D
+    :dc d = c; D
+    //immediates
+    :im8_a
+        a = M[pc++];
+    D
+    :im8_b
+        b = M[pc++];
+    D
+    :im8_c
+        c = M[pc++];
+    D
+    :im8_d
+        d = M[pc++];
+    D
+    
+    :im16_a
+        if(1)
+            u16[1] v
+            memcpy((byte*)v, M+pc, 2);
+            a = v[0];
+        end
+    D
+    :im16_b
+        if(1)
+            u16[1] v
+            memcpy((byte*)v, M+pc, 2);
+            b = v[0];
+        end
+    D
+    :im16_c
+        if(1)
+            u16[1] v
+            memcpy((byte*)v, M+pc, 2);
+            c = v[0];
+        end
+    D
+    :im16_d
+        if(1)
+            u16[1] v
+            memcpy((byte*)v, M+pc, 2);
+            d = v[0];
+        end
+    D
+    :im32_a
+        if(1)
+            u32[1] v
+            memcpy((byte*)v, M+pc, 4);
+            a = v[0];
+        end
+    D
+    :im32_b
+        if(1)
+            u32[1] v
+            memcpy((byte*)v, M+pc, 4);
+            b = v[0];
+        end
+    D
+    :im32_c
+        if(1)
+            u32[1] v
+            memcpy((byte*)v, M+pc, 4);
+            c = v[0];
+        end
+    D
+    :im32_d
+        if(1)
+            u32[1] v
+            memcpy((byte*)v, M+pc, 4);
+            d = v[0];
+        end
+    D
+    
+    :im64_a
+        if(1)
+            u64[1] v
+            memcpy((byte*)v, M+pc, 8);
+            a = v[0];
+        end
+    D
+    :im64_b
+        if(1)
+            u64[1] v
+            memcpy((byte*)v, M+pc, 8);
+            b = v[0];
+        end
+    D
+    :im64_c
+        if(1)
+            u64[1] v
+            memcpy((byte*)v, M+pc, 8);
+            c = v[0];
+        end
+    D
+    :im64_d
+        if(1)
+            u64[1] v
+            memcpy((byte*)v, M+pc, 8);
+            d = v[0];
+        end
+    D
+    
+    //load uses the register in question....
+    :ld8_a
+    :ld8_b
+    :ld8_c
+    :ld8_d
+    
+    :ld16_a
+    :ld16_b
+    :ld16_c
+    :ld16_d
+    
+    :ld32_a
+    :ld32_b
+    :ld32_c
+    :ld32_d
+    
+    :ld64_a
+    :ld64_b
+    :ld64_c
+    :ld64_d
+
+    //stores use the register in question for the value,
+    //but then use register D for the address.
+    :st8_a
+    :st8_b
+    :st8_c
+    
+    :st16_a
+    :st16_b
+    :st16_c
+    
+    :st32_a
+    :st32_b
+    :st32_c
+    
+    :st64_a
+    :st64_b
+    :st64_c
+    //mathematics... A = A OP B
+    :iadd
+    :isub
+    :imul
+    
+    :udiv
+        if(b != 0)
+            a = a / b;
+        end
+    D
+    :umod
+        if(b != 0)
+            a = a % b;
+        end
+    D
+    :idiv
+        if(b != 0)
+            a = (i64)a / (i64)b;
+        end
+    D
+    :imod
+        if(b != 0)
+            a = (i64)a % (i64)b;
+        end
+    D
+    
+    
+    :lsh
+        a = a << b;
+    D
+    :rsh
+        a = a >> b;
+    D
+    
+    :bitor
+        a = a | b;
+    D
+    :bitand
+        a = a & b;
+    D
+    :bitxor
+        a = a ^ b;
+    D
+    :logor
+        a = a || b;
+    D
+    :logand
+        a = a && b;
+    D
+    
+    :compl
+        a = ~a;
+    D
+    :ineg
+        a = -a;
+    D
+    :not
+        a = !a;
+    D
+    :boolify
+        a = !!a;
+    D
+    //float math
+    :fadd
+    :fsub
+    :fmul
+    :fdiv
+    
+    :dadd
+    :dsub
+    :dmul
+    :ddiv
+    
+    //int-float conversions...
+    :itod
+    :itof
+    :ftoi
+    :dtoi
+    
+    //manipulate the stack...
+    :pusha
+    :popa
+    :pushb
+    :popb    
+    :pushc
+    :popc
+    :pushd
+    :popd
+    //apply A to the stack pointer...
+    :alloca
+    :getstp
+    :setstp
+    //comparisons- unsigned
+    //operates between A and B
+    :ult
+    :ulte
+    :ugt
+    :ugte
+    :ueq
+    :uneq
+    //signed comparisons
+    :ilt
+    :ilte
+    :igt
+    :igte
+    :ieq
+    :ineq
+    //float comparisons
+    :flt
+    :flte
+    :fgt
+    :fgte
+    :feq
+    :fneq
+    //double comparisons
+    :dlt
+    :dlte
+    :dgt
+    :dgte
+    :deq
+    :dneq
+    //control flow. Finally!
+    //jump to C
+    :jmp
+    //jump if not zero to C
+    :jifnz
+    //jump if zero to C
+    :jifz
+    //pushes the PC but then
+    //assigns PC the value of C.
+    :call
+    //
+    :ret
+    
+    
+    :ze8
+        a = a & 0xff;
+    D
+    :ze16
+        a = a & 0xFFff;
+    D
+    :ze32
+        a = a & 0xFFffFFff;
+    D
+    :se8
+        a = (i64)(i8)a;
+    D
+    :se16
+        a = (i64)(i16)a;
+    D
+    :se32
+        a = (i64)(i32)a;
+    D
+    
+
+    
+    :become_user //enter a user (for non-privileged code, this is a nop)
+        if(!is_privileged)
+            goto nop
+        end
+        tck = 0;
+        //TODO: ctx switch.
+    D
+    :syscall //perform a syscall. Returns to Kernel with special code. For privileged code, this is a nop.
+        if(is_privileged)
+            goto nop
+        end
+        R = 0x1;
+    goto become_privileged;
+    //execute the bios function
+    :bios
+        if(!is_privileged)
+            goto nop
+        end
+        a = bios(a,b,c,d,M);
+    D
+    
+    //manipulate the user's register file...
+    :get_user_a
+        if(!is_privileged)
+            goto nop
+        end
+    D
+    :get_user_b
+        if(!is_privileged)
+            goto nop
+        end
+    D
+    :get_user_c
+        if(!is_privileged)
+            goto nop
+        end
+    D
+    :get_user_d
+        if(!is_privileged)
+            goto nop
+        end
+    D
+    :get_user_pc
+        if(!is_privileged)
+            goto nop
+        end
+    D
+    :get_user_stp
+        if(!is_privileged)
+            goto nop
+        end
+        
+    D
+    :set_user_a
+        if(!is_privileged)
+            goto nop
+        end
+
+    D
+    :set_user_b
+        if(!is_privileged)
+            goto nop
+        end
+
+    D
+    :set_user_c
+        if(!is_privileged)
+            goto nop
+        end
+
+
+    D
+    :set_user_d
+        if(!is_privileged)
+            goto nop
+        end
+
+    D
+    :set_user_pc
+        if(!is_privileged)
+            goto nop
+        end
+
+    D
+    :set_user_stp
+        if(!is_privileged)
+            goto nop
+        end
+
+    //manipulate user's memory
+    D
+    :user_mread64
+        if(!is_privileged)
+            goto nop
+        end
+    D
+    :user_mwrite64
+        if(!is_privileged)
+            goto nop
+        end
+    D
+    :pid_set
+        if(!is_privileged)
+            goto nop
+        end
+        //TODO
+    D
+    //
+    
+    //executed whenever userland invokes syscall or hlt
+    :become_privileged
+        //TODO: ctx switch. Write R to register A.
+    D
+end
+
+fn pub main(i32 argc, schar** argv)->i32:
+    MG = malloc(PROCESS_MEMORY_AMT_PLUS_PAD * (MAX_PROCESSES+1));
+    if(argc < 3)
+        @prnt[
+            /   "Usage:"
+            /   "rgvm image.bin"
+            /   "The image is the boot image- OS"
+            /   "Max size is "
+        ]
+        sys_exit(1);
+    end
+    u64 ff = fopen((char*)argv[1], "rb");
+    if(ff == 0)
+        @prnt[
+            /   "Could not open file:"
+            /   ((char*)argv[1])
+        ]
+        sys_exit(1);
+    end
+    fseek(ff, 0,SEEK_END() );
+    u64 sz = ftell(ff);
+    fseek(ff, 0,SEEK_SET() );
+    if(sz > PROCESS_MEMORY_AMT)
+        sz = PROCESS_MEMORY_AMT;
+    end
+    //we could escape every single character in the file...
+    fread(ff, MG, sz);
+    exec();
+end
+
+fn codegen codegen_main():
+    cg_emitC(SEABASS_STDLIB_PREFIX);
+end
+
+

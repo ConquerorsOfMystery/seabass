@@ -1,0 +1,408 @@
+MAY 2024 PLANNING
+
+I have dedicating virtually all my time as of late to prayer. the LORD is faithful,
+but, well, I'm not a good christian, I'm a really bad one, so I'm not sure how effective
+my prayer was.
+
+GOALS WITH THE SEABASS PROJECT:
+* Make custom programming language development rapid
+* Overtake/replace C/C++ in terms of productivity
+* Enable faster and more intuitive programming, make the tool
+turn programmers into better programmers
+* Make programming more fun!
+
+
+PROJECTS TO TAKE ON:
+* Curved space raytracer for dad
+* Screensavers in Funbas
+* RPG engine
+* New programming languages within Seabass (Seabass++? the concept-oriented language?)
+    * UAST-based especially
+    * Emphasis on moving capabilities of compiler/lang development into the hands
+    of users
+    * Expand/extend cgrdparse
+* UAST-based reasoning oriented language(s)
+    * ? Greatest innovation in computer programming ?
+    * Develop your own error-propagating compiler
+
+
+PROJECT IDEA 1: UAST-BASED CONCEPT-ORIENTED PROGRAMMING LANGUAGE
+
+I could build a crude language which maps nearly 1:1 with Seabass that has access
+to almost all of its features, and then add the inferencing stuff on top.
+
+... Or I could mix them together, i.e. coming up with some way to have meta-language
+builders inside of seabass which then decay into seabass code and are intended to be
+mixed with seabass.
+
+What if I created the meta-language in such a way that concepts could eventually decay
+into code through some means of specification? I.e. take the concept of a worksheet
+and turn it into something that can happen to nouns, perhaps even verbs and adjectives.
+
+If you could take code which accepted a concept and then generated code for it (or not)
+based on rule(s) then this would be enough.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+?ARCHNOUN SYSTEM?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//pronoun- archetypal noun
+archnoun fred [
+    //this is a worksheet_fn with extra stuff
+    
+    [
+        if(1)
+            u64 vname
+            for(begin, test, iter)
+            
+            end
+        end    
+    ][
+        //these parameters have to be scanned by the
+        //meta-language system to determine their names.
+        //the bracketed portions are default values.
+        vname[i] begin[i=0] test[i<16] iter[i++]
+    ][
+        return result;
+    ]
+]
+
+
+
+
+george is a fred. //i.e. noun george;
+george specify [ i [i=0] [i<32] [i++]] //one way to specify parameters
+george.test is [i<64] //another way
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This system has some problems:
+    -> The parameter system does not meld well with the larger language
+        Like, how would reasoning happen on them?
+    -> It doesn't meld well.
+    
+    the concept of a value should I think be separated out inside of the concept map.
+
+
+   fred - is_a_for
+   |       |           |           |
+   vname   begin       test        iter
+   |       |           |           |
+   tokseq  tokseq      tokseq      tokseq
+   |       |           |           |
+   [i]     [i=0]       [i<3]       [i++]
+
+BUT HOW WOULD YOU ACTUALLY HAVE CODE, A LINEAR SEQUENCE?
+
+You could have "right" or "left" relationships forming a tree....
+
+a - right - b
+b - right - c
+c - left - bb
+
+such that the sequence is then...
+
+a b bb c
+
+you could also "fold" everything into one or more tokseq nodes, which
+are then merged at the end (first by respecting left-right relationships,
+then by looking at order in the nodelist).
+
+This token sequence ordering system is probably the first most obvious thing
+to include in the language...
+
+HOW DOES STORING VALUES IN DEDICATED CONCEPTS HELP ANYTHING?
+
+Values could be deduced or inferenced by rules. Transformations of the
+concept map could take an entire section of the concept map and transform it
+into another concept map, or turn it into code.
+
+HOW DO WE WRITE RULES?
+
+The easiest way would just be to write seabass code which accepts the concept map
+as input and operates on the nodes... UAST analyzers. Optimally, this would be
+"folded into" the meta-language itself so that it could write its own rules
+which were then translated to seabass.
+
+I rather imagine that the net effect of rules might be...
+1) To take multiple nodes (for instance a single noun with relationship nodes to tokseqs)
+and then turn that into a single tokseq node.
+2) Inference properties of a node
+3) Inference the existence of nodes by recognizing omission of data
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+COULD WE JUST DO STUFF ALL INSIDE OF SEABASS, NO METALANG?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Worksheets basically function like rules that generate token sequences
+in this system. It's possible that we could do concept modelling just
+by using worksheets as the "token sequence generators" however
+this eliminates the "recursive element" of self-improvement that
+the concept-modelling solution offers.
+
+Worksheets-on-worksheets, builders-on-builders, cgrdparse-feeding-cgrdparse
+is sort of like this concept modelling stuff.
+
+Worksheets can principally do the same thing, the question is whether it is as intuitive
+that way.
+
+Perhaps this whole system can be replaced with "just use worksheets bro"
+
+-->
+I believe we actually CAN do all this inside of seabass. In fact, did I not already
+work on a noun/prop system for seabass? This idea is similar, but different.
+
+I think it's probably BETTER if it's a custom language, though, and we use the UAST
+or some similar data structure.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+WORKSHEETS AS THE ULTIMATE METAPROGRAMMING TOOL?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Worksheets can "stack" and can be programmatic. They can
+encapsulate extremely complex compiletime logic (they can
+be just macros or full compilers).
+
+Templates and worksheets basically encapsulate most that
+is "meta" in "metaprogramming".
+
+The real question I think is "What higher order concepts
+can be made into worksheets to simplify algorithm
+expression?"
+
+Obviously, an entire algorithm can be turned into a worksheet,
+basically being little more than a macro library, however
+I wanted new ways to express algorithms, not just a bunch of
+pre-made algorithms. I want to make the user a better thinker
+in how they reason about computer code, not just give them all
+the answers.
+
+In the same way that C transforms an assembly machine into
+the abstract machine of C, I think I really want to use
+metaprogramming to define new/different abstract machines
+which are more suited to man's cognitive capabilities.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TOOLBOXES, WORKFLOWS, OR ABSTRACT MACHINES?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+An abstract machine can provide a set of tools which
+a person can use to solve problems.
+
+How do I develop a set of tools for thinking?
+
+What tools can I have which improve how I think about programming?
+
+OBSERVATIONS
+
+-> The expression provides an interesting way of thinking about
+programming. Instead of interacting with raw memory and doing
+loads and stores, we work in terms of pointers and values (lvalue,rvalue)
+and whatnot. it's a lot easier to think in terms of variables and
+whatnot instead of assembly loads/stores/moves/ops. The expression
+creates a "tree" of operations, it does explicitly define a sequence
+of steps, without specifying details the user does not actually wish
+to convey, such as in the expression
+
+a = b + c
+
+whether B or C is read first (both must be read before the
+addition can be performed) or in this expression:
+
+a = b[c+d] * e + f
+
+whether c, d, or f are read first.
+
+A sequence of statements which "achieves this effect" is generated
+by the compiler (assembly/machine code insns) (assuming that it is not
+optimized out altogether by some other step!).
+
+It's fairly easy to turn expressions into stack machine operations with
+pushes and pops.
+
+In one's head, a person imagines doing intermediate calculations and
+computing intermediate values. A subexpression within an expression
+represents such "intermediate values" and editing the expression to add
+new subexpressions or alter existing ones is effectively changing how/which
+intermediate values are computed.
+
+intriguingly the concept of a stack applied here highlights an interesting recursive
+element to the expression. It can of course be represented as a tree with each
+operation being a node and subexpressions thereof being subnodes (terminals, or more
+operations). Decaying a tree into a linear list makes this "smart". The problem is
+subdivided beautifully.
+
+When sorting items in a list by "finding the smallest element and moving it to
+the start" over and over, you imagine hunting and pecking through the list
+and keeping your "finger" on the smallest element, then swapping the two.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+COULD SOFTWARE ARCHITECTURE BE MADE LIKE AN EXPRESSION?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In a way, it already is, as we have an "AST" but well there is
+very little subdivision. C programs may have functions which call functions
+and even functions which take function pointers as arguments, but not for instance
+functions which create structs. The result of creating a struct is not the input to
+another function in C which then produces a function for instance.
+
+Seabass's metaprogramming capabilities could enable some sort of... "Expression-esque"
+authoring of software ala the subdivision of concerns and recursive tree structure
+of an expression. Notably, it is often the case in programming control flow and such that
+when/where a particular value is calculated is flexible and does not need to be specified
+strictly, things can be expressed as "parallel" when in reality they are going to be
+decayed to linear operations.
+
+If a relationship between operations is not specified, it is not part of the 
+program specification and does not need to be part of a program's analysis, 
+making the analysis of the program by a human easier. 1+2+3 does not specify whether
+1+2 or 2+3 happens first. If one of them actually does happen first, it does not matter
+(saving for some bit flip or programming anomaly/error).
+
+Complex control flow in computer programs often involves multiple independent
+trees of value computation which in a TAC visualization is clearly visible to the
+compiler.
+
+Consider
+
+1: q = a + b + c;
+2: f = a[c] + b;
+3: if(f != c)
+4:    a = b * c;
+5: end
+
+In this example, lines 1 and 2 are entirely independent of each other and,
+it seems we could alter the program like this:
+
+2: f = a[c] + b;
+3: if(f != c)
+1:    q = a + b + c;
+4:    a = b * c;
+X: else
+1:    q = a + b + c;
+5: end
+
+and it would work exactly the same. Notice that just like
+common subexpression elimination, the latter can be transformed into the former by
+extraction. Line 1's relevance to the net computation in a DFG is only that it happen
+before any modification of a in line 4, and for program size's sake, it makes sense
+to extract the statement into the pre-if section, just like in (a * c) + (d * c)
+we can undo the distributive property to (a + c) * d.
+
+There is *enormous* similarity between an expression and the tree-like structure of
+a program's control flow, including similarities in theoretical properties like the
+distributive property.
+
+However this is all existing tech. How do I apply the concept of "subexpressions"
+and "operations" to software architecture?
+
+SOFTWARE ARCHITECTURE ELEMENTS:
+
+* Writing a variable
+* Writing a class
+* Writing a function
+* Writing a method
+* Writing a statement
+
+HIGHER ORDER ELEMENTS:
+
+* Defining a container
+* Defining a template
+
+In software architecture design people work more broadly with broad concepts, typically
+thinking of a "goal" for how the computer should behave in a situation or a "desired effect"
+which the computer could have. They might want the computer to behave in a particular way
+in some area and they "figure out how to get that to happen".
+
+It would be nice if the specification of the goal and the code that was written
+were intrinsically related, i.e. if you were writing a physics engine and you
+were visualizing something happening in a physics simulation (like a ball dropping
+and bouncing) the desired result resembled the code. EDIT: More importantly, the
+desired result should naturally lead you to write the code that produces it, if
+you're familiar with the language.
+
+Of course, there is a logical extreme: If you wanted a ball to drop, you could draw
+pictures in microsoft paint and then display them by-hand. This would be a very crude
+form of "programming" and obviously isn't what is meant.
+
+There is a deeper underlying meaning to what you want when you ask for a physics engine.
+You want things to feel a certain way, you want things to react a certain way, you want
+them to behave a certain way when interacted with. This abstract notion of a system that
+behaves a certain way versus a specific concrete example is important.
+
+How do we make a "way things work" seem intuitive and separate it from the concrete
+example?
+
+How do we make programming that "feel like that"?
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+WISDOM AND EFFECT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Once you have an understanding of a system, a "way things
+can be" (partial or composite) you can implement it. Merging
+and mixing these systems grants one new and interesting effects.
+
+If it was easier to work with wisdom and to comprehend it, then
+perhaps merging/mixing algorithms would be... easier?
+
+Metaprogramming could make the expression of algorithms much
+easier (especially in a generic way) and then their usage as
+well.
+
+Once you have a large library of algorithms stored in such a
+fashion, you could simply invoke them in your metaprograms
+and the computer could... use them.
+
+A huge part of the "cost" of computer programming is having
+to implement your solution. Generic programming allows you to
+avoid re-implementing stuff that has already been done. If
+you write code once and make it re-usable, you avoid re-implementation
+cost.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A style of programming I haven't seen before?:
+
+//defining iterator X
+Iterator X on Y;
+X.foreach[
+    X.elem.index = X.i; //i being the iteration count.
+]
+
+X(); //invoke X
+
+Notice that in the example above, in order for "Iterator" to
+work and all that, you need to have a system whereby linguistic
+elements have properties and elements. This is more like
+what I think the meta-language should be.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+DUSTBIN
+GARBAGE BE BELOW
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+?GENERATOR SYSTEM?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+generator forgen[
+    [
+        //accepts
+        X Y Z W
+    ][
+        //parameters
+        
+        
+    ][
+        //application
+        
+    ]
+]
+
+
+
+
+
+

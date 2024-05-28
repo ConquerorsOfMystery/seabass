@@ -1,0 +1,51 @@
+#include <toc_native_user>
+//mutate pprint....
+@wksht prnt[
+    [
+        @pprint [println itoa ARG1]
+    ][
+        ARG1
+    ]
+]
+
+
+fn pub main(i32 argc, schar** argv)->i32:
+    if(argc < 2)
+        @prnt[
+            /   "Usage:"
+            /   "dirlist /path/to/the/directory"
+        ]
+        sys_exit(1);
+    end
+    u32[1] nentries;
+    @uniqueptr[char*] listing;
+    errno = 0;
+    if(
+        getdirlist((char*)argv[1], listing.&d, nentries)
+    )
+        @prnt[
+            /   "Could not load directory:"
+            /   ((char*)argv[1])
+        ]
+        sys_exit(1);
+    end
+    if(errno)
+        perror("<C library> Error:");
+        sys_exit(1);
+    end
+    @vec[char*] zz;
+    u64 i
+    for(i = 0; i < nentries[0]; i++)
+        zz.push(listing.d[i]);
+    end
+    for(i = 0, i < zz.len, i++)
+        println(zz.d[i]);
+        free(zz.d[i]);
+        zz.d[i] = 0;
+    end
+    return 0
+end
+
+fn codegen codegen_main():
+    cg_emitC(SEABASS_STDLIB_PREFIX);
+end

@@ -1,0 +1,34 @@
+
+SEABASS REQUIRES A C++ STYLE LANGUAGE.
+
+
+Something to fully replace C++. I find the need
+for the following features:
+
+* Failable Functions/Methods
+    If a failable function is called, it will
+    automatically be wrapped in a try-catch.
+    
+    this will work exactly the way try-throw
+    works in SEABASS, but it will automatically
+    generate the try[a = mycall();][return 0;]
+    blocks.
+    
+    I could have it trap every single possible failable
+    function, or just small groups.
+    
+    I prefer the former...
+* Templates
+    The need to be able to instantiate templated
+    types (with methods and functions) anywhere
+    in your code is great. this _should_ be as easy
+    as detecting name_of_template followed by an opening
+    angle bracket (or whatever I choose for templating...)
+* Borrow checking
+    As much as I deeply resent Rust's syntax, the borrow checking
+    system (or something equivalent) is necessary to prevent errors.
+* Metaprogramming
+    OOPSY should be able to define and use parsehooks just like SEABASS.
+* 
+
+

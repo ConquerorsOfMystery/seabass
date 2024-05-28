@@ -1,0 +1,24 @@
+
+#guard BIT32_TGT_CBAS
+
+#define TGT_UMAX u32
+#define TGT_IMAX i32
+//allow doubles to be used on 32 bit architectures...
+#define TGT_FMAX double
+
+
+#__CBAS_TARGET_WORDSZ 32
+#__CBAS_TARGET_MAX_FLOAT 64
+data codegen string SEABASS_BIT_PREFIX "
+#define SEABASS_32_BIT 1
+#define i32 long
+#define u32 unsigned long
+#define _STRTOU_ strtoul
+#define _STRTOI_ strtol
+#define TGT_UMAX unsigned long
+#define TGT_IMAX long
+";
+
+codegen u64 SEABASS_TARGET_BITS = 32;
+
+

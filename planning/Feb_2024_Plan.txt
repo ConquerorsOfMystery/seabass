@@ -1,0 +1,174 @@
+
+THE RENEWAL- PLANNING IN 2024
+
+1. Rewrite the documentation
+
+2. Pray for new metaprogramming ideas.
+
+METAPROGRAMMING IDEAS:
+
+> A Factory
+
+A computer program can be thought of like a device comprised of 
+carved, molded, or cast parts which are pieced together.
+
+Typically while programming, you carve/cast/mold as you code by
+writing every construct yourself, but as you go higher level in
+metaprogramming, you work with more "pre-fabricated parts" or
+"pre-made molds" or what-have-you.
+
+It seems there is a dichotomy at play between that of a fine artist
+and mass production... In order for metaprogramming to not be at a loss
+to a fine artist, it must actually match or defeat him in some fashion
+which is useful to the programmer.
+
+HOW CAN METAPROGRAMMING DEFEAT THE FINE ARTISAN PROBLEM?
+
+Perhaps it cannot, but rather we should think of how we can strengthen
+the arm of the fine artist. But... the fewer the strokes of the artist,
+the less his handiwork! 
+
+A ROBOTIC ARTIST?
+
+... Ai?
+
+A SUPERIOR LANGUAGE?
+
+Something which purely expresses the constructs in the mind of the artist. His intent.
+
+More ways to place paint on a canvas and more ways to remove it that make sense to him.
+
+MENTAL MODEL TO IMPLEMENTATION?
+
+In the mind of a man, you have "mental constructs"... like
+a loop, or an inchworm, or a class. These concepts/constructs
+are themselves pieces from which a program can be created.
+
+In the same fashion that a program in C is not written using
+branch instructions but instead loops and if statements, higher
+order control flow constructs could flesh out a programmer's
+toolkit.
+
+Mind to implementation.
+
+CONSTEXPR, OPTIMIZATION
+
+A person can express a solution to a problem which makes
+sense to them, but is ultimately suboptimal in some fashion.
+
+Algorithmic evaluation or optimization can literally transform
+the expressed solution into another equivalent one.
+
+FIND AN OPTIMAL SET OF PROGRAMMING PARADIGMS/CONSTRUCTS
+
+What is the optimal way to think to write computer programs?
+
+What constructs are used in writing computer programs?
+
+CONTAINERS AND ALGORITHMS- A BASIC OUTLINE FOR HIGHER
+ORDER CONSTRUCTS IN PROGRAMMING
+
+foldout_arg is a good example of a higher order
+construct "thing" that has been incredibly useful-
+operating on a linked list of parser tokens, outputting
+to a variable.
+
+the vector container is also a good example.
+
+The "inchworm" used for @eqor (et al) could become an
+explicit programming construct accepting two strings
+and some control flow.
+
+The need to mutate the abstraction for custom use somewhat
+negates the purpose of the thing itself. If you use a 
+pre-made abstraction, you typically cannot modify it.
+
+Views on that-
+
+1. you can build abstractions progressively, iteratively,
+rather than based on the needs for a particular program.
+
+PROBLEM: Gonna be a whole lot of them. Probably the best
+solution, though.
+
+2. The abstractions can be built with so many configurable
+options that all practical use cases are covered.
+
+PROBLEM: not exactly "drag and drop". Remembering what the
+options are could be extremely difficult.
+
+3. Per-author. Each person may have a set of abstractions
+they themselves like to use, which conform to how they think,
+rather than being for everyone.
+
+PROBLEM: Obviously this doesn't share that well... but
+I think there is some truth to it in the same way painters/
+artists have favorite colors.
+
+4. Impossible?
+
+... Nah! I don't believe it. I think C++ proves this isn't true-
+higher order constructs do naturally exist in programming and
+making them explicit in the language DOES give you an advantage.
+
+CAN WE HAVE PRE-MADE ABSTRACTIONS/CONSTRUCTS THAT CAN ALSO
+BE MODIFIED READILY?
+
+Perhaps.
+
+...BUT WHAT KINDS OF ABSTRACTIONS DO WE NEED?!?!
+
+> Class Archetypes. Certain patterns of structs occur often,
+notably trees and linked lists (1-trees).
+
+> Containers. Vector has already been implemented, but more
+kinds of containers may be useful. I mostly just use vectors
+and linked lists in my work, but there've been times when 
+a hash table would be useful.
+
+> Container operations. This would include things like the
+inchworm (progressively walking a linear container and moving
+elements from one to the other, optionally performing some
+filtering/replacing operation).
+
+> Metacontainers. Containers which have some "weird thing" about
+them, for instance, you could have a vector of structs, each with
+an integer member, and the placement of the item in the vector is 
+stored in the int, so on push/frontpop/remove one or more elements
+would be modified (backpop probably wouldn't need it). So basically
+you might have a vector implementation, but the vector implementation
+would have optional ways to modify or extend it.
+
+> Formula functions
+Often times, you need to "implement X again" (another UI system, another
+ray tracer, another screen coordinate denormalization function, etc). Having
+pre-made forms of these, or references, serves as a great help- if X already
+exists, code can be harvested from it. If it's public domain code, it can
+be lifted without any attribution (Which is the best!).
+
+WHAT KINDS OF FORMULAS/ALGOS DO WE NEED?
+
+Coordinate mapping. Mixing/blending. Graphics stuff is easy, rip it off the
+web.
+
+> Sample programs to demonstrate algorithms or techniques.
+
+Cellular automata thingies, interpreters, triangle renderers, rectangle fill,
+text rendering, blitters, physics code, date/time code...
+
+you name it.
+
+Sample programs to do STUFF!
+
+WHAT ACTUALLY PREVENTS PROGRAMS FROM BEING WRITTEN?
+
+Laziness and Difficulty- I can't well help the sluggard
+who won't so much lift his hand to his mouth, but I can
+probably make programming easier.
+
+I NEED TEMPLATE PROJECTS!
+
+If I have a template project I can work from, I can just use
+it to do stuff.
+
+3. Implement new metaprogramming ideas

@@ -1,0 +1,2064 @@
+
+#guard OPENGL_1_1
+
+#include <toc/inlinec.hbas>
+
+data codegen string GL_1_1_PREFIX "\n#include <GL/gl.h>\n";
+
+#define GLboolean byte
+#define GLbyte sbyte
+#define GLchar sbyte
+#define GLubyte byte
+#define GLshort short
+#define GLushort ushort
+#define GLint int
+#define GLuint uint
+#define GLfixed int
+#define GLint64 i64
+#define GLuint64 u64
+#define GLsizei uint
+#define GLenum uint
+#define GLintptr int*
+#define GLsizeiptr uint*
+#define GLbitfield uint
+#define GLfloat f32
+#define GLclampf f32
+#define GLdouble f64
+#define GLclampd f64
+
+fn inline glAccum(
+    uint op,
+    float value
+):
+    @inline_C "glAccum($op,$value);"
+end
+fn inline glAlphaFunc(
+    uint funk,
+    float ref
+):
+    @inline_C "glAlphaFunc($funk,$ref);"
+end
+fn inline glAreTexturesResident(
+    uint n,
+    uint* textures,
+    byte* residences
+)->u8:
+    @inline_C "return glAreTexturesResident(
+        $n,
+        $textures,
+        (GLboolean*)$residences
+    );"
+end
+fn inline glArrayElement(int i):
+    @inline_C "glArrayElement($i);"
+end
+fn inline glBegin(uint mode):
+    @inline_C "glBegin($mode);"
+end
+fn inline glEnd():
+    @inline_C "glEnd();"
+end
+fn inline glBindTexture(
+    uint target,
+    uint texture
+):
+    @inline_C "glBindTexture($target, $texture);"
+end
+
+fn inline glBitmap(
+    int width,
+    int height,
+    int xorig,
+    int yorig,
+    int xmove,
+    int ymove,
+    byte* bitmap
+):
+    @inline_C "glBitmap($width, $height,
+    $xorig, $yorig, $xmove, $ymove, $bitmap
+    );"
+end
+
+fn inline glBlendFunc(
+    uint sfactor,
+    uint dfactor
+):
+    @inline_C "glBlendFunc($sfactor, $dfactor);"
+end
+fn inline glCallList(
+    uint l
+):
+    @inline_C "glCallList($l);"
+end
+fn inline glCallLists(
+    uint n,
+    uint type,
+    byte* lists
+):
+    @inline_C "glCallLists($n, $type, $lists);"
+end
+
+fn inline glClear(uint mask):
+    @inline_C "glClear($mask);"
+end
+fn inline glClearAccum(
+    f32 r,
+    f32 g,
+    f32 b,
+    f32 a,
+):
+    @inline_C "glClearAccum($r,$g,$b,$a);"
+end
+fn inline glClearColor(
+    f32 r,
+    f32 g,
+    f32 b,
+    f32 a,
+):
+    @inline_C "glClearColor($r,$g,$b,$a);"
+end
+fn inline glClearDepth(double d):
+    @inline_C "glClearDepth($d);"
+end
+fn inline glClearIndex(float d):
+    @inline_C "glClearIndex($d);"
+end
+fn inline glClearStencil(int d):
+    @inline_C "glClearStencil($d);"
+end
+fn inline glClipPlane(uint p, double* equa):
+    @inline_C "glClipPlane($p, $equa);"
+end
+fn inline glColor3b(sbyte r, sbyte g, sbyte b):
+    @inline_C "glColor3b($r, $g, $b);"
+end
+fn inline glColor3d(f64 r, f64 g, f64 b):
+    @inline_C "glColor3d($r, $g, $b);"
+end
+fn inline glColor3f(f32 r, f32 g, f32 b):
+    @inline_C "glColor3f($r, $g, $b);"
+end
+fn inline glColor3i(int r, int g, int b):
+    @inline_C "glColor3i($r, $g, $b);"
+end
+fn inline glColor3ub(byte r, byte g, byte b):
+    @inline_C "glColor3ub($r, $g, $b);"
+end
+fn inline glColor3ui(uint r, uint g, uint b):
+    @inline_C "glColor3ui($r, $g, $b);"
+end
+fn inline glColor3us(ushort r, ushort g, ushort b):
+    @inline_C "glColor3us($r, $g, $b);"
+end
+fn inline glColor3s(short r, short g, short b):
+    @inline_C "glColor3s($r, $g, $b);"
+end
+//4 versions...
+fn inline glColor4b(sbyte r, sbyte g, sbyte b, sbyte a):
+    @inline_C "glColor4b($r, $g, $b,$a);"
+end
+fn inline glColor4d(f64 r, f64 g, f64 b, f64 a):
+    @inline_C "glColor4d($r, $g, $b,$a);"
+end
+fn inline glColor4f(float r, float g, float b, float a):
+    @inline_C "glColor4f($r, $g, $b,$a);"
+end
+fn inline glColor4i(int r, int g, int b, int a):
+    @inline_C "glColor4i($r, $g, $b,$a);"
+end
+fn inline glColor4s(short r, short g, short b, short a):
+    @inline_C "glColor4s($r, $g, $b,$a);"
+end
+fn inline glColor4ub(byte r, byte g, byte b, byte a):
+    @inline_C "glColor4ub($r, $g, $b,$a);"
+end
+fn inline glColor4ui(uint r, uint g, uint b, uint a):
+    @inline_C "glColor4ui($r, $g, $b,$a);"
+end
+fn inline glColor4us(ushort r, ushort g, ushort b, ushort a):
+    @inline_C "glColor4us($r, $g, $b,$a);"
+end
+
+//V versions......
+fn inline glColor3bv(sbyte* r):
+    @inline_C "glColor3bv((GLbyte*)$r);"
+end
+fn inline glColor3ubv(byte* r):
+    @inline_C "glColor3ubv($r);"
+end
+fn inline glColor3dv(f64* r):
+    @inline_C "glColor3dv($r);"
+end
+fn inline glColor3fv(f32* r):
+    @inline_C "glColor3fv($r);"
+end
+fn inline glColor3iv(int* r):
+    @inline_C "glColor3iv($r);"
+end
+fn inline glColor3uiv(uint* r):
+    @inline_C "glColor3uiv($r);"
+end
+fn inline glColor3sv(short* r):
+    @inline_C "glColor3sv($r);"
+end
+fn inline glColor3usv(ushort* r):
+    @inline_C "glColor3usv($r);"
+end
+
+
+
+//4 versions...
+fn inline glColor4bv(sbyte* r):
+    @inline_C "glColor4bv((GLbyte*)$r);"
+end
+fn inline glColor4ubv(byte* r):
+    @inline_C "glColor4ubv($r);"
+end
+fn inline glColor4dv(f64* r):
+    @inline_C "glColor4dv($r);"
+end
+fn inline glColor4fv(float* r):
+    @inline_C "glColor4fv($r);"
+end
+fn inline glColor4iv(int* r):
+    @inline_C "glColor4iv($r);"
+end
+fn inline glColor4uiv(uint* r):
+    @inline_C "glColor4uiv($r);"
+end
+fn inline glColor4sv(short* r):
+    @inline_C "glColor4sv($r);"
+end
+fn inline glColor4usv(ushort* r):
+    @inline_C "glColor4usv($r);"
+end
+fn inline glColorMask(
+    byte r,
+    byte g,
+    byte b,
+    byte a,
+):
+    @inline_C "glColorMask($r,$g,$b,$a);"
+end
+fn inline glColorMaterial(
+    uint face,
+    uint mode
+):
+    @inline_C "glColorMaterial($face,$mode);"
+end
+fn inline glColorPointer(
+    int sz,
+    uint type,
+    uint stride,
+    byte* p
+):
+    @inline_C "glColorPointer($sz, $type, $stride, $p);"
+end
+fn inline glCopyPixels(
+    int x,
+    int y,
+    uint w,
+    uint h,
+    uint t
+):
+    @inline_C "glCopyPixels($x, $y, $w, $h, $t);"
+end
+
+
+fn inline glCopyTexImage1D(
+    uint tg,
+    int lvl,
+    uint internalfmt,
+    int x,
+    int y,
+    uint width,
+    int border
+):
+    @inline_C "glCopyTexImage1D($tg, $lvl, $internalfmt,$x, $y, $width, $border);"
+end
+fn inline glCopyTexSubImage1D(
+    uint tg,
+    int lvl,
+    int xoff,
+    int x,
+    int y,
+    uint width
+):
+    @inline_C "glCopyTexSubImage1D($tg, $lvl, $xoff, $x, $y, $width);"
+end
+fn inline glCopyTexImage2D(
+    uint tg,
+    int lvl,
+    uint internalfmt,
+    int x,
+    int y,
+    uint width,
+    uint height,
+    int border
+):
+    @inline_C "glCopyTexImage2D($tg, $lvl, $internalfmt,$x, $y, $width, $height, $border);"
+end
+
+fn inline glCopyTexSubImage2D(
+    uint tg,
+    int lvl,
+    int xoff,
+    int yoff,
+    int x,
+    int y,
+    uint width,
+    uint height
+):
+    @inline_C "glCopyTexSubImage2D($tg, $lvl, $xoff, $yoff, $x, $y, $width, $height);"
+end
+
+
+fn inline glCullFace(
+    uint mode
+):
+    @inline_C "glCullFace($mode);"
+end
+
+fn inline glDeleteLists(
+    uint l,
+    uint range
+):
+    @inline_C "glDeleteLists($l, $range);"
+end
+fn inline glDeleteTextures(
+    uint n,
+    uint* textures
+):
+    @inline_C "glDeleteTextures($n, $textures);"
+end
+fn inline glDepthFunc(
+    uint funk
+):
+    @inline_C "glDepthFunc($funk);"
+end
+fn inline glDepthMask(
+    byte flag
+):
+    @inline_C "glDepthMask($flag);"
+end
+fn inline glDepthRange(
+    double zNear,
+    double zFar
+):
+    @inline_C "glDepthRange($zNear, $zFar);"
+end
+
+fn inline glDrawArrays(uint mode, int first, uint count):
+    @inline_C "glDrawArrays($mode, $first, $count);"
+end
+fn inline glDrawBuffer(uint mode):
+    @inline_C "glDrawBuffer($mode);"
+end
+fn inline glDrawElements(uint mode, uint count, uint t, byte* indices):
+    @inline_C "glDrawElements($mode, $count, $t, $indices);"
+end
+fn inline glDrawPixels(uint width, uint height, uint f, uint t, byte* p):
+    @inline_C "glDrawPixels($width, $height, $f, $t, $p);"
+end
+fn inline glEdgeFlag(byte flag):
+    @inline_C "glEdgeFlag($flag);"
+end
+fn inline glEdgeFlagv(byte* flag):
+    @inline_C "glEdgeFlagv($flag);"
+end
+fn inline glEdgeFlagPointer(uint stride, byte* p):
+    @inline_C "glEdgeFlagPointer($stride, $p);"
+end
+fn inline glEnable(uint cap):
+    @inline_C "glEnable($cap);"
+end
+fn inline glDisable(uint cap):
+    @inline_C "glDisable($cap);"
+end
+fn inline glEnableClientState(uint cap):
+    @inline_C "glEnableClientState($cap);"
+end
+fn inline glDisableClientState(uint cap):
+    @inline_C "glDisableClientState($cap);"
+end
+//d,f,2,AND V?!?!
+fn inline glEvalCoord1d(double u):
+    @inline_C "glEvalCoord1d($u);"
+end
+fn inline glEvalCoord1f(float u):
+    @inline_C "glEvalCoord1f($u);"
+end
+fn inline glEvalCoord2d(double u, double v):
+    @inline_C "glEvalCoord2d($u, $v);"
+end
+fn inline glEvalCoord2f(float u, float v):
+    @inline_C "glEvalCoord2f($u, $v);"
+end
+//and v...
+fn inline glEvalCoord1dv(double* u):
+    @inline_C "glEvalCoord1dv($u);"
+end
+fn inline glEvalCoord1fv(float* u):
+    @inline_C "glEvalCoord1fv($u);"
+end
+fn inline glEvalCoord2dv(double* u):
+    @inline_C "glEvalCoord2dv($u);"
+end
+fn inline glEvalCoord2fv(float* u):
+    @inline_C "glEvalCoord2fv($u);"
+end
+fn inline glEvalMesh1(uint mode, int i1, int i2):
+    @inline_C "glEvalMesh1($mode, $i1, $i2);"
+end
+fn inline glEvalMesh2(uint mode, int i1, int i2, int j1, int j2):
+    @inline_C "glEvalMesh2($mode, $i1, $i2, $j1, $j2);"
+end
+fn inline glEvalPoint1(int i):
+    @inline_C "glEvalPoint1($i);"
+end
+fn inline glEvalPoint2(int i, int j):
+    @inline_C "glEvalPoint2($i, $j);"
+end
+fn inline glFeedbackBuffer(uint sz, uint t, float* b):
+    @inline_C "glFeedbackBuffer($sz, $t, $b);"
+end
+fn inline glFinish():
+    @inline_C "glFinish();"
+end
+
+fn inline glFlush():
+    @inline_C "glFlush();"
+end
+fn inline glFogf(uint pname, float param):
+    @inline_C "glFogf($pname, $param);"
+end
+fn inline glFogi(uint pname, int param):
+    @inline_C "glFogi($pname, $param);"
+end
+fn inline glFogfv(uint pname, float* param):
+    @inline_C "glFogfv($pname, $param);"
+end
+fn inline glFogiv(uint pname, int* param):
+    @inline_C "glFogiv($pname, $param);"
+end
+fn inline glFrontFace(uint mode):
+    @inline_C "glFrontFace($mode);"
+end
+fn inline glFrustum(
+    double left,
+    double right,
+    double bottom,
+    double top,
+    double zNear,
+    double zFar
+):
+    @inline_C "glFrustum($left, $right, $bottom, $top, $zNear, $zFar);"
+end
+/*
+    First reference used:
+    http://nehe.gamedev.net/article/replacement_for_gluperspective/21002/index.html
+    
+    I later found this article:
+    https://www.khronos.org/opengl/wiki/GluPerspective_code
+    
+    And while writing this comment, I found this article:
+    https://www.gamedev.net/forums/topic/180495-glfrustum-and-glperspective-difference/
+    
+    CITATION HISTORY:
+    I previously cited nehe's article however discovered the Khronos article
+    and assumed it was a 'standard algorithm' that Nehe had independently
+    reinvented.
+    
+    After watching a video about plagiarism, I thought about it again. I've
+    decided to cite BOTH.
+    
+    To be clear: I based my code on Nehe's code. Credits to him.
+    
+    And, I think I was wrong not to cite it. My apologies, Nehe
+    
+    Q: DOES THIS INTERFERE WITH THE CC0 LICENSE OF THE REPO?
+    
+    A: This is math. You can't own math. Furthermore, this is
+    a completely different programming language, and finally,
+    dude, this is three lines of code.
+*/
+fn inline glPerspective(
+    double fov,
+    double aspect,
+    double zn,
+    double zf
+):
+    double fw
+    double fh
+    fh = tan(PI * fov/360) * zn;
+    fw = aspect * fh;
+    glFrustum(-fw, fw, -fh, fh, zn, zf);
+end
+fn inline glGenLists(uint range)->uint:
+    @inline_C "return glGenLists($range);"
+end
+fn inline glGenTextures(uint n, uint* arr):
+    @inline_C "glGenTextures($n, $arr);"
+end
+
+fn inline glGetBooleanv(
+    uint pname,
+    byte* params
+):
+    @inline_C "glGetBooleanv($pname, $params);"
+end
+fn inline glGetDoublev(
+    uint pname,
+    double* params
+):
+    @inline_C "glGetDoublev($pname, $params);"
+end
+fn inline glGetFloatv(
+    uint pname,
+    float* params
+):
+    @inline_C "glGetFloatv($pname, $params);"
+end
+fn inline glGetIntegerv(
+    uint pname,
+    int* params
+):
+    @inline_C "glGetIntegerv($pname, $params);"
+end
+
+fn inline glGetClipPlane(
+    uint p,
+    double* equa
+):
+    @inline_C "glGetClipPlane($p, $equa);"
+end
+fn inline glGetError()->uint:
+    @inline_C "return glGetError();"
+end
+fn inline glGetLightfv(uint l, uint pname, float* params):
+    @inline_C "glGetLightfv($l, $pname, $params);"
+end
+fn inline glGetLightiv(uint l, uint pname, int* params):
+    @inline_C "glGetLightiv($l, $pname, $params);"
+end
+//target, query, v
+fn inline glGetMapdv(uint l, uint pname, double* params):
+    @inline_C "glGetMapdv($l, $pname, $params);"
+end
+fn inline glGetMapfv(uint l, uint pname, float* params):
+    @inline_C "glGetMapfv($l, $pname, $params);"
+end
+fn inline glGetMapiv(uint l, uint pname, int* params):
+    @inline_C "glGetMapiv($l, $pname, $params);"
+end
+//l is "face"
+fn inline glGetMaterialfv(uint l, uint pname, float* params):
+    @inline_C "glGetMaterialfv($l, $pname, $params);"
+end
+fn inline glGetMaterialiv(uint l, uint pname, int* params):
+    @inline_C "glGetMaterialiv($l, $pname, $params);"
+end
+
+//map, values
+fn inline glGetPixelMapfv(uint l,  float* params):
+    @inline_C "glGetPixelMapfv($l, $params);"
+end
+fn inline glGetPixelMapuiv(uint l, uint* params):
+    @inline_C "glGetPixelMapuiv($l, $params);"
+end
+fn inline glGetPixelMapusv(uint l, ushort* params):
+    @inline_C "glGetPixelMapusv($l, $params);"
+end
+
+fn inline glGetPointerv(uint pname, byte* params):
+    @inline_C "glGetPointerv($pname, (void*)$params);"
+end
+
+fn inline glGetPolygonStipple(byte* mask):
+    @inline_C "glGetPolygonStipple($mask);"
+end
+fn inline glGetString(uint nm)->byte*:
+    @inline_C "return (unsigned char*)glGetString($nm);"
+end
+//target, pname, params
+fn inline glGetTexEnvfv(uint l, uint pname, float* params):
+    @inline_C "glGetTexEnvfv($l, $pname, $params);"
+end
+fn inline glGetTexEnviv(uint l, uint pname, int* params):
+    @inline_C "glGetTexEnviv($l, $pname, $params);"
+end
+//coord, pname, params
+fn inline glGetTexGendv(uint l, uint pname, double* params):
+    @inline_C "glGetTexGendv($l, $pname, $params);"
+end
+fn inline glGetTexGenfv(uint l, uint pname, float* params):
+    @inline_C "glGetTexGenfv($l, $pname, $params);"
+end
+fn inline glGetTexGeniv(uint l, uint pname, int* params):
+    @inline_C "glGetTexGeniv($l, $pname, $params);"
+end
+
+fn inline glGetTexImage(uint tg, int lvl, uint f, uint t, byte* px):
+    @inline_C "glGetTexImage($tg, $lvl, $f, $t, $px);"
+end
+
+fn inline glGetTexLevelParameterfv(uint tg, int lvl, uint pname, float* params):
+    @inline_C "glGetTexLevelParameterfv($tg, $lvl, $pname, $params);"
+end
+fn inline glGetTexLevelParameteriv(uint tg, int lvl, uint pname, int* params):
+    @inline_C "glGetTexLevelParameteriv($tg, $lvl, $pname, $params);"
+end
+
+fn inline glGetTexParameterfv(uint tg, uint pname, float* params):
+    @inline_C "glGetTexParameterfv($tg, $pname, $params);"
+end
+fn inline glGetTexParameteriv(uint tg, uint pname, int* params):
+    @inline_C "glGetTexParameteriv($tg, $pname, $params);"
+end
+fn inline glHint(uint tg, uint md):
+    @inline_C "glHint($tg, $md);"
+end
+fn inline glIndexd(double c):
+    @inline_C "glIndexd($c);"
+end
+fn inline glIndexf(float c):
+    @inline_C "glIndexf($c);"
+end
+fn inline glIndexi(int c):
+    @inline_C "glIndexi($c);"
+end
+fn inline glIndexs(short c):
+    @inline_C "glIndexs($c);"
+end
+fn inline glIndexub(byte c):
+    @inline_C "glIndexub($c);"
+end
+
+fn inline glIndexdv(double* c):
+    @inline_C "glIndexdv($c);"
+end
+fn inline glIndexfv(float* c):
+    @inline_C "glIndexfv($c);"
+end
+fn inline glIndexiv(int* c):
+    @inline_C "glIndexiv($c);"
+end
+fn inline glIndexsv(short* c):
+    @inline_C "glIndexsv($c);"
+end
+fn inline glIndexubv(byte* c):
+    @inline_C "glIndexubv($c);"
+end
+fn inline glIndexMask(uint m):
+    @inline_C "glIndexMask($m);"
+end
+fn inline glIndexPointer(uint t, uint stride, byte* p):
+    @inline_C "glIndexPointer($t, $stride, $p);"
+end
+fn inline glInitNames():
+    @inline_C "glInitNames();"
+end
+fn inline glInterleavedArrays(
+    uint f,
+    uint stride,
+    byte* p
+):
+    @inline_C "glInterleavedArrays($f, $stride, $p);"
+end
+fn inline glIsEnabled(uint cap)->byte:
+    @inline_C "return glIsEnabled($cap);"
+end
+fn inline glIsList(uint cap)->byte:
+    @inline_C "return glIsList($cap);"
+end
+fn inline glIsTexture(uint cap)->byte:
+    @inline_C "return glIsTexture($cap);"
+end
+
+
+fn inline glLightf(uint l, uint pname, float param):
+    @inline_C "glLightf($l, $pname, $param);" 
+end
+fn inline glLighti(uint l, uint pname, int param):
+    @inline_C "glLighti($l, $pname, $param);" 
+end
+fn inline glLightfv(uint l, uint pname, float* param):
+    @inline_C "glLightfv($l, $pname, $param);" 
+end
+fn inline glLightiv(uint l, uint pname, int* param):
+    @inline_C "glLightiv($l, $pname, $param);" 
+end
+
+
+fn inline glLightModelf(uint pname, float param):
+    @inline_C "glLightModelf($pname, $param);" 
+end
+fn inline glLightModeli(uint pname, int param):
+    @inline_C "glLightModeli($pname, $param);" 
+end
+fn inline glLightModelfv(uint pname, float* param):
+    @inline_C "glLightModelfv($pname, $param);" 
+end
+fn inline glLightModeliv(uint pname, int* param):
+    @inline_C "glLightModeliv($pname, $param);" 
+end
+
+fn inline glLineStipple(int factor, ushort pattern):
+    @inline_C "glLineStipple($factor, $pattern);" 
+end
+fn inline glLineWidth(float w):
+    @inline_C "glLineWidth($w);"
+end
+fn inline glListBase(uint b):
+    @inline_C "glListBase($b);"
+end
+fn inline glLoadIdentity():
+    @inline_C "glLoadIdentity();"
+end
+fn inline glLoadMatrixd(double* m):
+    @inline_C "glLoadMatrixd($m);"
+end
+fn inline glLoadMatrixf(float* m):
+    @inline_C "glLoadMatrixf($m);"
+end
+fn inline glLoadName(uint n):
+    @inline_C "glLoadName($n);"
+end
+fn inline glLogicOp(uint n):
+    @inline_C "glLogicOp($n);"
+end
+fn inline glMap1d(
+    uint tg,
+    double  u1,
+    double u2,
+    int stride,
+    int order,
+    double* p
+):
+    @inline_C "glMap1d($tg, $u1, $u2, $stride, $order, $p);"
+end
+fn inline glMap1f(
+    uint tg,
+    float  u1,
+    float u2,
+    int stride,
+    int order,
+    float* p
+):
+    @inline_C "glMap1f($tg, $u1, $u2, $stride, $order, $p);"
+end
+
+fn inline glMap2d(
+    uint tg,
+    double  u1,
+    double u2,
+    int ustride,
+    int uorder,
+    double  v1,
+    double v2,
+    int vstride,
+    int vorder,
+    double* p
+):
+    @inline_C "glMap2d($tg, 
+    $u1, $u2, $ustride, $uorder, 
+    $v1, $v2, $vstride, $vorder, 
+    $p);"
+end
+fn inline glMap2f(
+    uint tg,
+    float  u1,
+    float u2,
+    int ustride,
+    int uorder,    
+    float  v1,
+    float v2,
+    int vstride,
+    int vorder,
+    float* p
+):
+    @inline_C "glMap2f($tg, 
+    $u1, $u2, $ustride, $uorder, 
+    $v1, $v2, $vstride, $vorder, 
+    $p);"
+end
+
+fn inline glMapGrid1d(
+    int un,
+    double u1,
+    double u2
+):
+    @inline_C "glMapGrid1d($un, $u1, $u2);"
+end
+
+fn inline glMapGrid1f(
+    int un,
+    float u1,
+    float u2
+):
+    @inline_C "glMapGrid1f($un, $u1, $u2);"
+end
+
+fn inline glMapGrid2d(
+    int un,
+    double u1,
+    double u2,
+    int vn,
+    double v1,
+    double v2
+):
+    @inline_C "glMapGrid2d($un, $u1, $u2, $vn, $v1, $v2);"
+end
+
+fn inline glMapGrid2f(
+    int un,
+    float u1,
+    float u2,
+    int vn,
+    float v1,
+    float v2
+):
+    @inline_C "glMapGrid2f($un, $u1, $u2, $vn, $v1, $v2);"
+end
+fn inline glMaterialf(uint f, uint pname, float param):
+    @inline_C "glMaterialf($f, $pname, $param);"
+end
+fn inline glMateriali(uint f, uint pname, int param):
+    @inline_C "glMateriali($f, $pname, $param);"
+end
+
+fn inline glMaterialfv(uint f, uint pname, float* param):
+    @inline_C "glMaterialfv($f, $pname, $param);"
+end
+fn inline glMaterialiv(uint f, uint pname, int* param):
+    @inline_C "glMaterialiv($f, $pname, $param);"
+end
+//mode
+fn inline glMatrixMode(uint n):
+    @inline_C "glMatrixMode($n);"
+end
+fn inline glMultMatrixd(double* m):
+    @inline_C "glMultMatrixd($m);"
+end
+fn inline glMultMatrixf(float* m):
+    @inline_C "glMultMatrixf($m);"
+end
+
+fn inline glNewList(uint l, uint m):
+    @inline_C "glNewList($l, $m);"
+end
+
+fn inline glEndList():
+    @inline_C "glEndList();"
+end
+//NORMAL!
+
+fn inline glNormal3bv(sbyte* r):
+    @inline_C "glNormal3bv((GLbyte*)$r);"
+end
+fn inline glNormal3dv(double* r):
+    @inline_C "glNormal3dv($r);"
+end
+fn inline glNormal3fv(f32* r):
+    @inline_C "glNormal3fv($r);"
+end
+fn inline glNormal3iv(int* r):
+    @inline_C "glNormal3iv($r);"
+end
+fn inline glNormal3sv(short* r):
+    @inline_C "glNormal3sv($r);"
+end
+
+
+fn inline glNormal3b(sbyte x, sbyte y, sbyte z):
+    @inline_C "glNormal3b($x,$y,$z);"
+end
+fn inline glNormal3d(double x, double y, double z):
+    @inline_C "glNormal3d($x,$y,$z);"
+end
+fn inline glNormal3f(f32 x, f32 y, f32 z):
+    @inline_C "glNormal3f($x,$y,$z);"
+end
+fn inline glNormal3i(int x, int y, int z):
+    @inline_C "glNormal3i($x,$y,$z);"
+end
+fn inline glNormal3s(short x, short y, short z):
+    @inline_C "glNormal3s($x,$y,$z);"
+end
+fn inline glNormalPointer(uint t, uint stride, byte* p):
+    @inline_C "glNormalPointer($t, $stride, $p);"
+end
+
+fn inline glOrtho(
+    double left,
+    double right,
+    double bottom,
+    double top,
+    double zNear,
+    double zFar
+):
+    @inline_C "glOrtho($left, $right, $bottom, $top, $zNear, $zFar);"
+end
+fn inline glPixelMapfv(
+    uint m,
+    uint msz,
+    float* v
+):
+    @inline_C "glPixelMapfv($m, $msz, $v);"
+end
+
+fn inline glPixelMapuiv(
+    uint m,
+    uint msz,
+    uint* v
+):
+    @inline_C "glPixelMapuiv($m, $msz, $v);"
+end
+
+fn inline glPixelMapusv(
+    uint m,
+    uint msz,
+    ushort* v
+):
+    @inline_C "glPixelMapusv($m, $msz, $v);"
+end
+
+
+fn inline glPixelStoref(
+    uint m,
+    float v
+):
+    @inline_C "glPixelStoref($m, $v);"
+end
+
+fn inline glPixelStorei(
+    uint m,
+    int v
+):
+    @inline_C "glPixelStorei($m, $v);"
+end
+fn inline glPixelTransferf(
+    uint pname,
+    float param
+):
+    @inline_C "glPixelTransferf($pname, $param);"
+end
+fn inline glPixelTransferi(
+    uint pname,
+    int param
+):
+    @inline_C "glPixelTransferi($pname, $param);"
+end
+
+fn inline glPixelZoom(float x, float y):
+    @inline_C "glPixelZoom($x, $y);"
+end
+
+fn inline glPointSize(float sz):
+    @inline_C "glPointSize($sz);"
+end
+fn inline glPolygonMode(uint face, uint mode):
+    @inline_C "glPolygonMode($face, $mode);"
+end
+
+fn inline glPolygonOffset(float factor, float units):
+    @inline_C "glPolygonOffset($factor, $units);"
+end
+fn inline glPolygonStipple(byte* mask):
+    @inline_C "glPolygonStipple($mask);"
+end
+fn inline glPrioritizeTextures(uint n, uint* textures, float* p):
+    @inline_C "glPrioritizeTextures($n, $textures, $p);"
+end
+
+fn inline glPushAttrib(uint mask):
+    @inline_C "glPushAttrib($mask);"
+end
+
+fn inline glPopAttrib():
+    @inline_C "glPopAttrib();"
+end
+
+
+fn inline glPushClientAttrib(uint mask):
+    @inline_C "glPushClientAttrib($mask);"
+end
+
+fn inline glPopClientAttrib():
+    @inline_C "glPopClientAttrib();"
+end
+fn inline glPushMatrix():
+    @inline_C "glPushMatrix();"
+end
+fn inline glPopMatrix():
+    @inline_C "glPopMatrix();"
+end
+fn inline glPushName(uint name):
+    @inline_C "glPushName($name);"
+end
+fn inline glPopName():
+    @inline_C "glPopName();"
+end
+//RASTER POSITION FNS
+fn inline glRasterPos2d(
+    double x,
+    double y
+):
+    @inline_C "glRasterPos2d($x, $y);"
+end
+fn inline glRasterPos2f(
+    float x,
+    float y
+):
+    @inline_C "glRasterPos2f($x, $y);"
+end
+fn inline glRasterPos2i(
+    int x,
+    int y
+):
+    @inline_C "glRasterPos2i($x, $y);"
+end
+fn inline glRasterPos2s(
+    short x,
+    short y
+):
+    @inline_C "glRasterPos2s($x, $y);"
+end
+//3 of 'em
+fn inline glRasterPos3d(
+    double x,
+    double y,
+    double z
+):
+    @inline_C "glRasterPos3d($x, $y, $z);"
+end
+fn inline glRasterPos3f(
+    float x,
+    float y,
+    float z
+):
+    @inline_C "glRasterPos3f($x, $y, $z);"
+end
+fn inline glRasterPos3i(
+    int x,
+    int y,
+    int z
+):
+    @inline_C "glRasterPos3i($x, $y, $z);"
+end
+fn inline glRasterPos3s(
+    short x,
+    short y,
+    short z
+):
+    @inline_C "glRasterPos3s($x, $y, $z);"
+end
+
+fn inline glRasterPos4d(
+    double x,
+    double y,
+    double z,
+    double w
+):
+    @inline_C "glRasterPos4d($x, $y, $z, $w);"
+end
+fn inline glRasterPos4f(
+    float x,
+    float y,
+    float z,
+    float w
+):
+    @inline_C "glRasterPos4f($x, $y, $z, $w);"
+end
+fn inline glRasterPos4i(
+    int x,
+    int y,
+    int z,
+    int w
+):
+    @inline_C "glRasterPos4i($x, $y, $z, $w);"
+end
+fn inline glRasterPos4s(
+    short x,
+    short y,
+    short z,
+    short w
+):
+    @inline_C "glRasterPos4s($x, $y, $z, $w);"
+end
+
+//NOW WITH POINTERS!!!!
+
+
+fn inline glRasterPos2dv(
+    double* x
+):
+    @inline_C "glRasterPos2dv($x);"
+end
+fn inline glRasterPos2fv(
+    float* x,
+):
+    @inline_C "glRasterPos2fv($x);"
+end
+fn inline glRasterPos2iv(
+    int* x,
+):
+    @inline_C "glRasterPos2iv($x);"
+end
+fn inline glRasterPos2sv(
+    short* x,
+):
+    @inline_C "glRasterPos2sv($x);"
+end
+//3 of 'em
+fn inline glRasterPos3dv(
+    double* x,
+):
+    @inline_C "glRasterPos3dv($x);"
+end
+fn inline glRasterPos3fv(
+    float* x,
+):
+    @inline_C "glRasterPos3fv($x);"
+end
+fn inline glRasterPos3iv(
+    int* x,
+):
+    @inline_C "glRasterPos3iv($x);"
+end
+fn inline glRasterPos3sv(
+    short* x,
+):
+    @inline_C "glRasterPos3sv($x);"
+end
+
+fn inline glRasterPos4dv(
+    double* x,
+):
+    @inline_C "glRasterPos4dv($x);"
+end
+fn inline glRasterPos4fv(
+    float* x,
+):
+    @inline_C "glRasterPos4fv($x);"
+end
+fn inline glRasterPos4iv(
+    int* x,
+):
+    @inline_C "glRasterPos4iv($x);"
+end
+fn inline glRasterPos4sv(
+    short* x,
+):
+    @inline_C "glRasterPos4sv($x);"
+end
+fn inline glReadBuffer(uint mode):
+    @inline_C "glReadBuffer($mode);"
+end
+fn inline glReadPixels(
+    int x, int y, uint w, uint h,
+    uint f, uint t, byte* px
+):
+    @inline_C "glReadPixels($x, $y, $w, $h, $f, $t, $px);"
+end
+fn inline glRectd(double x1, double y1, double x2, double y2):
+    @inline_C "glRectd($x1, $y1, $x2, $y2);"
+end
+fn inline glRectf(float x1, float y1, float x2, float y2):
+    @inline_C "glRectf($x1, $y1, $x2, $y2);"
+end
+fn inline glRecti(int x1, int y1, int x2, int y2):
+    @inline_C "glRecti($x1, $y1, $x2, $y2);"
+end
+fn inline glRects(short x1, short y1, short x2, short y2):
+    @inline_C "glRects($x1, $y1, $x2, $y2);"
+end
+fn inline glRectdv(double* v1, double* v2):
+    @inline_C "glRectdv($v1, $v2);"
+end
+fn inline glRectfv(float* v1, float* v2):
+    @inline_C "glRectfv($v1, $v2);"
+end
+
+fn inline glRectiv(int* v1, int* v2):
+    @inline_C "glRectiv($v1, $v2);"
+end
+fn inline glRectsv(short* v1, short* v2):
+    @inline_C "glRectsv($v1, $v2);"
+end
+
+fn inline glRenderMode(uint mode):
+    @inline_C "glRenderMode($mode);"
+end
+//angle, x,y,z
+fn inline glRotated(double angle, double x, double y, double z):
+    @inline_C "glRotated($angle, $x, $y, $z);"
+end
+
+fn inline glRotatef(float angle, float x, float y, float z):
+    @inline_C "glRotatef($angle, $x, $y, $z);"
+end
+
+fn inline glScaled(double x, double y, double z):
+    @inline_C "glScaled($x, $y, $z);"
+end
+
+fn inline glScalef(float x, float y, float z):
+    @inline_C "glScalef($x, $y, $z);"
+end
+fn inline glScissor(int x, int y, uint w, uint h):
+    @inline_C "glScissor($x, $y, $w, $h);"
+end
+fn inline glSelectBuffer(uint sz, uint* buf):
+    @inline_C "glSelectBuffer($sz, $buf);"
+end
+
+fn inline glShadeModel(uint mode):
+    @inline_C "glShadeModel($mode);"
+end
+fn inline glStencilFunc(uint funk, int ref, uint mask):
+    @inline_C "glStencilFunc($funk, $ref, $mask);"
+end
+fn inline glStencilMask(uint mask):
+    @inline_C "glStencilMask($mask);"
+end
+fn inline glStencilOp(uint fail, uint zfail, uint zpass):
+    @inline_C "glStencilOp($fail, $zfail, $zpass);"
+end
+
+
+fn inline glTexCoord1d(double s):
+    @inline_C "glTexCoord1d($s);"
+end
+fn inline glTexCoord1f(float s):
+    @inline_C "glTexCoord1f($s);"
+end
+fn inline glTexCoord1i(int s):
+    @inline_C "glTexCoord1i($s);"
+end
+fn inline glTexCoord1s(short s):
+    @inline_C "glTexCoord1s($s);"
+end
+
+fn inline glTexCoord2d(double s, double t):
+    @inline_C "glTexCoord2d($s, $t);"
+end
+fn inline glTexCoord2f(float s, float t):
+    @inline_C "glTexCoord2f($s, $t);"
+end
+fn inline glTexCoord2i(int s, int t):
+    @inline_C "glTexCoord2i($s, $t);"
+end
+fn inline glTexCoord2s(short s, short t):
+    @inline_C "glTexCoord2s($s, $t);"
+end
+
+
+fn inline glTexCoord3d(double s, double t, double r):
+    @inline_C "glTexCoord3d($s, $t, $r);"
+end
+fn inline glTexCoord3f(float s, float t, float r):
+    @inline_C "glTexCoord3f($s, $t, $r);"
+end
+fn inline glTexCoord3i(int s, int t, int r):
+    @inline_C "glTexCoord3i($s, $t, $r);"
+end
+fn inline glTexCoord3s(short s, short t, short r):
+    @inline_C "glTexCoord3s($s, $t, $r);"
+end
+
+
+
+fn inline glTexCoord4d(double s, double t, double r, double q):
+    @inline_C "glTexCoord4d($s, $t, $r, $q);"
+end
+fn inline glTexCoord4f(float s, float t, float r, float q):
+    @inline_C "glTexCoord4f($s, $t, $r, $q);"
+end
+fn inline glTexCoord4i(int s, int t, int r, int q):
+    @inline_C "glTexCoord4i($s, $t, $r, $q);"
+end
+fn inline glTexCoord4s(short s, short t, short r, short q):
+    @inline_C "glTexCoord4s($s, $t, $r, $q);"
+end
+
+
+
+//pointer versions...
+
+fn inline glTexCoord1dv(double* s):
+    @inline_C "glTexCoord1dv($s);"
+end
+fn inline glTexCoord1fv(float* s):
+    @inline_C "glTexCoord1fv($s);"
+end
+fn inline glTexCoord1iv(int* s):
+    @inline_C "glTexCoord1iv($s);"
+end
+fn inline glTexCoord1sv(short* s):
+    @inline_C "glTexCoord1sv($s);"
+end
+
+fn inline glTexCoord2dv(double* s):
+    @inline_C "glTexCoord2dv($s);"
+end
+fn inline glTexCoord2fv(float* s):
+    @inline_C "glTexCoord2fv($s);"
+end
+fn inline glTexCoord2iv(int* s):
+    @inline_C "glTexCoord2iv($s);"
+end
+fn inline glTexCoord2sv(short* s):
+    @inline_C "glTexCoord2sv($s);"
+end
+
+fn inline glTexCoord3dv(double* s):
+    @inline_C "glTexCoord3dv($s);"
+end
+fn inline glTexCoord3fv(float* s):
+    @inline_C "glTexCoord3fv($s);"
+end
+fn inline glTexCoord3iv(int* s):
+    @inline_C "glTexCoord3iv($s);"
+end
+fn inline glTexCoord3sv(short* s):
+    @inline_C "glTexCoord3sv($s);"
+end
+
+
+fn inline glTexCoord4dv(double* s):
+    @inline_C "glTexCoord4dv($s);"
+end
+fn inline glTexCoord4fv(float* s):
+    @inline_C "glTexCoord4fv($s);"
+end
+fn inline glTexCoord4iv(int* s):
+    @inline_C "glTexCoord4iv($s);"
+end
+fn inline glTexCoord4sv(short* s):
+    @inline_C "glTexCoord4sv($s);"
+end
+fn inline glTexCoordPointer(
+    int sz,
+    uint t,
+    uint stride,
+    byte* p
+):
+    @inline_C "glTexCoordPointer($sz, $t, $stride, $p);"
+end
+fn inline glTexEnvf(uint tg, uint pname, float param):
+    @inline_C "glTexEnvf($tg, $pname, $param);"
+end
+fn inline glTexEnvi(uint tg, uint pname, int param):
+    @inline_C "glTexEnvi($tg, $pname, $param);"
+end
+
+fn inline glTexEnvfv(uint tg, uint pname, float* param):
+    @inline_C "glTexEnvfv($tg, $pname, $param);"
+end
+fn inline glTexEnviv(uint tg, uint pname, int* param):
+    @inline_C "glTexEnviv($tg, $pname, $param);"
+end
+
+fn inline glTexGend(uint coord, uint pname, double param):
+    @inline_C "glTexGend($coord, $pname, $param);"
+end
+fn inline glTexGenf(uint coord, uint pname, f32 param):
+    @inline_C "glTexGenf($coord, $pname, $param);"
+end
+fn inline glTexGeni(uint coord, uint pname, int param):
+    @inline_C "glTexGeni($coord, $pname, $param);"
+end
+
+
+fn inline glTexGendv(uint coord, uint pname, double* param):
+    @inline_C "glTexGendv($coord, $pname, $param);"
+end
+fn inline glTexGenfv(uint coord, uint pname, f32* param):
+    @inline_C "glTexGenfv($coord, $pname, $param);"
+end
+fn inline glTexGeniv(uint coord, uint pname, int* param):
+    @inline_C "glTexGeniv($coord, $pname, $param);"
+end
+
+fn inline glTexImage1D(
+    uint tg,
+    int lvl,
+    int internalfmt,
+    uint width,
+    int border,
+    uint f,
+    uint t,
+    byte* px
+):
+    @inline_C "glTexImage1D($tg, $lvl, $internalfmt, $width, $border, $f, $t, $px);"
+end
+
+fn inline glTexImage2D(
+    uint tg,
+    int lvl,
+    int internalfmt,
+    uint width,
+    uint height,
+    int border,
+    uint f,
+    uint t,
+    byte* px
+):
+    @inline_C "glTexImage2D($tg, $lvl, $internalfmt, $width, $height, $border, $f, $t, $px);"
+end
+
+fn inline glTexParameterf(
+    uint tg,
+    uint pname,
+    float param
+):
+    @inline_C "glTexParameterf($tg, $pname, $param);"
+end
+fn inline glTexParameteri(
+    uint tg,
+    uint pname,
+    int param
+):
+    @inline_C "glTexParameteri($tg, $pname, $param);"
+end
+
+
+fn inline glTexParameterfv(
+    uint tg,
+    uint pname,
+    float* param
+):
+    @inline_C "glTexParameterfv($tg, $pname, $param);"
+end
+fn inline glTexParameteriv(
+    uint tg,
+    uint pname,
+    int* param
+):
+    @inline_C "glTexParameteriv($tg, $pname, $param);"
+end
+fn inline glTexSubImage1D(
+    uint tg,
+    int lvl,
+    int xoff,
+    uint w,
+    uint f,
+    uint t,
+    byte* p
+):
+    @inline_C "glTexSubImage1D($tg, $lvl, $xoff, $w, $f, $t, $p);"
+end
+fn inline glTexSubImage2D(
+    uint tg,
+    int lvl,
+    int xoff,
+    int yoff,
+    uint w,
+    uint h,
+    uint f,
+    uint t,
+    byte* p
+):
+    @inline_C "glTexSubImage2D($tg, $lvl, $xoff, $yoff, $w, $h, $f, $t, $p);"
+end
+fn inline glTranslated(double x, double y, double z):
+    @inline_C "glTranslated($x, $y, $z);"
+end
+fn inline glTranslatef(float x, float y, float z):
+    @inline_C "glTranslatef($x, $y, $z);"
+end
+//Vertex2D
+fn inline glVertex2d(
+    double x,
+    double y
+):
+    @inline_C "glVertex2d($x, $y);"
+end
+fn inline glVertex2f(
+    float x,
+    float y
+):
+    @inline_C "glVertex2f($x, $y);"
+end
+fn inline glVertex2i(
+    int x,
+    int y
+):
+    @inline_C "glVertex2i($x, $y);"
+end
+fn inline glVertex2s(
+    short x,
+    short y
+):
+    @inline_C "glVertex2s($x, $y);"
+end
+//3D
+fn inline glVertex3d(
+    double x,
+    double y,
+    double z
+):
+    @inline_C "glVertex3d($x, $y, $z);"
+end
+fn inline glVertex3f(
+    float x,
+    float y,
+    float z
+):
+    @inline_C "glVertex3f($x, $y, $z);"
+end
+fn inline glVertex3i(
+    int x,
+    int y,
+    int z
+):
+    @inline_C "glVertex3i($x, $y, $z);"
+end
+fn inline glVertex3s(
+    short x,
+    short y,
+    short z
+):
+    @inline_C "glVertex3s($x, $y, $z);"
+end
+//4D
+fn inline glVertex4d(
+    double x,
+    double y,
+    double z,
+    double w
+):
+    @inline_C "glVertex4d($x, $y, $z, $w);"
+end
+fn inline glVertex4f(
+    float x,
+    float y,
+    float z,
+    float w
+):
+    @inline_C "glVertex4f($x, $y, $z, $w);"
+end
+fn inline glVertex4i(
+    int x,
+    int y,
+    int z,
+    int w
+):
+    @inline_C "glVertex4i($x, $y, $z, $w);"
+end
+fn inline glVertex4s(
+    short x,
+    short y,
+    short z,
+    short w
+):
+    @inline_C "glVertex4s($x, $y, $z, $w);"
+end
+//POINTER VERSIONS....
+//2
+fn inline glVertex2dv(
+    double* v
+):
+    @inline_C "glVertex2dv($v);"
+end
+fn inline glVertex2fv(
+    float* v
+):
+    @inline_C "glVertex2fv($v);"
+end
+
+fn inline glVertex2iv(
+    int* v
+):
+    @inline_C "glVertex2iv($v);"
+end
+fn inline glVertex2sv(
+    short* v
+):
+    @inline_C "glVertex2sv($v);"
+end
+//3
+fn inline glVertex3dv(
+    double* v
+):
+    @inline_C "glVertex3dv($v);"
+end
+fn inline glVertex3fv(
+    float* v
+):
+    @inline_C "glVertex3fv($v);"
+end
+
+fn inline glVertex3iv(
+    int* v
+):
+    @inline_C "glVertex3iv($v);"
+end
+fn inline glVertex3sv(
+    short* v
+):
+    @inline_C "glVertex3sv($v);"
+end
+//4
+fn inline glVertex4dv(
+    double* v
+):
+    @inline_C "glVertex4dv($v);"
+end
+fn inline glVertex4fv(
+    float* v
+):
+    @inline_C "glVertex4fv($v);"
+end
+
+fn inline glVertex4iv(
+    int* v
+):
+    @inline_C "glVertex4iv($v);"
+end
+fn inline glVertex4sv(
+    short* v
+):
+    @inline_C "glVertex4sv($v);"
+end
+fn inline glVertexPointer(
+    int sz,
+    uint t,
+    uint stride,
+    byte* p
+):
+    @inline_C "glVertexPointer($sz, $t, $stride, $p);"
+end
+fn inline glViewport(
+    int x,
+    int y,
+    uint w,
+    uint h
+):
+    @inline_C "glViewport($x, $y, $w, $h);"
+end
+
+@wrap_c_constant uint GL_2D;
+@wrap_c_constant uint GL_3D;
+@wrap_c_constant uint GL_3D_COLOR;
+@wrap_c_constant uint GL_3D_COLOR_TEXTURE;
+@wrap_c_constant uint GL_4D_COLOR_TEXTURE;
+@wrap_c_constant uint GL_2_BYTES;
+@wrap_c_constant uint GL_3_BYTES;
+@wrap_c_constant uint GL_4_BYTES;
+@wrap_c_constant uint GL_ACCUM;
+@wrap_c_constant uint GL_ACCUM_ALPHA_BITS;
+@wrap_c_constant uint GL_ACCUM_BLUE_BITS;
+@wrap_c_constant uint GL_ACCUM_BUFFER_BIT;
+@wrap_c_constant uint GL_ACCUM_CLEAR_VALUE;
+@wrap_c_constant uint GL_ACCUM_GREEN_BITS;
+@wrap_c_constant uint GL_ACCUM_RED_BITS;
+@wrap_c_constant uint GL_ADD;
+@wrap_c_constant uint GL_ALL_ATTRIB_BITS;
+@wrap_c_constant uint GL_ALPHA;
+@wrap_c_constant uint GL_ALPHA_BIAS;
+@wrap_c_constant uint GL_ALPHA_BITS;
+@wrap_c_constant uint GL_ALPHA_SCALE;
+@wrap_c_constant uint GL_ALPHA_TEST;
+@wrap_c_constant uint GL_ALPHA_TEST_FUNC;
+@wrap_c_constant uint GL_ALPHA_TEST_REF;
+@wrap_c_constant uint GL_ALWAYS;
+@wrap_c_constant uint GL_AMBIENT;
+@wrap_c_constant uint GL_AMBIENT_AND_DIFFUSE;
+@wrap_c_constant uint GL_AND;
+@wrap_c_constant uint GL_AND_INVERTED;
+@wrap_c_constant uint GL_AND_REVERSE;
+@wrap_c_constant uint GL_ATTRIB_STACK_DEPTH;
+@wrap_c_constant uint GL_AUTO_NORMAL;
+@wrap_c_constant uint GL_AUX0;
+@wrap_c_constant uint GL_AUX1;
+@wrap_c_constant uint GL_AUX2;
+@wrap_c_constant uint GL_AUX3;
+@wrap_c_constant uint GL_AUX_BUFFERS;
+@wrap_c_constant uint GL_BACK;
+@wrap_c_constant uint GL_BACK_LEFT;
+@wrap_c_constant uint GL_BACK_RIGHT;
+@wrap_c_constant uint GL_BITMAP;
+@wrap_c_constant uint GL_BITMAP_TOKEN;
+@wrap_c_constant uint GL_BLEND;
+@wrap_c_constant uint GL_BLEND_DST;
+@wrap_c_constant uint GL_BLEND_SRC;
+@wrap_c_constant uint GL_BLUE;
+@wrap_c_constant uint GL_BLUE_BIAS;
+@wrap_c_constant uint GL_BLUE_BITS;
+@wrap_c_constant uint GL_BLUE_SCALE;
+@wrap_c_constant uint GL_BYTE;
+@wrap_c_constant uint GL_CCW;
+@wrap_c_constant uint GL_CLAMP;
+@wrap_c_constant uint GL_CLEAR;
+@wrap_c_constant uint GL_CLIP_PLANE0;
+@wrap_c_constant uint GL_CLIP_PLANE1;
+@wrap_c_constant uint GL_CLIP_PLANE2;
+@wrap_c_constant uint GL_CLIP_PLANE3;
+@wrap_c_constant uint GL_CLIP_PLANE4;
+@wrap_c_constant uint GL_CLIP_PLANE5;
+@wrap_c_constant uint GL_COEFF;
+@wrap_c_constant uint GL_COLOR;
+@wrap_c_constant uint GL_COLOR_BUFFER_BIT;
+@wrap_c_constant uint GL_COLOR_CLEAR_VALUE;
+@wrap_c_constant uint GL_COLOR_INDEX;
+@wrap_c_constant uint GL_COLOR_INDEXES;
+@wrap_c_constant uint GL_COLOR_MATERIAL;
+@wrap_c_constant uint GL_COLOR_MATERIAL_FACE;
+@wrap_c_constant uint GL_COLOR_MATERIAL_PARAMETER;
+@wrap_c_constant uint GL_COLOR_WRITEMASK;
+@wrap_c_constant uint GL_COMPILE;
+@wrap_c_constant uint GL_COMPILE_AND_EXECUTE;
+@wrap_c_constant uint GL_CONSTANT_ATTENUATION;
+@wrap_c_constant uint GL_COPY;
+@wrap_c_constant uint GL_COPY_INVERTED;
+@wrap_c_constant uint GL_COPY_PIXEL_TOKEN;
+@wrap_c_constant uint GL_CULL_FACE;
+@wrap_c_constant uint GL_CULL_FACE_MODE;
+@wrap_c_constant uint GL_CURRENT_BIT;
+@wrap_c_constant uint GL_CURRENT_COLOR;
+@wrap_c_constant uint GL_CURRENT_INDEX;
+@wrap_c_constant uint GL_CURRENT_NORMAL;
+@wrap_c_constant uint GL_CURRENT_RASTER_COLOR;
+@wrap_c_constant uint GL_CURRENT_RASTER_INDEX;
+@wrap_c_constant uint GL_CURRENT_RASTER_POSITION;
+@wrap_c_constant uint GL_CURRENT_RASTER_POSITION_VALID;
+@wrap_c_constant uint GL_CURRENT_RASTER_TEXTURE_COORDS;
+@wrap_c_constant uint GL_CURRENT_TEXTURE_COORDS;
+@wrap_c_constant uint GL_CW;
+@wrap_c_constant uint GL_DECAL;
+@wrap_c_constant uint GL_DECR;
+@wrap_c_constant uint GL_DEPTH;
+@wrap_c_constant uint GL_DEPTH_BIAS;
+@wrap_c_constant uint GL_DEPTH_BITS;
+@wrap_c_constant uint GL_DEPTH_BUFFER_BIT;
+@wrap_c_constant uint GL_DEPTH_CLEAR_VALUE;
+@wrap_c_constant uint GL_DEPTH_COMPONENT;
+@wrap_c_constant uint GL_DEPTH_FUNC;
+@wrap_c_constant uint GL_DEPTH_RANGE;
+@wrap_c_constant uint GL_DEPTH_SCALE;
+@wrap_c_constant uint GL_DEPTH_TEST;
+@wrap_c_constant uint GL_DEPTH_WRITEMASK;
+@wrap_c_constant uint GL_DIFFUSE;
+@wrap_c_constant uint GL_DITHER;
+@wrap_c_constant uint GL_DOMAIN;
+@wrap_c_constant uint GL_DONT_CARE;
+@wrap_c_constant uint GL_DOUBLEBUFFER;
+@wrap_c_constant uint GL_DRAW_BUFFER;
+@wrap_c_constant uint GL_DRAW_PIXEL_TOKEN;
+@wrap_c_constant uint GL_DST_ALPHA;
+@wrap_c_constant uint GL_DST_COLOR;
+@wrap_c_constant uint GL_EDGE_FLAG;
+@wrap_c_constant uint GL_EMISSION;
+@wrap_c_constant uint GL_ENABLE_BIT;
+@wrap_c_constant uint GL_EQUAL;
+@wrap_c_constant uint GL_EQUIV;
+@wrap_c_constant uint GL_EVAL_BIT;
+@wrap_c_constant uint GL_EXP;
+@wrap_c_constant uint GL_EXP2;
+@wrap_c_constant uint GL_EXTENSIONS;
+@wrap_c_constant uint GL_EYE_LINEAR;
+@wrap_c_constant uint GL_EYE_PLANE;
+@wrap_c_constant uint GL_FALSE;
+@wrap_c_constant uint GL_FASTEST;
+@wrap_c_constant uint GL_FEEDBACK;
+@wrap_c_constant uint GL_FILL;
+@wrap_c_constant uint GL_FLAT;
+@wrap_c_constant uint GL_FLOAT;
+@wrap_c_constant uint GL_FOG;
+@wrap_c_constant uint GL_FOG_BIT;
+@wrap_c_constant uint GL_FOG_COLOR;
+@wrap_c_constant uint GL_FOG_DENSITY;
+@wrap_c_constant uint GL_FOG_END;
+@wrap_c_constant uint GL_FOG_HINT;
+@wrap_c_constant uint GL_FOG_INDEX;
+@wrap_c_constant uint GL_FOG_MODE;
+@wrap_c_constant uint GL_FOG_START;
+@wrap_c_constant uint GL_FRONT;
+@wrap_c_constant uint GL_FRONT_AND_BACK;
+@wrap_c_constant uint GL_FRONT_FACE;
+@wrap_c_constant uint GL_FRONT_LEFT;
+@wrap_c_constant uint GL_FRONT_RIGHT;
+@wrap_c_constant uint GL_GEQUAL;
+@wrap_c_constant uint GL_GREATER;
+@wrap_c_constant uint GL_GREEN;
+@wrap_c_constant uint GL_GREEN_BIAS;
+@wrap_c_constant uint GL_GREEN_BITS;
+@wrap_c_constant uint GL_GREEN_SCALE;
+@wrap_c_constant uint GL_HINT_BIT;
+@wrap_c_constant uint GL_INCR;
+@wrap_c_constant uint GL_INDEX_BITS;
+@wrap_c_constant uint GL_INDEX_CLEAR_VALUE;
+@wrap_c_constant uint GL_INDEX_MODE;
+@wrap_c_constant uint GL_INDEX_OFFSET;
+@wrap_c_constant uint GL_INDEX_SHIFT;
+@wrap_c_constant uint GL_INDEX_WRITEMASK;
+@wrap_c_constant uint GL_INT;
+@wrap_c_constant uint GL_INVALID_ENUM;
+@wrap_c_constant uint GL_INVALID_OPERATION;
+@wrap_c_constant uint GL_INVALID_VALUE;
+@wrap_c_constant uint GL_INVERT;
+@wrap_c_constant uint GL_KEEP;
+@wrap_c_constant uint GL_LEFT;
+@wrap_c_constant uint GL_LEQUAL;
+@wrap_c_constant uint GL_LESS;
+@wrap_c_constant uint GL_LIGHT0;
+@wrap_c_constant uint GL_LIGHT1;
+@wrap_c_constant uint GL_LIGHT2;
+@wrap_c_constant uint GL_LIGHT3;
+@wrap_c_constant uint GL_LIGHT4;
+@wrap_c_constant uint GL_LIGHT5;
+@wrap_c_constant uint GL_LIGHT6;
+@wrap_c_constant uint GL_LIGHT7;
+@wrap_c_constant uint GL_LIGHTING;
+@wrap_c_constant uint GL_LIGHTING_BIT;
+@wrap_c_constant uint GL_LIGHT_MODEL_AMBIENT;
+@wrap_c_constant uint GL_LIGHT_MODEL_LOCAL_VIEWER;
+@wrap_c_constant uint GL_LIGHT_MODEL_TWO_SIDE;
+@wrap_c_constant uint GL_LINE;
+@wrap_c_constant uint GL_LINEAR;
+@wrap_c_constant uint GL_LINEAR_ATTENUATION;
+@wrap_c_constant uint GL_LINEAR_MIPMAP_LINEAR;
+@wrap_c_constant uint GL_LINEAR_MIPMAP_NEAREST;
+@wrap_c_constant uint GL_LINES;
+@wrap_c_constant uint GL_LINE_BIT;
+@wrap_c_constant uint GL_LINE_LOOP;
+@wrap_c_constant uint GL_LINE_RESET_TOKEN;
+@wrap_c_constant uint GL_LINE_SMOOTH;
+@wrap_c_constant uint GL_LINE_SMOOTH_HINT;
+@wrap_c_constant uint GL_LINE_STIPPLE;
+@wrap_c_constant uint GL_LINE_STIPPLE_PATTERN;
+@wrap_c_constant uint GL_LINE_STIPPLE_REPEAT;
+@wrap_c_constant uint GL_LINE_STRIP;
+@wrap_c_constant uint GL_LINE_TOKEN;
+@wrap_c_constant uint GL_LINE_WIDTH;
+@wrap_c_constant uint GL_LINE_WIDTH_GRANULARITY;
+@wrap_c_constant uint GL_LINE_WIDTH_RANGE;
+@wrap_c_constant uint GL_LIST_BASE;
+@wrap_c_constant uint GL_LIST_BIT;
+@wrap_c_constant uint GL_LIST_INDEX;
+@wrap_c_constant uint GL_LIST_MODE;
+@wrap_c_constant uint GL_LOAD;
+@wrap_c_constant uint GL_LOGIC_OP;
+@wrap_c_constant uint GL_LOGIC_OP_MODE;
+@wrap_c_constant uint GL_LUMINANCE;
+@wrap_c_constant uint GL_LUMINANCE_ALPHA;
+@wrap_c_constant uint GL_MAP1_COLOR_4;
+@wrap_c_constant uint GL_MAP1_GRID_DOMAIN;
+@wrap_c_constant uint GL_MAP1_GRID_SEGMENTS;
+@wrap_c_constant uint GL_MAP1_INDEX;
+@wrap_c_constant uint GL_MAP1_NORMAL;
+@wrap_c_constant uint GL_MAP1_TEXTURE_COORD_1;
+@wrap_c_constant uint GL_MAP1_TEXTURE_COORD_2;
+@wrap_c_constant uint GL_MAP1_TEXTURE_COORD_3;
+@wrap_c_constant uint GL_MAP1_TEXTURE_COORD_4;
+@wrap_c_constant uint GL_MAP1_VERTEX_3;
+@wrap_c_constant uint GL_MAP1_VERTEX_4;
+@wrap_c_constant uint GL_MAP2_COLOR_4;
+@wrap_c_constant uint GL_MAP2_GRID_DOMAIN;
+@wrap_c_constant uint GL_MAP2_GRID_SEGMENTS;
+@wrap_c_constant uint GL_MAP2_INDEX;
+@wrap_c_constant uint GL_MAP2_NORMAL;
+@wrap_c_constant uint GL_MAP2_TEXTURE_COORD_1;
+@wrap_c_constant uint GL_MAP2_TEXTURE_COORD_2;
+@wrap_c_constant uint GL_MAP2_TEXTURE_COORD_3;
+@wrap_c_constant uint GL_MAP2_TEXTURE_COORD_4;
+@wrap_c_constant uint GL_MAP_COLOR;
+@wrap_c_constant uint GL_MAP_STENCIL;
+@wrap_c_constant uint GL_MATRIX_MODE;
+@wrap_c_constant uint GL_MAX_ATTRIB_STACK_DEPTH;
+@wrap_c_constant uint GL_MAX_CLIP_PLANES;
+@wrap_c_constant uint GL_MAX_EVAL_ORDER;
+@wrap_c_constant uint GL_MAX_LIGHTS;
+@wrap_c_constant uint GL_MAX_LIST_NESTING;
+@wrap_c_constant uint GL_MAX_MODELVIEW_STACK_DEPTH;
+@wrap_c_constant uint GL_MAX_NAME_STACK_DEPTH;
+@wrap_c_constant uint GL_MAX_PIXEL_MAP_TABLE;
+@wrap_c_constant uint GL_MAX_PROJECTION_STACK_DEPTH;
+@wrap_c_constant uint GL_MAX_TEXTURE_SIZE;
+@wrap_c_constant uint GL_MAX_TEXTURE_STACK_DEPTH;
+@wrap_c_constant uint GL_MAX_VIEWPORT_DIMS;
+@wrap_c_constant uint GL_MODELVIEW;
+@wrap_c_constant uint GL_MODELVIEW_MATRIX;
+@wrap_c_constant uint GL_MODELVIEW_STACK_DEPTH;
+@wrap_c_constant uint GL_MODULATE;
+@wrap_c_constant uint GL_MULT;
+@wrap_c_constant uint GL_NAME_STACK_DEPTH;
+@wrap_c_constant uint GL_NAND;
+@wrap_c_constant uint GL_NEAREST;
+@wrap_c_constant uint GL_NEAREST_MIPMAP_LINEAR;
+@wrap_c_constant uint GL_NEAREST_MIPMAP_NEAREST;
+@wrap_c_constant uint GL_NEVER;
+@wrap_c_constant uint GL_NICEST;
+@wrap_c_constant uint GL_NONE;
+@wrap_c_constant uint GL_NOOP;
+@wrap_c_constant uint GL_NOR;
+@wrap_c_constant uint GL_NORMALIZE;
+@wrap_c_constant uint GL_NOTEQUAL;
+@wrap_c_constant uint GL_NO_ERROR;
+@wrap_c_constant uint GL_OBJECT_LINEAR;
+@wrap_c_constant uint GL_OBJECT_PLANE;
+@wrap_c_constant uint GL_ONE;
+@wrap_c_constant uint GL_ONE_MINUS_DST_ALPHA;
+@wrap_c_constant uint GL_ONE_MINUS_DST_COLOR;
+@wrap_c_constant uint GL_ONE_MINUS_SRC_ALPHA;
+@wrap_c_constant uint GL_ONE_MINUS_SRC_COLOR;
+@wrap_c_constant uint GL_OR;
+@wrap_c_constant uint GL_OR_INVERTED;
+@wrap_c_constant uint GL_OR_REVERSE;
+@wrap_c_constant uint GL_ORDER;
+@wrap_c_constant uint GL_OUT_OF_MEMORY;
+@wrap_c_constant uint GL_PACK_ALIGNMENT;
+@wrap_c_constant uint GL_PACK_LSB_FIRST;
+@wrap_c_constant uint GL_PACK_ROW_LENGTH;
+@wrap_c_constant uint GL_PACK_SKIP_PIXELS;
+@wrap_c_constant uint GL_PACK_SKIP_ROWS;
+@wrap_c_constant uint GL_PACK_SWAP_BYTES;
+@wrap_c_constant uint GL_PASS_THROUGH_TOKEN;
+@wrap_c_constant uint GL_PERSPECTIVE_CORRECTION_HINT;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_I;
+@wrap_c_constant uint GL_PIXEL_MAP_S_TO_S;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_R;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_G;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_B;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_A;
+@wrap_c_constant uint GL_PIXEL_MAP_R_TO_R;
+@wrap_c_constant uint GL_PIXEL_MAP_G_TO_G;
+@wrap_c_constant uint GL_PIXEL_MAP_B_TO_B;
+@wrap_c_constant uint GL_PIXEL_MAP_A_TO_A;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_I_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_S_TO_S_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_R_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_G_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_B_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_I_TO_A_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_R_TO_R_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_G_TO_G_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_B_TO_B_SIZE;
+@wrap_c_constant uint GL_PIXEL_MAP_A_TO_A_SIZE;
+@wrap_c_constant uint GL_PIXEL_MODE_BIT;
+@wrap_c_constant uint GL_POINT;
+@wrap_c_constant uint GL_POINTS;
+@wrap_c_constant uint GL_POINT_BIT;
+@wrap_c_constant uint GL_POINT_SIZE;
+@wrap_c_constant uint GL_POINT_SIZE_GRANULARITY;
+@wrap_c_constant uint GL_POINT_SIZE_RANGE;
+@wrap_c_constant uint GL_POINT_SMOOTH;
+@wrap_c_constant uint GL_POINT_SMOOTH_HINT;
+@wrap_c_constant uint GL_POINT_TOKEN;
+@wrap_c_constant uint GL_POLYGON;
+@wrap_c_constant uint GL_POLYGON_BIT;
+@wrap_c_constant uint GL_POLYGON_MODE;
+@wrap_c_constant uint GL_POLYGON_SMOOTH;
+@wrap_c_constant uint GL_POLYGON_SMOOTH_HINT;
+@wrap_c_constant uint GL_POLYGON_STIPPLE;
+@wrap_c_constant uint GL_POLYGON_STIPPLE_BIT;
+@wrap_c_constant uint GL_POLYGON_TOKEN;
+@wrap_c_constant uint GL_POSITION;
+@wrap_c_constant uint GL_PROJECTION;
+@wrap_c_constant uint GL_PROJECTION_MATRIX;
+@wrap_c_constant uint GL_PROJECTION_STACK_DEPTH;
+@wrap_c_constant uint GL_Q;
+@wrap_c_constant uint GL_QUADRATIC_ATTENUATION;
+@wrap_c_constant uint GL_QUADS;
+@wrap_c_constant uint GL_QUAD_STRIP;
+@wrap_c_constant uint GL_R;
+@wrap_c_constant uint GL_READ_BUFFER;
+@wrap_c_constant uint GL_RED;
+@wrap_c_constant uint GL_RED_BIAS;
+@wrap_c_constant uint GL_RED_BITS;
+@wrap_c_constant uint GL_RED_SCALE;
+@wrap_c_constant uint GL_RENDER;
+@wrap_c_constant uint GL_RENDERER;
+@wrap_c_constant uint GL_RENDER_MODE;
+@wrap_c_constant uint GL_REPEAT;
+@wrap_c_constant uint GL_REPLACE;
+@wrap_c_constant uint GL_RETURN;
+@wrap_c_constant uint GL_RGB;
+@wrap_c_constant uint GL_RGBA;
+@wrap_c_constant uint GL_RGBA_MODE;
+@wrap_c_constant uint GL_RIGHT;
+@wrap_c_constant uint GL_S;
+@wrap_c_constant uint GL_SCISSOR_BIT;
+@wrap_c_constant uint GL_SCISSOR_BOX;
+@wrap_c_constant uint GL_SCISSOR_TEST;
+@wrap_c_constant uint GL_SELECT;
+@wrap_c_constant uint GL_SET;
+@wrap_c_constant uint GL_SHININESS;
+@wrap_c_constant uint GL_SHADE_MODEL;
+@wrap_c_constant uint GL_SHORT;
+@wrap_c_constant uint GL_SMOOTH;
+@wrap_c_constant uint GL_SPECULAR;
+@wrap_c_constant uint GL_SPHERE_MAP;
+@wrap_c_constant uint GL_SPOT_CUTOFF;
+@wrap_c_constant uint GL_SPOT_DIRECTION;
+@wrap_c_constant uint GL_SPOT_EXPONENT;
+@wrap_c_constant uint GL_SRC_ALPHA;
+@wrap_c_constant uint GL_SRC_ALPHA_SATURATE;
+@wrap_c_constant uint GL_SRC_COLOR;
+@wrap_c_constant uint GL_STACK_OVERFLOW;
+@wrap_c_constant uint GL_STACK_UNDERFLOW;
+@wrap_c_constant uint GL_STENCIL;
+@wrap_c_constant uint GL_STENCIL_BITS;
+@wrap_c_constant uint GL_STENCIL_BUFFER_BIT;
+@wrap_c_constant uint GL_STENCIL_INDEX;
+@wrap_c_constant uint GL_STENCIL_CLEAR_VALUE;
+@wrap_c_constant uint GL_STENCIL_FAIL;
+@wrap_c_constant uint GL_STENCIL_FUNC;
+@wrap_c_constant uint GL_STENCIL_PASS_DEPTH_FAIL;
+@wrap_c_constant uint GL_STENCIL_PASS_DEPTH_PASS;
+@wrap_c_constant uint GL_STENCIL_REF;
+@wrap_c_constant uint GL_STENCIL_TEST;
+@wrap_c_constant uint GL_STENCIL_VALUE_MASK;
+@wrap_c_constant uint GL_STENCIL_WRITEMASK;
+@wrap_c_constant uint GL_STEREO;
+@wrap_c_constant uint GL_SUBPIXEL_BITS;
+@wrap_c_constant uint GL_T;
+@wrap_c_constant uint GL_TEXTURE;
+@wrap_c_constant uint GL_TEXTURE_1D;
+@wrap_c_constant uint GL_TEXTURE_2D;
+@wrap_c_constant uint GL_TEXTURE_BIT;
+@wrap_c_constant uint GL_TEXTURE_BORDER;
+@wrap_c_constant uint GL_TEXTURE_BORDER_COLOR;
+@wrap_c_constant uint GL_TEXTURE_COMPONENTS;
+@wrap_c_constant uint GL_TEXTURE_ENV;
+@wrap_c_constant uint GL_TEXTURE_ENV_COLOR;
+@wrap_c_constant uint GL_TEXTURE_ENV_MODE;
+@wrap_c_constant uint GL_TEXTURE_GEN_MODE;
+@wrap_c_constant uint GL_TEXTURE_GEN_Q;
+@wrap_c_constant uint GL_TEXTURE_GEN_R;
+@wrap_c_constant uint GL_TEXTURE_GEN_S;
+@wrap_c_constant uint GL_TEXTURE_GEN_T;
+@wrap_c_constant uint GL_TEXTURE_HEIGHT;
+@wrap_c_constant uint GL_TEXTURE_MAG_FILTER;
+@wrap_c_constant uint GL_TEXTURE_MATRIX;
+@wrap_c_constant uint GL_TEXTURE_MIN_FILTER;
+@wrap_c_constant uint GL_TEXTURE_STACK_DEPTH;
+@wrap_c_constant uint GL_TEXTURE_WIDTH;
+@wrap_c_constant uint GL_TEXTURE_WRAP_S;
+@wrap_c_constant uint GL_TEXTURE_WRAP_T;
+@wrap_c_constant uint GL_TRANSFORM_BIT;
+@wrap_c_constant uint GL_TRIANGLES;
+@wrap_c_constant uint GL_TRIANGLE_FAN;
+@wrap_c_constant uint GL_TRIANGLE_STRIP;
+@wrap_c_constant uint GL_TRUE;
+@wrap_c_constant uint GL_UNPACK_ALIGNMENT;
+@wrap_c_constant uint GL_UNPACK_LSB_FIRST;
+@wrap_c_constant uint GL_UNPACK_ROW_LENGTH;
+@wrap_c_constant uint GL_UNPACK_SKIP_PIXELS;
+@wrap_c_constant uint GL_UNPACK_SKIP_ROWS;
+@wrap_c_constant uint GL_UNPACK_SWAP_BYTES;
+@wrap_c_constant uint GL_UNSIGNED_BYTE;
+@wrap_c_constant uint GL_UNSIGNED_INT;
+@wrap_c_constant uint GL_UNSIGNED_SHORT;
+@wrap_c_constant uint GL_VENDOR;
+@wrap_c_constant uint GL_VERSION;
+@wrap_c_constant uint GL_VIEWPORT;
+@wrap_c_constant uint GL_VIEWPORT_BIT;
+@wrap_c_constant uint GL_XOR;
+@wrap_c_constant uint GL_ZERO;
+@wrap_c_constant uint GL_ZOOM_X;
+@wrap_c_constant uint GL_ZOOM_Y;
+
+

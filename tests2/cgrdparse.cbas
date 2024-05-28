@@ -1,0 +1,177 @@
+
+#include <stdmeta/cgrdparse.hbas>
+
+fn codegen cgrdparsehook_myhook(cgstrll in, cg_rd_parser_spec spec)->cgstrll*:
+    
+    //return the inlist verbatim...
+    //return in
+    
+    //Append a rule! Yee haw!
+    /*
+        Print out spec's name..
+    */
+    __builtin_puts("MYHOOK INVOKED ON SPEC WITH NAME:");
+    __builtin_puts(spec.name.s);
+    
+    in.push_end(cg_qtok("RunInCircles"));
+    in.push_end(cg_qtok("["));
+        in.push_end(cg_qtok("__builtin_puts"));
+        in.push_end(cg_qtok("("));
+        in.push_end(cg_qtok("\"Running in Circles!!!!\""));
+        in.push_end(cg_qtok(")"));
+    in.push_end(cg_qtok("]"));
+    
+    return in
+end
+@cgrdparser [
+    Test_Nested[
+        cgstrll* in
+    ]
+    cgrdparse
+    @myhook[
+        head[
+            this.in = this.tok_root:dupell();
+            do RunInCircles
+        ]
+    ]
+    finish[
+        emit [this.in] finish
+    ]
+]
+
+
+@cgrdparser [
+    Declare_An_Integer
+    [
+        cgstr int_name
+    ]
+
+    head [
+        this.int_name.s = cast(u8*)0;
+        while(tok_not_null)
+            char* p
+            p = "(";
+            match[["Here_is_the_name"]
+                eat
+                if(tok_null)
+                    __builtin_puts(">:( THERE IS NO NAME HERE GRRRRRR");
+                    __builtin_exit(1);
+                end
+                do set_ident
+                break
+            ]
+            match[ [p]
+                __builtin_puts("Nice opening parentheses!");
+            ] 
+            match[ [")"]
+                __builtin_puts("Nice closing parentheses!");
+            ]  
+            match[ [";"]
+                __builtin_puts("semicolon???");
+            ]            
+            match[ [","]
+                ^^";"[
+                    __builtin_puts("COMMA IS NOT SEMICOLON?!?!");
+                ]
+                ^^","[
+                    __builtin_puts("COMMA IS NOT COMMA?!?!");
+                ]
+                __builtin_puts("COMMA???");
+                continue
+            ]
+            stringlit[
+                __builtin_puts("A string? Oh, I can print that for you!");
+                __builtin_puts(tok.text);
+            ]
+            ident[
+                __builtin_puts("An identifier? Don't mind if I do!");
+                __builtin_puts(tok.text);
+            ]
+            if(tok_null) break; end
+            eat
+        end
+        do RunInCircles
+
+        go whack_a_mole
+        __builtin_puts("Wont print")
+    ]
+    @myhook[
+        doWeirdCrazyThings[
+            char* p
+        ]
+        whack_a_mole [
+            __builtin_puts("Fin")
+        ]
+    ]
+    @Test_Nested[
+        set_ident [
+            this.int_name:fromstr(tok.text);
+        ]
+    ]
+    finish [
+        if(this.int_name.s != cast(u8*)0)
+            emitq "codegen"
+            emitq "int"
+            emitq [this.int_name.s]
+            emitq ";"
+            this.int_name:free();
+            finish
+        else
+            __builtin_puts("ERROR!");
+            __builtin_puts("You didn't tell me what to call the integer!");
+            __builtin_exit(1);
+        end
+    ]
+]
+
+@Declare_An_Integer [
+    data data char;;;,; (char) agga "Yes, I want this printed" if if Here_is_the_name my_int_name
+]
+
+@global
+fn codegen codegen_main():
+    //__builtin_exit(0);
+    my_int_name = 3;
+    if(my_int_name == 3)
+        __builtin_puts("Hello from autocoding!");
+    end
+    @global
+    fn codegen print_stuff():
+        __builtin_puts("Hello!");
+        @globalscope
+            fn codegen print_stuff2():
+                __builtin_puts("Hello Again!");
+                @globalscope
+                    fn codegen print_stuff3():
+                        __builtin_puts("Goodbye Again!");
+                        @globalscope
+                            fn codegen print_stuff6():
+                                __builtin_puts("6");
+                            end
+                        end
+                    end
+                end
+            end
+        
+            fn codegen print_stuff4():
+                __builtin_puts("Four");
+                @globalscope
+                    fn codegen print_stuff5():
+                        __builtin_puts("Five");
+                    end
+                end
+            end
+        end
+        ;    
+    end
+    __builtin_puts("Finality!!");
+    print_stuff();
+
+    print_stuff2();
+    print_stuff3();
+    print_stuff4();
+    print_stuff5();
+    print_stuff6();
+
+    ;
+end

@@ -1,0 +1,33 @@
+
+/*
+    IMPLEMENTER'S NOTES:
+    
+    1. You will probably have to modify this file for your target....
+    2. _STRTOU_ and _STRTOI_ are used in the standard library...
+    3. some platforms may be non-compliant with the standard or
+        do weird things with `short` and etcetera.
+*/
+
+#guard BIT16_TGT_CBAS
+
+
+#define TGT_UMAX u16
+#define TGT_IMAX i16
+//prohibit usage of floats...
+#define TGT_FMAX __ERROR__
+
+
+#__CBAS_TARGET_WORDSZ 16
+#__CBAS_TARGET_DISABLE_FLOAT
+data codegen string SEABASS_BIT_PREFIX "
+#define SEABASS_16_BIT 1
+#define i32 long
+#define u32 unsigned long
+#define _STRTOU_ atou
+#define _STRTOI_ atoi
+#define TGT_UMAX unsigned short
+#define TGT_IMAX short
+";
+
+codegen u64 SEABASS_TARGET_BITS = 16;
+

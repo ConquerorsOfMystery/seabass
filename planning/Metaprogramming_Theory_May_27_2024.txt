@@ -1,0 +1,55 @@
+METAPROGRAMMING THEORY- NOUNS AND BINDING POINTS
+
+The fundamental structure of a piece of software architecture is
+built out of nouns with relationships. At the very bottom, it
+becomes a sequence of bytes, or above that instructions and data,
+and above that C program constructs like for, if-else, while, types,
+expressions, and above that you could have algorithms and generic types
+and classes, and so-on and so-forth.
+
+The principle hypothesis of Metaprogramming theory is that this
+"hierarchy" from bytes to instructions to C code can be continued
+upward all the way to the software architecture level, so that the
+code structure represents the architectural planning itself. Furthermore
+this should enable architectural planning to be much faster- pick'n choose
+"elements" and connect them up filling in small portions of information
+where necessary to construct a piece of software.
+
+Programs are constructed out of building blocks. In C or Assembly
+the building blocks are typically extremely small and hundreds of them
+are entered by-hand to make up even very simple programs.
+
+A visual editor would simplify entry- instead of typing "f-o-r-(-)-{-enter-}"
+you could simply click/press a button that "added" a for loop.
+
+This would be a way to streamline it, however I believe it is only
+a multiplicative speed-up rather than exponential (as desired with metaprogramming).
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Due to the way programming currently works, even very simple pieces of logic are ultimately
+very complex to enter. Writing a string library is a task which, conceptually, should be
+mere seconds or minutes of work but in practice takes hours (due to minutae).
+
+HOW DO I ACCELERATE THE PROCESS OF WRITING A STRING LIBRARY?
+
+A string is a form of container. In C it's typically a form of vector that uses a magic
+value (null) instead of a length.
+
+The "hard part" is writing the code which manipulates one or more strings efficiently,
+chopping them up, mixing them, searching them, appending them, etcetera.
+
+The basic process of implementing a string library is to implement the most fundamental
+string operations and then implement the higher level ones "out of" the lower level
+ones, excepting for efficiency's sake you may "break out the tweezers" and write partial
+re-implementations to avoid redundant operations.
+
+>> It would be easier to implement a string library if a function could be written "generically"
+for alternate information specifications... Like, for example, it would be faster to calculte
+the length of a string if there was a "minimum length" given. This could help remove redundancy
+in calculation.
+
+>> One could think of a string class as a subclass of atomically typed (i.e. char, short, int, float, qword, double)
+vector containers. 
+
+
+

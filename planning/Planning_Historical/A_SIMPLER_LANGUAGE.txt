@@ -1,0 +1,20 @@
+
+A SIMPLER LANGUAGE
+
+Forths and forthlikes have something right- simplicity. However,
+forth fails in a critical aspect: it does not accurately portray
+the reality of a register machine.
+
+Pushing and popping onto an operand stack does not represent
+what a 
+
+They also fail in the way that most languages have fallen before
+SEABASS- the inability to adapt with arbitrary mutable syntax.
+
+CAN I BEAT SEABASS (and forth) WITH A SIMPLER LANGUAGE?
+
+Something written in only a few thousand lines of seabass.
+
+I'll have to ponder it...
+
+

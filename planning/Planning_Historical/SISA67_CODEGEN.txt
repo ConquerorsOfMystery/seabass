@@ -1,0 +1,17 @@
+
+I NEED TO WRITE A SISA67 CODE GENERATOR.
+
+In order to do it _properly_ I need a sort of
+"directive language"- a higher level generator
+language which sits inbetween Seabass and S67.
+
+The main advantage of this, of course, is that
+I can do stuff like merge dispatch tables,
+remove duplicate values, etcetera.
+
+I want it to be a flat IR which means I need
+to traverse the entire function node and
+emit this IR for all the branches/leaves.
+
+That should give me enough flexibility to
+implement what I want. 

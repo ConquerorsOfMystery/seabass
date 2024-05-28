@@ -1,0 +1,604 @@
+
+/*
+    CODE GENERATOR TOOLS- OPTIMIZE, MANIPULATE THE AST
+    
+    Tools for writing code generators and
+    optimizing the AST.
+    
+    TOOL 1- cg_optimizer_constant_swap
+        Optimizies the order of certain commutative
+        operations so that register allocation
+        will be more efficient.
+        
+        
+    TODO: NEEDED TOOLS
+        * Automatic pointer punning [CHECK]
+        * Deleting nodes (recursively, or do we >>leak memory<<?)
+            - Notably, for marking an if statement as "always not taken"
+            we can just delete its body. Don't generate any code for it.
+        * Doing compiletime calculations- 2+3 is 5.
+        * Some sort of flat IR. Assume infinite registers and arrays/structs
+        are always in memory. Assume no spillage, that's for a code generator
+        to figure out....
+        * Lots of things for "playing with" the AST.
+    
+    
+*/
+#guard seabass_codegen_tools
+
+#include <stdmeta/reflect.hbas>
+
+
+fn codegen cgir_kind_is_terminal_or_unary(int kind)->i64:
+    return (
+        kind == CG_EXPR_LSYM ||
+        kind == CG_EXPR_CAST ||
+        kind == CG_EXPR_NEG ||
+        kind == CG_EXPR_COMPL ||
+        kind == CG_EXPR_NOT ||
+        kind == CG_EXPR_PRE_INCR ||
+        kind == CG_EXPR_PRE_DECR ||
+        //post incr and post decr require
+        //slightly more assembly, but
+        //we still want to re-order if we can...
+        kind == CG_EXPR_POST_INCR ||
+        kind == CG_EXPR_POST_DECR ||
+        kind == CG_EXPR_GSYM ||
+        kind == CG_EXPR_SIZEOF ||
+        kind == CG_EXPR_INTLIT ||
+        kind == CG_EXPR_FLOATLIT ||
+        kind == CG_EXPR_STRINGLIT ||
+        kind == CG_EXPR_CONSTEXPR_FLOAT ||
+        kind == CG_EXPR_CONSTEXPR_INT ||
+        kind == CG_EXPR_GETGLOBALPTR ||
+        kind == CG_EXPR_GETFNPTR
+    );
+end
+
+//swap operands in commutative operations
+//to ensure that register allocation is as efficient as possible.
+//this ensures register allocation is more efficient...
+fn codegen cg_optimizer_operand_swap(
+    cgexpr_node ee
+):
+    i64 i
+    for(i = 0, i < CG_MAX_FARGS, i++)
+        if(ee.subnodes[i] == 0) continue end
+        cg_optimizer_operand_swap(ee.subnodes[i]);
+    end
+    //only commutative operations....
+    if(
+        !(
+            ee.kind == CG_EXPR_EQ ||
+            ee.kind == CG_EXPR_NEQ ||
+            ee.kind == CG_EXPR_STREQ ||
+            ee.kind == CG_EXPR_STRNEQ ||
+            ee.kind == CG_EXPR_ADD ||
+            ee.kind == CG_EXPR_MUL ||
+            ee.kind == CG_EXPR_BITAND ||
+            ee.kind == CG_EXPR_BITXOR ||
+            ee.kind == CG_EXPR_BITOR
+        )
+    )
+        return
+    end
+    u64 l_is_terminal = cgir_kind_is_terminal_or_unary(ee.subnodes[0].kind);
+    u64 r_is_terminal = cgir_kind_is_terminal_or_unary(ee.subnodes[1].kind);
+    if(!r_is_terminal && l_is_terminal)
+        cgexpr_node* q = ee.subnodes[0];
+        ee.subnodes[0] = ee.subnodes[1];
+        ee.subnodes[1] = q;
+    end
+end
+//POINTER PUNNING: CHECK!
+
+method codegen cgscope.getstmts()->cgstmt*:
+    return (cgstmt*)this.stmts;
+end
+
+method codegen cgstmt.getexpr(u64 id)->cgexpr_node*:
+    return (cgexpr_node*)this.expressions[id];
+end
+
+method codegen cgsymdecl.getfbody()->cgscope*:
+    return (cgscope*)this.fbody;
+end
+
+
+
+fn codegen cg_codegen_walkFunction_TEMPLATE_takes_scopefptr(cgscope* ss);
+fn codegen cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr(cgstmt* ss);
+fn codegen cg_codegen_walkFunction_TEMPLATE_takes_exprfptr(cgexpr_node* ee);
+fn codegen cg_codegen_walkFunction_TEMPLATE_takes_fnfptr(cgsymdecl* ff);
+
+fn predecl codegen cg_codegen_walkScope(
+    cgscope* s, //the scope
+    byte* visit_scope_fptr,
+    byte* retreat_scope_fptr,
+    byte* revisit_scope_fptr,
+    byte* visit_stmt_fptr, 
+    byte* retreat_stmt_fptr,
+    byte* revisit_stmt_fptr,
+    byte* visit_expr_fptr,
+    byte* retreat_expr_fptr,
+    byte* revisit_expr_fptr,
+    byte* visit_inline_function_fptr,
+    byte* retreat_inline_function_fptr
+);
+
+fn codegen cg_codegen_walkExpr(
+    cgexpr_node* ee, //the expr node
+    byte* visit_scope_fptr,
+    byte* retreat_scope_fptr,
+    byte* revisit_scope_fptr,
+    byte* visit_stmt_fptr, 
+    byte* retreat_stmt_fptr,
+    byte* revisit_stmt_fptr,
+    byte* visit_expr_fptr,
+    byte* retreat_expr_fptr,
+    byte* revisit_expr_fptr,
+    byte* visit_inline_function_fptr,
+    byte* retreat_inline_function_fptr
+):
+    callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](visit_expr_fptr)(ee);
+    if(ee.kind == CG_EXPR_METHOD || ee.kind == CG_EXPR_FCALL)
+        cgast* ast = cg_getast();
+        u64 is_inlined = ast.symbol_table[0][ee.symid].is_inline;
+        if(!is_inlined)
+            i64 i
+            for(i = 0, i < CG_MAX_FARGS, i++)
+                if(ee.subnodes[i] == 0)
+                    break
+                end
+                cg_codegen_walkExpr(
+                    ee.subnodes[i],
+                    visit_scope_fptr,
+                    retreat_scope_fptr,
+                    revisit_scope_fptr,
+                    visit_stmt_fptr, 
+                    retreat_stmt_fptr,
+                    revisit_stmt_fptr,
+                    visit_expr_fptr,
+                    retreat_expr_fptr,
+                    revisit_expr_fptr,
+                    visit_inline_function_fptr,
+                    retreat_inline_function_fptr
+                );
+                callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](revisit_expr_fptr)(ee);
+            end
+        else //INLINE FN
+            u64 i
+            for(i = 0, i < CG_MAX_FARGS, i++)
+                if(ee.subnodes[i] == 0)
+                    break
+                end
+                cg_codegen_walkExpr(
+                    ee.subnodes[i],
+                    visit_scope_fptr,
+                    retreat_scope_fptr,
+                    revisit_scope_fptr,
+                    visit_stmt_fptr, 
+                    retreat_stmt_fptr,
+                    revisit_stmt_fptr,
+                    visit_expr_fptr,
+                    retreat_expr_fptr,
+                    revisit_expr_fptr,
+                    visit_inline_function_fptr,
+                    retreat_inline_function_fptr
+                );
+                callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](revisit_expr_fptr)(ee);
+            end
+            callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_fnfptr](visit_inline_function_fptr)(ast.symbol_table[0][ee.symid]);
+            if(ast.symbol_table[0][ee.symid].fbody != 0)
+
+                //Walk the inline function....
+                cg_codegen_walkScope(
+                    (cgscope*)(ast.symbol_table[0][ee.symid].fbody),
+                    visit_scope_fptr,
+                    retreat_scope_fptr,
+                    revisit_scope_fptr,
+                    visit_stmt_fptr, 
+                    retreat_stmt_fptr,
+                    revisit_stmt_fptr,
+                    visit_expr_fptr,
+                    retreat_expr_fptr,
+                    revisit_expr_fptr,
+                    visit_inline_function_fptr,
+                    retreat_inline_function_fptr
+                );
+            end
+
+            callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_fnfptr](retreat_inline_function_fptr)(ast.symbol_table[0][ee.symid]);
+            callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](revisit_expr_fptr)(ee);
+        end
+    elif(ee.kind == CG_EXPR_CALLFNPTR)
+        i64 i
+        for(i = 0, i < CG_MAX_FARGS, i++)
+            if(ee.subnodes[i] == 0)
+                break
+            end
+            cg_codegen_walkExpr(
+                ee.subnodes[i],
+                visit_scope_fptr,
+                retreat_scope_fptr,
+                revisit_scope_fptr,
+                visit_stmt_fptr, 
+                retreat_stmt_fptr,
+                revisit_stmt_fptr,
+                visit_expr_fptr,
+                retreat_expr_fptr,
+                revisit_expr_fptr,
+                visit_inline_function_fptr,
+                retreat_inline_function_fptr
+            );
+            callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](revisit_expr_fptr)(ee);
+        end
+    //singletons...
+    elif(
+        ee.kind == CG_EXPR_SIZEOF ||
+        ee.kind == CG_EXPR_INTLIT ||
+        ee.kind == CG_EXPR_FLOATLIT ||
+        ee.kind == CG_EXPR_MEMBER ||
+        ee.kind == CG_EXPR_MEMBERPTR ||
+        ee.kind == CG_EXPR_LSYM ||
+        ee.kind == CG_EXPR_GSYM ||
+        //ee.kind == CG_EXPR_SYM ||
+        ee.kind == CG_EXPR_CONSTEXPR_FLOAT ||
+        ee.kind == CG_EXPR_CONSTEXPR_INT ||
+        ee.kind == CG_EXPR_GETFNPTR ||
+        ee.kind == CG_EXPR_GETGLOBALPTR ||
+        ee.kind == CG_EXPR_STRINGLIT
+    )
+        goto last
+    elif(
+        //unary operators..
+        ee.kind == CG_EXPR_POST_INCR ||
+        ee.kind == CG_EXPR_POST_DECR ||
+        ee.kind == CG_EXPR_PRE_INCR ||
+        ee.kind == CG_EXPR_PRE_DECR ||
+        ee.kind == CG_EXPR_NOT ||
+        ee.kind == CG_EXPR_NEG ||
+        ee.kind == CG_EXPR_CAST ||
+        ee.kind == CG_EXPR_COMPL
+    )
+        cg_codegen_walkExpr(
+            ee.subnodes[0],
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](revisit_expr_fptr)(ee);
+    else //binary operator...
+        cg_codegen_walkExpr(
+            ee.subnodes[0],
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](revisit_expr_fptr)(ee);
+        cg_codegen_walkExpr(
+            ee.subnodes[1],
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](revisit_expr_fptr)(ee);
+    end
+
+
+    :last
+    callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_exprfptr](retreat_expr_fptr)(ee);
+end
+
+
+
+fn codegen cg_codegen_walkStmt(
+    cgstmt* s, //the statement
+    byte* visit_scope_fptr,
+    byte* retreat_scope_fptr,
+    byte* revisit_scope_fptr,
+    byte* visit_stmt_fptr, 
+    byte* retreat_stmt_fptr,
+    byte* revisit_stmt_fptr,
+    byte* visit_expr_fptr,
+    byte* retreat_expr_fptr,
+    byte* revisit_expr_fptr,
+    byte* visit_inline_function_fptr,
+    byte* retreat_inline_function_fptr
+):
+    callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](visit_stmt_fptr)(s);
+    if(
+        s.kind == CG_STMT_NOP ||
+        s.kind == CG_STMT_LABEL ||
+        s.kind == CG_STMT_GOTO ||
+        s.kind == CG_STMT_ASM ||
+        s.kind == CG_STMT_CONTINUE ||
+        s.kind == CG_STMT_BREAK 
+    )
+        goto last
+    elif(
+        s.kind == CG_STMT_EXPR ||
+        s.kind == CG_STMT_RETURN ||
+        s.kind == CG_STMT_SWITCH
+    )
+        cg_codegen_walkExpr(
+            (cgexpr_node*)(s.expressions[0]),
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](revisit_stmt_fptr)(s);
+    elif(
+        s.kind == CG_STMT_IF ||
+        s.kind == CG_STMT_ELIF ||
+        s.kind == CG_STMT_WHILE
+    )
+        cg_codegen_walkExpr(
+            (cgexpr_node*)(s.expressions[0]),
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](revisit_stmt_fptr)(s);
+        cg_codegen_walkScope(
+            s.myscope,
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](revisit_stmt_fptr)(s);
+   elif(s.kind == CG_STMT_ELSE)
+        cg_codegen_walkScope(
+            s.myscope,
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](revisit_stmt_fptr)(s);
+    elif(s.kind == CG_STMT_FOR)
+        //Long!
+        cg_codegen_walkExpr(
+            (cgexpr_node*)(s.expressions[0]),
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](revisit_stmt_fptr)(s);
+        
+        cg_codegen_walkExpr(
+            (cgexpr_node*)(s.expressions[1]),
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](revisit_stmt_fptr)(s);
+        
+        cg_codegen_walkExpr(
+            (cgexpr_node*)(s.expressions[2]),
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](revisit_stmt_fptr)(s);
+        
+        
+        cg_codegen_walkScope(
+            s.myscope,
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](revisit_stmt_fptr)(s);
+    elif(s.kind == CG_STMT_TAIL)
+        //TODO: handle tail statement...
+        cgast* ast = cg_getast();
+        u64 is_inlined = ast.symbol_table[0][s.symid].is_inline;
+        //simple case- if it is not inlined, we dont do any inlining...
+        if(!is_inlined) goto last end
+        //it is inlined!    
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_fnfptr]
+            (visit_inline_function_fptr)
+            (ast.symbol_table[0][s.symid]);
+        
+        //walk that scope...
+        if(ast.symbol_table[0][s.symid].fbody != 0)
+            cg_codegen_walkScope(
+                (cgscope*)(ast.symbol_table[0][s.symid].fbody),
+                visit_scope_fptr,
+                retreat_scope_fptr,
+                revisit_scope_fptr,
+                visit_stmt_fptr, 
+                retreat_stmt_fptr,
+                revisit_stmt_fptr,
+                visit_expr_fptr,
+                retreat_expr_fptr,
+                revisit_expr_fptr,
+                visit_inline_function_fptr,
+                retreat_inline_function_fptr
+            );
+        end
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_fnfptr]
+            (retreat_inline_function_fptr)
+            (ast.symbol_table[0][s.symid]);
+        
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr]
+            (revisit_stmt_fptr)
+            (s);
+    end
+    
+    
+
+    :last
+    callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_stmtfptr](retreat_stmt_fptr)(s);
+end
+
+
+fn codegen cg_codegen_walkScope(
+    cgscope* s, //the scope
+    byte* visit_scope_fptr,
+    byte* retreat_scope_fptr,
+    byte* revisit_scope_fptr,
+    byte* visit_stmt_fptr, 
+    byte* retreat_stmt_fptr,
+    byte* revisit_stmt_fptr,
+    byte* visit_expr_fptr,
+    byte* retreat_expr_fptr,
+    byte* revisit_expr_fptr,
+    byte* visit_inline_function_fptr,
+    byte* retreat_inline_function_fptr
+):
+    callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_scopefptr](visit_scope_fptr)(s);
+    //for each statement...
+    i64 i
+    for(i = 0, i < s.nstmts, i++)
+        cg_codegen_walkStmt(
+            (cast(cgstmt*)(s.stmts))[i],
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        );
+        callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_scopefptr](revisit_scope_fptr)(s);
+    end
+
+
+    callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_scopefptr](retreat_scope_fptr)(s);
+end
+
+
+fn codegen cg_codegen_walkFunction(
+    cgsymdecl* funk, //the function
+    byte* visit_scope_fptr,
+    byte* retreat_scope_fptr,
+    byte* revisit_scope_fptr,
+    byte* visit_stmt_fptr, 
+    byte* retreat_stmt_fptr,
+    byte* revisit_stmt_fptr,
+    byte* visit_expr_fptr,
+    byte* retreat_expr_fptr,
+    byte* revisit_expr_fptr,
+    byte* visit_inline_function_fptr,
+    byte* retreat_inline_function_fptr,
+    byte* visit_fn_ptr,
+    byte* retreat_fn_ptr
+):
+    callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_fnfptr](visit_fn_ptr)(funk);
+    if(funk.fbody != 0)
+        cg_codegen_walkScope(
+            cast(cgscope*)funk.fbody,
+            visit_scope_fptr,
+            retreat_scope_fptr,
+            revisit_scope_fptr,
+            visit_stmt_fptr, 
+            retreat_stmt_fptr,
+            revisit_stmt_fptr,
+            visit_expr_fptr,
+            retreat_expr_fptr,
+            revisit_expr_fptr,
+            visit_inline_function_fptr,
+            retreat_inline_function_fptr
+        )
+    end
+    
+    
+    
+    callfnptr[cg_codegen_walkFunction_TEMPLATE_takes_fnfptr](retreat_fn_ptr)(funk);
+end
+
+
+

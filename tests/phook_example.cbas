@@ -1,0 +1,31 @@
+
+codegen int a = 0;
+
+fn codegen parsehook_dostuff:
+    if(a++ == 0)
+        __builtin_puts("First time!")
+    else
+        __builtin_puts("At least twice!")
+    end
+end
+
+
+@dostuff
+@dostuff
+@dostuff
+@dostuff
+
+fn codegen codegen_main():
+    @dostuff
+    @dostuff
+    @dostuff
+    @dostuff
+
+end
+
+
+fn add(int a, int b)->i32:
+    long c = a + b;
+    return c
+end
+

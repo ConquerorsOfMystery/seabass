@@ -1,0 +1,101 @@
+
+JAN 4 2024 - METAPROGRAMMING THEORY WORK AND FUTURE PROJECT PLANS
+
+~~~~~~~~~~~~~~~~~~~~~~~
+
+WHAT ARE THE GENERAL PRINCIPLES OF METAPROGRAMMING AND METACOGNITION, AND AIMS
+OF THE PROJECT?
+
+1. The human mind, the supercomputer created by God, is the actual contraption
+we are trying to harness, rather than a silicon chip. The human mind should be 
+able to do far more than manmade computers could ever hope to do. We just need
+to provide it the data... which means giving it the feedback it needs to form
+an intuition.
+
+2. Problem transformation- By changing the principle components by which a problem
+is analyzed, we can make it more accessible to the human mind. We turn problems into
+equivalent problems. Alternate syntaxes and arbitrary abstractions achieve this effect.
+This increases the mind's ability to "grok" the problem, gives us new ways of generating
+intuition.
+
+3. Maximize automation. We want to minimize the strain on man's flesh typing as well as
+minimize mindless repetition and wasted time. If the computer can do something instead
+of me doing it, then it ought to be doing it.
+
+WHAT DO WE EXPECT TO ACHIEVE WITH METAPROGRAMMING?
+
+* Vastly increased focus on hard problem solving and massive reduction in repetition.
+
+* Increase in the interesting-ness of computer programming.
+
+* Greater comprehension of programs and problems they solve- because we have a better
+base of understanding for them.
+
+* Some degree of automated cognition- that the computer can make decisions for us that
+we might ordinarily have to write ourselves, ultimately reducing mental strain solving
+repetitive uninteresting problems.
+
+WHAT DO I NEED MOST FOR FURTHERANCE OF THE METAPROGRAMMING AGENDA?
+
+* Visualization tools. Should be developed into the Funbas library.
+
+    What do I need?
+    
+    * UI rendering and interaction- buttons and whatnot. Simple stuff.
+    
+    * Pixel plotting
+    
+    * Raytracing
+    
+    * HW accelerated 3D triangle object rendering with OpenGL
+
+* Project management / creation tools- I need to be able to "get programming" with
+seabass and start compiling code quickly, especially visualizations, so I can make
+test programs fast. This may also aid with game development. Mom says I'm hard to
+get started, but once I get going, I'm really going. She's right. I have to make
+that hurdle as small as possible.
+
+Extending the metaprogramming library and funbas, being the main focus of the
+upcoming development phase, also needs to be accelerated.
+
+* >>New code manipulation tools<< 
+
+    I need more things like cgwksht. Cgwksht has turned out to be an indispensible tool
+    for programming in Seabass and has been used to implement tons of important metaprogramming
+    tools as well as save tons of time.
+    
+    ?? -- Nested Worksheets -- ??
+    
+    By passing worksheet invocation(s) into another worksheet's template parameters I can
+    get massively distributed worksheet-ification. I believe this can be used to raise the
+    level of abstraction very quickly. "Pure Recursion for worksheets".
+    
+    ?? -- Repeated portion worksheets -- ??
+    
+    One of the principle operations I often have to do that worksheet doesn't entirely do
+    for me is to have a repeated portion- a subsection of the worksheet which is repeated.
+    
+    I could just write a "repeater worksheet" that accepts a block of code and then repeats
+    it, but this actually doesn't solve the principle problem. There is usually some operation
+    I want to do on each repetition- I want a loop. I can literally write for loops and insert
+    code at each iteration, but that's too much.
+    
+    ?? -- Level 2 Worksheets -- ??
+    
+    cg_bldr_tokmanip_push_strings allows me to do something sort of like an inverted worksheet- write
+    emitter code normally, then have sections of emitted code. Furthermore, I can even have emitter
+    code inside of my emitted code by using $[]. What if, instead of templating emitted code as with
+    worksheets, I templated emitter code? This is effectively what Seabass's worksheets do when
+    used to generate codegen code. A worksheet that generates the post-processing section of
+    another worksheet.
+    
+    TEMPLATED BUILDERS?
+    
+    It would seem this idea is roughly that you would literally write code in-place on-the-spot to
+    then write code for you. Similiar to tbas in that way. So basically, you fill out a worksheet,
+    which then writes a builder which is immediately invoked. Kind of crazy....
+    
+    CAN I USE TBAS TO IMPLEMENT THIS SYSTEM?
+    
+    ... Probably. Templated builders.
+
