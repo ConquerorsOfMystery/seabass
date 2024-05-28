@@ -50,6 +50,16 @@ in calculation.
 
 >> One could think of a string class as a subclass of atomically typed (i.e. char, short, int, float, qword, double)
 vector containers. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+HOW DO I ACCELERATE THE PROCESS OF WRITING NEW LIBRARIES/APPLICATIONS?
+
+1. Metaprogramming tools. Making the creation of new syntaxes easy.
+
+2. Having a lot of libraries to begin with- the more code you can sample from,
+the more code you can write from it.
+
+3. Having well-defined, well-structured ways to "hook up" different libraries
+together and make them work. Minimal glue required.
 
 
 

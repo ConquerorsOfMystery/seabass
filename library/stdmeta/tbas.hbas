@@ -600,7 +600,7 @@ end
     :explain_syntax
     @pprint[
         /           "Syntax is..."
-        /           "@cgmktemplate["
+        /           "@mktemplate["
         /           "myTemplate"
         /           "    [//template"
         /           "        [/*body. This is inserted each time.*/]"
@@ -620,7 +620,7 @@ end
 
 codegen u64 TEMPLATE_DUMMY_EXPANDER_COUNTER = 0;
 
-//Pretemplating
+//Pretemplating! Useful when you need to have templated structs within templated structs.
 @wksht pretemplate [
     [
         ;

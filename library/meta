@@ -1,5 +1,28 @@
 
-#guard metaprogramming_library_all
+/*
+    SEABASS METAPROGRAMMING LIBRARY
+    
+    This is the file you should include to use the entire standard metaprogramming
+    toolkit in your programs.
+    
+    It includes a wide variety of helpful useful tools for writing compiletime
+    compilers, parsers, and all sorts of other stuff.
+    
+    just use this line:
+    #include <meta>
+    
+    in your programs.
+    
+    All this is CC0 public domain software, meaning
+    no attribution, copyleft, or any other limitations!
+    
+    They are bytes on YOUR hard drive, why should I have any say what you
+    do with them?
+    
+    
+*/
+
+#guard seabass_standard_metaprogramming_library_all
 
 #include <stdmeta/tokenz.hbas>
 #include <stdmeta/uast_common.hbas>
