@@ -61,5 +61,6 @@ the more code you can write from it.
 3. Having well-defined, well-structured ways to "hook up" different libraries
 together and make them work. Minimal glue required.
 
-
+4. Algorithm Examples/demos. Make a "Recipe book" for programming with lots of small
+graphical demos showcasing algorithms.
 
