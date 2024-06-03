@@ -2533,18 +2533,6 @@ fn codegen cg_emitC(char* prefix):
             __builtin_free(p);
         end
     end   
-    /*
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        IMPL_README
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        
-        AUTHOR'S NOTE
-        
-        This is the official dedicatory of the `toc` translator- to our Lord Jesus Christ.
-        
-        Please do not remove it unless there is some technical requirement.
-    */
-    cg_quick_emit("/*\nBlessed be the Lord Jesus Christ of Nazareth, forever. Amen.\n*/",0);
 
     //close the ofile...
     __builtin_close_ofile();
