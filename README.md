@@ -1,33 +1,5 @@
 Before anything else...
 
-Blessings, Honor, Power, and Glory to our Lord and Saviour...
-
-# Jesus of Nazareth
-
-The Son of God, risen from the grave by his own power, alive forever. the
-Mighty God, the King Eternal, whose mercies endure forever.
-
-Give thanks and praise to him, for he is worthy.
-
-Amen.
-
-# Get FREE Blessings from the CREATOR OF HEAVEN AND EARTH!
-
-Bless Abraham - Get blessed - Genesis 12:3. Jesus Christ is God, but he
-came in the flesh after the seed of Abraham. Bless him
-
-"If I have the power to bless, I Bless the Lord Jesus Christ, who is Worthy."
-
-I don't know exactly what the blessing you get for blessing him is,
-but God's attitude about his promises seems to be "Prove me now herewith" 
-(Malachi 3:10 KJV)
-
-I do not deserve the wonderful things he has given me.
-
-He can give you eternal life too. God raised him from the dead. Believe
-the report and confess him with your mouth and he'll save you.
-
-
 # THE SEABASS METAPROGRAMMING LANGUAGE
 
 Welcome! This repository contains the code for the Seabass metaprogramming
@@ -118,7 +90,6 @@ file extension and everything.
 I have some old documentation I wrote which I believe has errors in it (much lacking in Godliness) 
 but it may be useful regardless:
 
-https://conquerors_of_mystery.codeberg.page/seabass/
 
 
 

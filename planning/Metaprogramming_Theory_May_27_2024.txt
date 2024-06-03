@@ -63,4 +63,21 @@ together and make them work. Minimal glue required.
 
 4. Algorithm Examples/demos. Make a "Recipe book" for programming with lots of small
 graphical demos showcasing algorithms.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SEABASS DEVELOPMENT ROADMAP 2024 (LATE MAY)
+
+1. Search up lists of algorithms and whatnot to implement in Seabass.
+2. Implement a large series of demos using funbas which use graphics+sound.
+3. Create the "Objects and Properties system" with contexts. We could maybe
+use the UNRAS but that data structure, while universal, may be inefficient.
+
+The goal of this system would be to have "software architecture elements" be
+the building blocks of programming. Glue code should be eliminated by having libraries
+adapt to fit each other.
+4. Look through my demos and look for patterns in the designs of them which
+could be abstracted out. Think about how that abstraction would take place.
+5. Start writing real software- how about that 2D dungeon crawler thing?
+
+
 
