@@ -1,0 +1,33 @@
+THE PLAN...
+
+1. Set up test-benches, a "base-level interface" for my programs. I believe funbas is
+sufficient. Some code might require interfacing more with C.
+
+2. Write a bunch of programs. Demos, small utility programs, etcetera. Get a bunch of
+example programs written in seabass to examine for useful programming constructs.
+
+Types of programs I could probably write:
+* Cellular automata
+* RPG game
+* Puzzle game
+* Small games in general...
+* Sorting algorithm visualization
+* Fluid simulation
+* Math visualizations
+* Drawing/paint tools
+* Network communication
+* File utilities
+* Unix utilities
+
+I may also just find a bunch of small demos and examine them. I need to look at typical
+examples of computer programming.
+
+3. Study the software
+
+4. Derive constructs
+
+5. Use them in demos (I.e. write demos)
+
+6. Encode them into stdmeta
+
+7. Show the world! Make youtube videos.

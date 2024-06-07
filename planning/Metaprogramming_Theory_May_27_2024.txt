@@ -7,23 +7,31 @@ and above that C program constructs like for, if-else, while, types,
 expressions, and above that you could have algorithms and generic types
 and classes, and so-on and so-forth.
 
-The principle hypothesis of Metaprogramming theory is that this
-"hierarchy" from bytes to instructions to C code can be continued
-upward all the way to the software architecture level, so that the
-code structure represents the architectural planning itself. Furthermore
-this should enable architectural planning to be much faster- pick'n choose
-"elements" and connect them up filling in small portions of information
-where necessary to construct a piece of software.
+Another way to think about this is that you have an ordered structure (whether
+a tree or simply a linear sequence) of fields. Each field can have one of a set of
+things in it, and/or some amount of data.
 
-Programs are constructed out of building blocks. In C or Assembly
-the building blocks are typically extremely small and hundreds of them
-are entered by-hand to make up even very simple programs.
+An instruction in assembly can recieve data arguments, whether they be bytes to be
+placed in (or math'd with) registers, addresses, or register names/ids.
 
-A visual editor would simplify entry- instead of typing "f-o-r-(-)-{-enter-}"
-you could simply click/press a button that "added" a for loop.
+Higher order languages are comprised of different constructs with different fields.
+The constructs in these higher order languages decay into lower level ones. The constructs
+chosen are ones which are intrinsically useful in building computer programs.
 
-This would be a way to streamline it, however I believe it is only
-a multiplicative speed-up rather than exponential (as desired with metaprogramming).
+As long as the constructs are useful and effective (efficient enough) then the programming
+language is a success. The more useful and versatile the constructs, and the easier they are
+to learn and manipulate, the better the programming language.
+
+The principle hypothesis of Metaprogramming theory, now, is that better constructs exist
+for writing computer programs which do not exist in most programming languages, and in many
+are not even possible at all.
+
+Seabass is powerful enough for almost (if not actually) any concievable programming construct to exist
+within it. Experimentation and exploration of computer programming may aid me in discovering what those
+constructs are.
+
+Discovering existing constructs in programming and then encoding them as language features is a key
+concept.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Due to the way programming currently works, even very simple pieces of logic are ultimately
