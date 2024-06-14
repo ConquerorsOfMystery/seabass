@@ -1,0 +1,11 @@
+
+WHAT IS THE GOAL/DIRECTION OF SEABASS?
+To make the ultimate programming tool. The first of the last
+programming languages.
+
+It first compiles to C (so it can be a viable low-level development
+language) and then- the world!
+
+A visual/graphical version of seabass should exist. How to make
+parsehooks work with it is a good question.
+
