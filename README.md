@@ -89,7 +89,10 @@ functionality, enabling new syntaxes. It also, of course, has full compiletime e
 Other languages do not enable, or do not flexibly allow, the programmer to alter the
 compiler itself.
 
-Seabass 
+Seabass isn't just another programming language. It is a dynamo for letting clever people
+"get over the hurdles" to make the world a better place.
+
+
 # Why Seabass?
 
 Three big things-
@@ -120,8 +123,7 @@ file extension and everything.
 
 # Documentation?
 
-I have some old documentation I wrote which I believe has errors in it (much lacking in Godliness) 
-but it may be useful regardless:
+`cbas -m help`
 
 
 

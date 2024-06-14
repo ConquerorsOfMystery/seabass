@@ -1864,7 +1864,7 @@ static char* read_stdin_until_we_get_eof(FILE* f, unsigned long* len){
 void vm_allocate_needed_memory(size_t amt);
 //void alloc_symbol_table();
 
-int main(int argc, char** argv){
+int ctok_main(int argc, char** argv){
     saved_argc = argc;
     saved_argv = argv;
     strll* f;
@@ -2027,6 +2027,7 @@ int main(int argc, char** argv){
     fail_incompat:;
     puts("The software, as written, is not compatible with your platform.");
     puts("Beloved, I'm sorry.");
-    exit(1);    
+    exit(1);
+    return 1;
 }
 /*End of file comment.*/

@@ -1,0 +1,63 @@
+
+HOW DO I PACKAGE AND MARKET THE SEABASS LANGUAGE?
+
+It's a "universal devkit". It's an "ingenuity engine".
+
+What is needed to make Seabass a truly universal development product?
+
+1. Boil it down.
+
+Seabass should be one executable binary in a folder with its libraries. On a Unix machine it's
+convenient that we have `/usr/include/cbas/` but it's not necessary to make it
+work. The "hurdle" type stuff that gets you to the code should be cut down as much as possible.
+
+Everything about the tool should be extremely simple.
+
+Making an EXE on Windows needs to be easy. We can't have any nonsense complexities with
+trying to make MinGW work.
+
+I figure the easiest way to do this is to provide TinyCC alongside it and write a "nanny program"
+that invokes TinyCC.
+
+Seabass has to maintain its flexibility as a retargetable compiler, but the nanny program can be
+specifically "toc".
+
+We want users to be able to have a very simple development setup which consists
+entirely of opening their editor and clicking a "compile and run" button.
+
+2. Emphasize retargeting.
+
+It's the user's responsibility to FFI libraries to be accessible by Seabass.
+
+We want to make this easy and we want to make targeting new languages easy.
+
+Making the metaprogramming tool itself extremely capable through stdmeta
+should be the emphasis, especially porting to new targets.
+
+We want to make it easy for a basic engineer to figure out over the course
+of, say, forty minutes how to make seabass spit out code in their favorite
+language and then begin making libraries accessible within it.
+
+Then we want to make it easy to call their favorite compiler from seabass.
+
+It would be really wonderful if I had a "developer's operating system" for
+this purpose...
+
+THE DES (Development Environment System)
+
+A single program whose sole purpose is to read and write files, run code, and display stuff
+on-screen in a window. Doesnt need to touch the network or the audio system.
+
+I could take the Seabass metacompiler and extend it with this functionality- I.e. move the old "main" of
+seabass into a separate function which gets called.
+
+NAH BUT WE NEED MORE THAN JUST SEABASS, ALSO THE METACOMPILER DIES WHEN IT REACHES AN ERROR.
+
+We need a full shell. It would be easiest just to use the host system's shell (and this would allow
+interfacing with other programs on the system).
+
+Using "system" I can invoke other programs.
+
+... Seem like it works to me. Pack that into the nanny?
+
+
