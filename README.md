@@ -9,11 +9,15 @@ All of it is public domain.
 
 # What is this?
 
-A programming language... sort of. A tool for programming which can help you write code
-better/faster.
+The most powerful programming tool ever created. Seabass is the first of the last 
+programming languages.
 
-The rough concept is that it's a programming language that you can extend using itself,
-mutable and extensible both syntactically and in structure.
+Seabass is a self-modifying, self-extending, self-retargeting programming language.
+
+That means you can extend the language to have new features, create new syntaxes (even
+whole new languages), and then compile it for almost any target in existence.
+
+Your intellectual capabilities are the limit.
 
 # How do I use it?
 
@@ -23,40 +27,69 @@ the .c files in the top level directory together `gcc -O3 *.c -o cbas` and that 
 a working cbas tool. Make sure to delete any `auto_out.c` files in the top level (should any
 be left).
 
+You'll want to install the standard libraries (everything under library/) into /usr/include/cbas/
+or something. 
+
+after that's done, try building some of the test programs. Look at the Makefile.
+
+the `cbas` tool itself should be build-able on most systems with a C compiler (Windows and Linux are of course
+fully capable). The metaprogramming library should also be a no brainer on those platforms as well as the `toc` 
+converter however the standard library stuff in `toc` may have to be tweaked per-platform. This is mostly 
+because C itself differs from platform
+to platform, and Seabass currently only has a C backend written (toc).
+
+Some `cstring` functions (`string.h`) may not be available on some platforms, but they are
+easily replaced.
+
+# How do I write Seabass code?
+
+Look at the example programs written. Mess around with it. I tried to make some tutorials
+but they were garbage. The base-level language feels like Lua, Rust, and C had a baby,
+and the metaprogramming makes you feel like a god.
+
+If you can write a mandelbrot renderer in C, you can learn Seabass pretty quick. Most of it is the same,
+just with tweaked or trimmed-down syntax.
+
+The metaprogramming capabilities of seabass are a whole other animal, though. It is currently a pretty
+good question what can be done with them. Not even one iota of the capabilities of this language have been
+tapped.
+
+Do you like money? Here's an entrepeneurial idea for you: Take what I've written here and figure out how
+to package it into the most powerful programming devkit ever made, and sell it to the US Government.
+
+You'll be a multi-millionaire in less than a year.
+
 # What can it do right now?
 
-You can write code in the seabass metaprogramming language and the tool will compile to C, which
-can then be compiled by GCC into target code. It should be possible to retarget Seabass easily-
-this is part of how it was designed.
+You can write code in the seabass metaprogramming language and the tool can compile to C, which
+can then be compiled by GCC into target code. 
 
-The tool itself does syntax error checking although due to the nature of metaprogramming
-it is very easy for errors to crop up which are difficult to track down. No line/column
-numbers are given for internally generated code.
 
-There is a metaprogramming library- you should be able to use the tools contained therein
-to rapidly lay down code equivalent to C. 
+With a little bit of effort it should be trivial to compile seabass code to any target.
 
-OpenGL 1.1 and OpenAL 1.1 have both been ported (notwithstanding mistakes/errors). There is
-a graphics library based on SDL2.
+The seabass programming tool (cbas) is not the only thing in-box. This puppy comes with
+batteries included, we have OpenAL 1.1, OpenGL 1.1, BSD sockets, and parts of SDL2 already available
+for programming.
+
+While this does make Seabass a capable programming language in its own right, it ultimately serves
+as little more than a demo. You really want to FFI existing C libraries into Seabass (or whatever
+language you choose to have Seabass compile into).
+
 
 # What is the potential of the project?
 
-To be blunt- I do not know. My hope is that it can be made to maximally extend and take
-advantage of man's God-given talents.
+In the right hands, Seabass could supersede every existing programming language.
 
-I believe this tool and this language can be useful for programming and help people
-write better code more quickly.
+The primary "new development" with Seabass is the discovery of the "parsehook",
+a language element which enables the programmer to extend the parser with new
+functionality, enabling new syntaxes. It also, of course, has full compiletime execution.
 
-# Why would you want to write Seabass? Why not just write C?
+# Why would you want to write Seabass? Why not just write C++, Rust, Etc?
 
-In short- custom abstractions, custom syntax sugars, and compiler extension.
+Other languages do not enable, or do not flexibly allow, the programmer to alter the
+compiler itself.
 
-Your source code can extend and manipulate the compilation process, from parsing
-to code generation.
-
-In standard C, I do not believe Seabass's practical capabilities are matched in this regard.
-
-
+Seabass 
 # Why Seabass?
 
 Three big things-
