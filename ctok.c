@@ -13,7 +13,7 @@ char* DUP_PATH_STRING(char* L, char* A){
 }
 
 
-#define SEABASS_VER_STRING "0.80 Beta (Bootstrap)"
+#define CBAS_VER_STRING "0.80 Beta (Bootstrap)"
 
 #include "targspecifics.h"
 #include "libmin.h"
@@ -1957,10 +1957,10 @@ int ctok_main(int argc, char** argv){
         puts("The CBAS Metaprogramming Tool");
         puts(bar);
         puts("Version string:");
-        puts(SEABASS_VER_STRING);
+        puts(CBAS_VER_STRING);
         puts(bar);
         puts("If you would like to learn how to use");
-        puts("seabass, try invoking...");
+        puts("CBAS, try invoking...");
         printf("%s -m help\n",argv[0]);
         exit(0);
     }

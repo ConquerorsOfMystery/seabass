@@ -436,19 +436,19 @@ void print_manpage(char* subject){
         ll("    4. It must be possible to combine, mix, or merge compiletime compilers.")
         ll("If a compiler does not meet these criteria, it is not a true metacompiler.")
         nl
-        l("seabass")
+        l("CBAS")
         ll("A metaprogramming-oriented programming language with lua-like syntax, understood")
         ll("by this metacompiler.")
         nl
         l("cbas")
-        ll("The SEABASS metaprogramming tool, metacompiler. Able to lex, pre-process, parse,")
-        ll("and execute SEABASS source code at compiletime.")
+        ll("The CBAS metaprogramming tool, metacompiler. Able to lex, pre-process, parse,")
+        ll("and execute CBAS source code at compiletime.")
         l(bar)
     };
     m(syntax){
         b(syntax)
-        l("Seabass's base-level syntax is a mixture of lua and C. It is designed to be friendly and pragmatic.")
-        l("However, Seabass is no ordinary programming language. It allows you to write entirely new")
+        l("CBAS's base-level syntax is a mixture of lua and C. It is designed to be friendly and pragmatic.")
+        l("However, CBAS is no ordinary programming language. It allows you to write entirely new")
         l("syntaxes within the language, even entire new programming languages.")
         nl
         l("In order to do that however, you need to know the base level language's syntax.")       
@@ -482,7 +482,7 @@ void print_manpage(char* subject){
     };
     m(reflection){
         b(reflection)
-        l("Seabass allows you to access the internals of the compiler. However, in order to do this,")
+        l("CBAS allows you to access the internals of the compiler. However, in order to do this,")
         l("A support library is needed. It should have come with the program.")
         nl
         l("This will provide you with the full compiler reflection library, allowing you")
@@ -495,7 +495,7 @@ void print_manpage(char* subject){
     };
     m(parsehook){
         b(parsehook)
-        l("Seabass enables metaprogramming by allowing your code to 'hook' into the parser.")
+        l("CBAS enables metaprogramming by allowing your code to 'hook' into the parser.")
         nl
         l("You can write a function and then use it to do parsing.")
         nl
@@ -517,7 +517,7 @@ void print_manpage(char* subject){
     };
     m(keywords){
         b(keywords)
-        l("Seabass has a very large number of keywords, at least in part")
+        l("CBAS has a very large number of keywords, at least in part")
         l("Because it has so many type aliases.")
         nl
         l("Here is a list of all keywords:")
@@ -609,7 +609,7 @@ void print_manpage(char* subject){
     };
     m(types){
         b(types)
-        l("Seabass has primitive types (integers and floats) pointers, arrays, and structs.")
+        l("CBAS has primitive types (integers and floats) pointers, arrays, and structs.")
         nl
         l("The primitive types are the integer types u8,i8,u16,i16,u32,i32,u64,i64")
         l("and the floating-point types f32 and f64.")
@@ -654,7 +654,7 @@ void print_manpage(char* subject){
     };
     m(constexpr){
         b(constexpr)
-        l("Seabass supports constexpr expressions. A constexpr expression can be embedded within any")
+        l("CBAS supports constexpr expressions. A constexpr expression can be embedded within any")
         l("expression by using constexpri or constexprf (for float or integer, respectively)")
         nl
         l("You would want to use constant expressions for the following reasons:")
@@ -667,12 +667,12 @@ void print_manpage(char* subject){
     };
     m(codegen){
         b(codegen)
-        l("Seabass is a metaprogramming language- it lets you write code that writes code. ")
+        l("CBAS is a metaprogramming language- it lets you write code that writes code. ")
         l("This is achieved by allowing the compilation unit to define functions which run")
         l("during parsing and compiletime, which have almost unlimited access to the compiler's internals")
         l(bar)
         nl
-        l("While the unit is being parsed, Seabass will check for the metaprogramming operator (@) and if")
+        l("While the unit is being parsed, CBAS will check for the metaprogramming operator (@) and if")
         l("it finds it, it will attempt to call a codegen function. These are called 'parsehooks'.")
         l("(See the parsehook manpage for more information on those)")
         nl
@@ -691,7 +691,7 @@ void print_manpage(char* subject){
     };
     m(undefined_behavior){
         b(undefined_behavior)
-        l("Seabass, like C and C++, has some operations which are undefined behavior.")
+        l("CBAS, like C and C++, has some operations which are undefined behavior.")
         l("For target code, this is implementation specific, but for the codegen environment, this")
         l("is more well-defined.")
         nl
@@ -716,7 +716,7 @@ void print_manpage(char* subject){
     };
     m(short_circuiting){
         b(short_circuiting)
-        l("Seabass does short circuiting. If you have an && or || and the first argument is 0 (for &&)")
+        l("CBAS does short circuiting. If you have an && or || and the first argument is 0 (for &&)")
         l("or not zero(for ||) then the rest of the and/or chain is not evaluated.")
         l(bar)
     };
@@ -739,7 +739,7 @@ void print_manpage(char* subject){
     };
     m(function_pointers){
         b(function_pointers)
-        l("Seabass, like C, has function pointers.")
+        l("CBAS, like C, has function pointers.")
         l("However, unlike C, they are not part of the type system.")
         l("All function pointers are `byte*`")
         l("To get a functions function pointer, do:")
@@ -757,41 +757,41 @@ void print_manpage(char* subject){
     };
     m(for_c_programmers){
         b(for_c_programmers)
-        l("Welcome to the introduction to Seabass for C programmers!")
+        l("Welcome to the introduction to CBAS for C programmers!")
         nl
-        l("This manpage will give you the basic 'gist' of what Seabass is, as well as")
+        l("This manpage will give you the basic 'gist' of what CBAS is, as well as")
         l("discuss its performance capabilities compared to raw C.")
         nl
-        l("WHAT IS SEABASS?")
+        l("WHAT IS CBAS?")
         ll("A metaprogramming language. However, this is an abstract and vague definition,")
         ll("So let me give you some rough analogies:")
         l("TWO LANGUAGES IN ONE")
-        ll("Code in seabass can be classified two different ways: Target or Codegen.")
+        ll("Code in CBAS can be classified two different ways: Target or Codegen.")
         ll("Target code is meant to be compiled into some lower level language (such as")
         ll("C or assembly) while codegen code is executed during compiletime. These")
         ll("languages are pretty much totally identical in syntax.")
         l("AN INTERPRETED LANGUAGE")
-        ll("Seabass is, principally, an interpreted language. When the `cbas` tool is invoked")
+        ll("CBAS is, principally, an interpreted language. When the `cbas` tool is invoked")
         ll("on source code, it is immediately 'executed'.")
         ll("This execution, as we'll discuss later, is rather unusual compared to most other")
         ll("interpreted languages (Code written for the target is not executed, for instance) but those")
         ll("details will hopefully become clear later.")
         l("A STRICTLY COMPILED LANGUAGE")
-        ll("You can also think of Seabass as a compiled language. Code which is not")
+        ll("You can also think of CBAS as a compiled language. Code which is not")
         ll("'codegen' is not executable until after it has been compiled into something")
         ll("which is. The responsibility of performing this code generation step rests")
         ll("with the interpreted language.")
         l("A RETARGETABLE COMPILER")
-        ll("You can also think of Seabass as a retargetable compiler. You can write your own")
+        ll("You can also think of CBAS as a retargetable compiler. You can write your own")
         ll("code generators which take the AST as input and generate code for a target.")
-        ll("This means that Seabass programs are theoretically extremely portable.")
+        ll("This means that CBAS programs are theoretically extremely portable.")
         l("A SELF-MODIFYING SCRIPTING LANGUAGE")
-        ll("Seabass lets you modify the internal structure of the compiler as well")
+        ll("CBAS lets you modify the internal structure of the compiler as well")
         ll("as the source code of the program being parsed, while it is being parsed,")
         ll("using interpreted code which runs immediately.")
         l("A COMPILER-COMPILER")
-        ll("Since Seabass is built around the idea of writing custom syntaxes, you can")
-        ll("think of Seabass sort of like Bison or Yacc in the sense that it enables")
+        ll("Since CBAS is built around the idea of writing custom syntaxes, you can")
+        ll("think of CBAS sort of like Bison or Yacc in the sense that it enables")
         ll("you to write parsers for new programming languages.")
         nl
         l("STAGES OF COMPILATION")
@@ -817,7 +817,7 @@ void print_manpage(char* subject){
         ll("Character literals are converted to integer literals.")
         nl
         l("PARSING")
-        ll("Seabass is implemented with a recursive descent parser. However, it is possible")
+        ll("CBAS is implemented with a recursive descent parser. However, it is possible")
         ll("to write `codegen` functions called 'parsehooks' which allow writing custom syntaxes.")
         ll("if the parser sees \"@myidentifier\" it tries to look for parsehook_myidentifier")
         ll("parsehooks have the ability to arbitrarily manipulate the Abstract Syntax Tree and")
