@@ -1954,7 +1954,8 @@ int ctok_main(int argc, char** argv){
         streq(infilename, "--version")
     ){
         const char* bar = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-        puts("The CBAS Metaprogramming Tool");
+        puts("CODER'S BASILISK");
+        puts("The first of the last programming languages.");
         puts(bar);
         puts("Version string:");
         puts(CBAS_VER_STRING);

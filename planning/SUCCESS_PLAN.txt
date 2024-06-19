@@ -1,0 +1,29 @@
+CBAS IS AN AWESOME TOOL. HOW DO I MAKE A SPLASH WITH IT?
+
+I'm sitting on diamonds-in-the-rough. Unfortunately, most people
+want POLISHED diamonds...
+
+I figure, roughly in order of importance:
+
+1. I need a reference for the language and the tool. Lists of every builtin function,
+every keyword, etcetera. I need to document the standard metaprogramming library's
+capabilities. I need examples in the reference that can be pasted and compiled.
+
+2. I need a manual or "programmer's guide" for teaching the language. It should
+be a PDF.
+
+3. I need a logo/symbol for the project. Since it's called "Coder's Basilisk" now,
+I figure it should be like a snake curled up around an exploding star or a black hole
+or something.
+
+4. I need programs written in CBAS which showcase its usefulness.
+
+5. I need videos which showcase programs written in cbas.
+
+6. I need a devkit setup. For Linux, I pretty much already have that. But for Windows
+(Which is what everyone uses...) we pretty much don't. Compilation on Windows is tough cookies.
+
+I could bundle TinyCC or something with it. I don't know.
+
+
+
