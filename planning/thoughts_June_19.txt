@@ -1,0 +1,20 @@
+Something computer languages don't really have a good
+way of doing is "Do X on Y". Functions partially achieve
+this, but really they may be a mix of infrastructural and
+end-result commands.
+
+Think about a physics engine implementation.
+
+"do a physics iteration on the objects in the list" is easy
+to express in text, but verbose and somewhat unintuitive in
+code, looking more like "For each object in the list, iterate
+physics on that object". If we included collision handling
+in "iterate physics" then this is actually insufficient, we
+have to look at every possible colliding pair of objects and
+check for a collision. If we optimize with bins, this becomes
+even more complex.
+
+Since I understand so well how basic physics engine code 
+(not full Rigid Body Dynamics) is implemented, and this system
+is prototypical of mass data processing over time, it is a useful 
+example to analyze.
