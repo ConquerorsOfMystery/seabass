@@ -1,6 +1,6 @@
 Before anything else...
 
-# THE CBAS METAPROGRAMMING LANGUAGE
+# CODER'S BASILISK - CBAS - THE ULTIMATE PROGRAMMING TOOL
 
 Welcome! This repository contains the code for the cbas metaprogramming
 tool along with some libraries and example code.
