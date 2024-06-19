@@ -300,9 +300,9 @@ void print_manpage(char* subject){
     };
     m(help){
         b(help)
-        l("Welcome to the CBAS Metaprogramming Tool's Manual Pages!")
+        l("Welcome to Coder's Basilisk's Manual Pages!")
         nl
-        l("This program was authored for the Public Domain, using the undeserved blessings of our Lord Jesus Christ.")
+        l("This program was authored for the Public Domain")
         nl
         l("To begin viewing documentation, view the index:")
         nl
@@ -336,7 +336,6 @@ void print_manpage(char* subject){
         o(parsehook)
         o(keywords)
         o(undefined_behavior)
-        o(dedicatory)
         l(bar)
     };
     m(terminology){
@@ -438,7 +437,7 @@ void print_manpage(char* subject){
         nl
         l("CBAS")
         ll("A metaprogramming-oriented programming language with lua-like syntax, understood")
-        ll("by this metacompiler.")
+        ll("by this metacompiler. ")
         nl
         l("cbas")
         ll("The CBAS metaprogramming tool, metacompiler. Able to lex, pre-process, parse,")
@@ -471,13 +470,6 @@ void print_manpage(char* subject){
         l(bar)
         l("[to isolate this example for piping to file, run cbas -m syntax_oop_example")
         nl
-        l(bar)
-    };
-    m(dedicatory){
-        b(dedicatory)
-        l("All Glory, might, praise, power, and honor to Jesus of Nazareth, King of Kings and Lord of Lords.")
-        l("Without the blessings of God our Father and our Lord Jesus Christ, none of this would be possible.")
-        l("Never forget him!")
         l(bar)
     };
     m(reflection){
@@ -1095,7 +1087,6 @@ void print_manpage(char* subject){
     r(terminology)
     r(syntax)
     r(error_messages)
-    r(dedicatory)
     r(reflection)
     r(parsehook)
     r(keywords)

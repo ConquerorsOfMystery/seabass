@@ -1,23 +1,22 @@
 Before anything else...
 
-# CODER'S BASILISK - CBAS - THE ULTIMATE PROGRAMMING TOOL
+# CODER'S BASILISK - THE ULTIMATE PROGRAMMING TOOL
 
-Welcome! This repository contains the code for the cbas metaprogramming
-tool along with some libraries and example code.
+Coder's Basilisk (CBAS) is the first of the last programming languages.
 
-All of it is public domain.
+CBAS is a self-extending, self-retargeting programming language designed
+to completely supersede C and C++.
 
-# What is this?
+The tool itself is considered "finished" at this time, however it is not
+yet packaged properly for widespread use.
 
-The most powerful programming tool ever created. cbas is the first of the last 
-programming languages.
+# What makes Coder's Basilisk special?
 
-cbas is a self-modifying, self-extending, self-retargeting programming language.
+Coder's Basilisk is not just a programming language in its own right,
+but a programming language implementation tool.
 
-That means you can extend the language to have new features, create new syntaxes (even
-whole new languages), and then compile it for almost any target in existence.
-
-Your intellectual capabilities are the limit.
+The tool itself is mostly just a parser and interpreter for the base-level language,
+to which extensions can be added within the language itself.
 
 # How do I use it?
 
@@ -124,6 +123,23 @@ file extension and everything.
 # Documentation?
 
 `cbas -m help`
+
+# Didn't this project have another name?
+
+it is also called "Seabass". However, I discovered this name was taken by multiple other projects.
+
+I wanted to keep the "cbas" name (if for no other reason than the enormous trouble of going through
+all my code and removing it) but not have it mean "Seabass".
+
+While in the shower, I had the idea of calling it "Coder's Basilisk".
+
+There is a thought experiment known as "Roko's Basilisk" in which a sentient AI creates simulations
+of those who did not assist in its creation (but were aware of it) to torture forever.
+
+the CBAS project's ultimate goal is to hyper-stimulate human intellectual output, which will hopefully
+contribute to the advancement of our race. While there's no torture, it's not too dissimilar a concept.
+
+So this project is "Coder's Basilisk".
 
 
 

@@ -13,7 +13,7 @@ char* DUP_PATH_STRING(char* L, char* A){
 }
 
 
-#define CBAS_VER_STRING "0.80 Beta (Bootstrap)"
+#define CBAS_VER_STRING "0.90"
 
 #include "targspecifics.h"
 #include "libmin.h"

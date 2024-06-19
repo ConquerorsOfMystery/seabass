@@ -20,7 +20,7 @@ I figure the easiest way to do this is to provide TinyCC alongside it and write 
 that invokes TinyCC.
 
 Seabass has to maintain its flexibility as a retargetable compiler, but the nanny program can be
-specifically "toc".
+[defaulted] specifically "toc".
 
 We want users to be able to have a very simple development setup which consists
 entirely of opening their editor and clicking a "compile and run" button.
