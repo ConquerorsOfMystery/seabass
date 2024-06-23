@@ -1,0 +1,40 @@
+WHAT IS THE ESSENCE OF METAPROGRAMMING THEORY?
+To create abstractions which are good "building blocks"
+or "tools" for software infrastructure.
+
+To create languages which form fluid spaces for thought about
+how to write code.
+
+HOW DOES CBAS ENABLE METAPROGRAMMING?
+
+The Parsehook. Codegen code. You can extend the compiler.
+
+WHAT BASIC PRINCIPLES IN METAPROGRAMMING THEORY ARE IMPORTANT?
+
+* Contextual inference. By establishing a "context" within the
+structure of the code, it is possible to make the language more
+suitable for that specific case. One way to have a context for
+instance is to have "[a] thing(s) you are talking about". Obvious
+example is how methods can speak of the object they were called
+on as "this".
+
+* Concept modelling. Nouns, adjectives, and verbs can have relationships
+between each other which describe software's structure, most obviously
+control flow, namespaces, and data hierarchies (Class members). Ordinary
+C does not do very much of this- it really only has the concept of "parent/child"
+relationships. struct members, function arguments, statements inside of a
+compound statement. C++ has the concept of a "friend class".
+
+WHAT ARE SOME IDEAS FOR ABSTRACTIONS?
+
+* The EAG. Extremely Ambiguous grammar. I currently envision
+it as being a concept-modelling language, the data structure of which
+is then parsed to generate "ordinary code".
+
+* Symbol Knowledge System. For a given scope (global too) there may be
+"attributes" for "nouns" in the code. These are useful for static analysis
+and inferencing. Also great for "plugging" (making components talk to each
+other automatically).
+
+* CBAS++. An extension of CBAS which incorporates multithreading and other
+factors into its linguistic structure.
