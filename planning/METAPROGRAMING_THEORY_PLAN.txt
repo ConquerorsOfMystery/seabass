@@ -38,3 +38,55 @@ other automatically).
 
 * CBAS++. An extension of CBAS which incorporates multithreading and other
 factors into its linguistic structure.
+
+WHAT NEW "HARD METAPROGRAMMING" STUFF DO I WANT TO ADD TO CBAS?
+(i.e. advancing the theory of metaprogramming itself; scientifically
+important)
+
+>> The EAG. I want to create the EAG.
+
+>> Demonstrations of the UAST's usage as a concept modelling tool.
+This is "hard" because the data structure itself is not sufficient
+to determine how to use it.
+
+>> The Symbol Knowledge System.
+
+SOFT METAPROGRAMMING STUFF?
+
+>> Lots of templated stuff. Algorithms and stuff.
+
+>> Some DSLs. I'm thinking particularly for algorithm specification,
+especially on containers.
+
+>> C++-esque stuff. We want iterators, for-each, etcetera implemented
+in CBAS. Whether this is as simple as combining symbol knowledge with
+worksheets and templates is a potshot.
+
+
+MAKING CBAS A USEFUL TOOL?
+
+>> I need a GUI library that can render text, checkboxes, sliders, and other
+common widgets or widget components. Full truetype rendering would be awesome,
+but, well, bro it's so many characters. How?!?!
+
+I might just have to settle with ASCII extended only. Perhaps fonts can be specified.
+
+(Doesn't work for things like arabic or japanese, but whatever, dude)
+
+>> I need to make writing new backends easy.
+
+>> I need to write DOCUMENTATION. Especially TUTORIALS, REFERENCE, GUIDES, AND EXPOSITORY
+MATERIAL. 
+
+DEMOING CBAS? PROVING IT TO THE WORLD?
+
+I think it would be awesome to write my own "gui program engine" which I could compile
+for windows. It would then accept scripts in javascript or lua or something to drive
+it.
+
+I could write a game engine, which could sell on steam.
+
+
+
+
+
