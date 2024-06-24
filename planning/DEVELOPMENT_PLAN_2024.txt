@@ -1,0 +1,17 @@
+
+CBAS IS A SUPERWEAPON WAITING TO BE ARMED.
+
+"Completed" in its core function, but not ready to be used.
+
+I want to start building CBAS into a true super-weapon-
+
+I want to write a gui library (including ASCII font rendering)
+using funbas. I want a practical 3d/2d rendering library
+which uses software (No shaders).
+
+I want algorithm implementations in CBAS- notably for software
+rendering, I want everything needed to go from triangle models
+and transforms to a "final result".
+
+
+
