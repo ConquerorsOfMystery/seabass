@@ -12,7 +12,7 @@
     
     
 */
-
+#guard STDMETA_cgtokvec_DMHSW
 #include <stdmeta/cgstl.hbas>
 
 /*

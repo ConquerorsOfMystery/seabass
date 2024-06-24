@@ -1,0 +1,100 @@
+
+/*
+    FIXED POINT ARITHMETIC FOR CBAS
+    
+    addition and subtraction don't matter, but 
+*/
+
+#include <stdmeta/wksht.hbas>
+
+
+
+
+codegen u64 __fixedgen = 0;
+
+@mktemplate [
+    fixedmul
+    [
+        [__WHY__]
+        @global
+        fn codegen __WHY__(i32 _a, i32 _b)->i32:
+            i64 a
+            i64 b
+            i64 c
+            a = _a;
+            b = _b;
+            //for fixed point 22.10,
+            //a and b are both scaled by 1/1024 (>>10).
+            //the result will be scaled 1/(2^20)
+            //so we must right shift...
+            c = a * b; 
+            c = ((u64)c) >> (u64)FRAC_BITS;
+            return c;
+        end
+    ][
+        FRAC_BITS
+    ][
+        char[50] buf
+        u64 ours = __fixedgen++;
+        cgstrcpy(buf, "__fixedmul__");
+        __builtin_utoa(buf + 12, ours);
+        
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__WHY__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(buf);
+            end
+            iter = iter.right
+        end
+        return result;
+    ]
+]
+
+
+@mktemplate [
+    fixeddiv
+    [
+        [__WHY__]
+        @global
+        fn codegen __WHY__(i32 _a, i32 _b)->i64:
+            i64 a
+            i64 b
+            i64 c
+            a = _a;
+            b = _b;
+            //for fixed point 22.10,
+            //a and b are both scaled by 1/1024 (>>10).
+            //1/1024 / 1/1024 is 1.
+            //i.e. if we just divided now, the result would then have scaling
+            //1, meaning we lose ALL of the precision after the radix.
+            //what we really want is 1/(1024^2) / 1/1024,
+            //which gives us 
+            a = a * (1<<FRAC_BITS); //scaling of the first number is now doubled,
+                                    //meaning division will now give us a 1/1024 result.
+            c = a / b; 
+            return c;
+        end
+    ][
+        FRAC_BITS
+    ][
+        char[50] buf
+        u64 ours = __fixedgen++;
+        cgstrcpy(buf, "__fixedmul__");
+        __builtin_utoa(buf + 12, ours);
+        
+        cgstrll* iter = result;
+        while(iter != 0)
+            if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+            if(iter.text streq "__WHY__")
+                __builtin_free(iter.text);
+                iter.text = __builtin_strdup(buf);
+            end
+            iter = iter.right
+        end
+        return result;
+    ]
+]
+
+
