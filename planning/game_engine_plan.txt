@@ -1,0 +1,136 @@
+
+I WANT TO MAKE A GAME ENGINE / MULTIMEDIA TOOLKIT SURROUNDING CBAS
+
+A fast, easy way to write code which runs anywhere. Anywhere-enough so that I don't
+care if you can't run it.
+
+Android, Windows, Linux.
+
+And I want it to be reasonably simple to port to any other platforms.
+
+Necessary parts:
+
+1. An interpreted stack machine byte code.
+
+2. An API which can interact with the network, graphics, sound, windowing system, and the file system.
+I really want full OpenGL or Vulkan for shading, but maybe I could have my own shading language?
+
+3. A CBAS tooling to target the interpreter.
+
+4. A physics engine. I figure I will write my own.
+
+5. File format handlers for common formats- so stb_image and something to handle OBJ or FBX files.
+
+    Scratch this- Fuck handling files! I'll just do a multimedia toolkit.
+
+6. A graphical editor. I think doing scene trees like Unity or Godot is a bad idea- instead 
+
+WHAT IS THE NATURE OF USING SUCH AN ENGINE?
+
+I imagine the "standard workflow" is anything from pure code to almost entirely graphical. 
+
+I imagine that I would want to make a graphical language (which turns into CBAS, which is then compiled
+into bytecode to be executed by the interpreter). 
+
+The engine would take one binary- the program- along with all files. I might include an assembler inside
+the engine binary itself, but, like, whatever, dude.
+
+HOW MUCH OF THE GRAPHICS API SHOULD WE EXPOSE?
+
+I want to simplify it. I figure there's a "standard 2D workflow", a "standard 3D Phong Workflow", a "standard
+PBR 3D workflow" and a variety of others (Standard 3d flat shaded, standard 3d per-vertex lit...).
+
+Fancy effects should be limited to fragment shader stuff- I figure we'll expose all of GLSL if you really
+want it.
+
+HOW DOES A USER ACTUALLY USE THE TOOL TO MAKE GAMES?
+
+It'll be a multimedia toolkit, with an emphasis on game tooling.
+
+So, like... you write code.
+
+
+WHAT ARE THE "HARD PHASES" OF THIS GAME ENGINE IDEA?
+
+1. Binding Modern OpenGL or Vulkan- I would actually want to use OpenGL ES, for potential
+android support...
+
+2. Writing the basic 3d model renderer which accepts a vertex shader and fragment shader to process
+the model data as well as the currently bound material (albedo + reflectivity + bump).
+
+3. Getting a Physics Engine tied into the mix
+
+4. Writing the interpreter
+
+5. Making it work on Windows and Android
+
+
+OVERALL DEVELOPMENT PLAN OF THE ENGINE?
+
+1. I have to architect the overall structure-
+
+    * OpenGL ES, Sockets, and OpenAL.
+    
+    * We do our own GUI library. We also roll our own physics engine, and editor as well.
+    
+    * I'm doing OpenGL ES and not normal OpenGL because I want to target Android. The editor
+    has to allow generating for android. Exactly how to package up the C source code plus assets 
+    to run on android inside of an APK is a good question...
+
+2. I have to write the wrapper/binding for OpenGL ES to CBAS
+
+    SCRATCH 3- NO BULLET. I write my own physics engine. Instead,
+    put networking here.
+
+4. I have to write a full renderer in C/C++ with GLSL and test it. This could actually
+be fairly difficult, because I may not have any asset importing abilities and therefore
+must generate assets procedurally.
+
+5. I have to mix my renderer with the physics engine
+
+6. I have to mix all that with the audio engine.
+
+7. I have to write my interpreter VM
+
+8. I have to make the interpreter VM a valid target for CBAS. This should be easy IF
+the VM is tweaked as I go along to make targeting it easy.
+
+9. The VM has to be given access to the full API of the engine.
+
+10. I have to make the full development pipeline writing CBAS code and compiling to the
+VM target work on Linux and Windows (bare minimum). I also want to test it on Android,
+although figuring out how to make an android APK or whatever could be very difficult.
+
+11. I have to jam-pack shit in to make the process of making games easy.
+
+SO TO RE-ITERATE, WHAT DO I HAVE TO DO?
+
+1. OpenGL, OpenAL, Networking, and the file system. That's what has to be wrapped for CBAS.
+
+    >>> Literally the only thing that hasn't been wrapped yet is OpenGL ES.
+
+2. I need to write a VM that is a target for CBAS and supports all the APIs I want wrapped.
+
+3. I have to write some shit using the APIs I want to use to make an editor, file format
+importers, etcetera. I figure I at least want to demonstrate OBJ loading.
+
+4. I want to write a software renderer and some other stuff
+
+5. I want demos showcasing what the toolkit can do
+
+6. I want documentation
+
+7. All this has to work on Windows and Android.
+
+8. We wrap it up in a neat little bow as a program which can be launched from a single
+executable (which steam will be able to see!) which then generates your game inside a folder
+(or an APK or whatever for android) for your desired target platform.
+
+9. Once I have a "finished program" I pay Valve 200 bucks or so and put my game engine on steam.
+
+    (I also want to list it on Itch.io)
+    
+    I figure i'll list it super cheap for like 5 bucks. Royalty-free license. I might give away the source
+    code as well.
+
+10. I let the cash roll in...
