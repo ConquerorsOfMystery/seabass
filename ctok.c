@@ -30,14 +30,11 @@ char* DUP_PATH_STRING(char* L, char* A){
     System include directory.
 */
 
+char* sys_include_dir = 
 #ifdef __WIN32__
-
-const char* sys_include_dir = "C:/cbas/";
-
+"C:/cbas/";
 #else
-
-const char* sys_include_dir = "/usr/include/cbas/";
-
+"/usr/include/cbas/";
 #endif
 
 LIBMIN_UINT atou_hex(char* s){
@@ -1870,8 +1867,99 @@ int ctok_main(int argc, char** argv){
     strll* f;
     char* infilename = NULL;
     FILE* ifile = NULL;
-    char* entire_input_file;
     unsigned long entire_input_file_len = 0;
+    /*
+        Attempt to retrieve the config file from the home directory...
+        or the current directory on Windows
+    */
+    ifile = 
+#ifdef __WIN32__
+    fopen("cbas_cfg.txt","rb");
+#else
+    fopen(".cbas_cfg","rb");
+#endif
+    if(ifile)
+    {
+        puts("<CONFIG FILE DETECTED>");
+        char* cfg_file_contents = read_file_into_alloced_buffer(ifile, &entire_input_file_len);
+        if(cfg_file_contents == NULL){
+            puts("<ERROR> ?? Empty config file??");
+            exit(1);
+        }
+        char* cfg_walker;
+        fclose(ifile); 
+        ifile = NULL;
+        cfg_walker = cfg_file_contents;
+        while(1)
+        {
+            int which_line = 0;
+            char* eol;
+            char store;
+            //We are at the beginning of a line. 
+            //Skip every space character preceding line content.
+            while(isspace(cfg_walker[0])) cfg_walker++;
+            if(cfg_walker[0] == 0) break;
+            //identify line type.
+            if(strprefix("SYSTEM_INCLUDE:", cfg_walker)) which_line = 1;
+            if(strprefix("SYS_INCLUDE:", cfg_walker)) which_line = 1;
+            if(strprefix("SYS_INCLUDE_DIR:", cfg_walker)) which_line = 1;
+            if(strprefix("system_include:", cfg_walker)) which_line = 1;
+            if(strprefix("sys_include:", cfg_walker)) which_line = 1;
+            if(strprefix("system_include_dir:", cfg_walker)) which_line = 1;
+            //if we did not successfully identify the line type, break out!
+            if(which_line == 0 && cfg_walker[0] != '\n' && cfg_walker[0]) {
+                puts("Unknown line in cfg:");
+                puts(cfg_walker);
+                break;
+            }
+            //skip line type part.
+            while(!isspace(cfg_walker[0])) cfg_walker++;
+            //skip whitespace.
+            while(isspace(cfg_walker[0])) cfg_walker++;
+            
+            //invalid line...
+            if(cfg_walker[0] == '\0' || cfg_walker[0] == '\n') {puts("\n<CFG ERROR> Unfilled field?");break;}
+            
+            //Navigate to the end of the line.
+            eol = cfg_walker;
+            while(eol[0] && eol[0] != '\n') eol++;
+            if(eol == cfg_walker) {puts("\n<CFG ERROR> Unfilled field?");break;}
+            
+            //based on identified line type, handle the line.
+            if(which_line == 1){
+                //SYS_INCLUDE_DIR
+                store = eol[0];
+                eol[0] = '\0';
+                sys_include_dir = strdup(cfg_walker);
+                if(sys_include_dir == NULL) {puts("Malloc failed while parsing cfg file...");exit(1);}
+                eol[0] = store;
+            }else{
+                //unknown line type
+                break;
+            }
+            //did we reach the end of the file's contents? Break out!
+            if(eol[0] == '\0') break;
+            
+            //continue parsing.
+            cfg_walker = eol+1;
+        }
+        free(cfg_file_contents);
+    } else {
+        puts(
+            "Detected no cfg file...\n"
+            "Create this file:\n"
+#ifdef __WIN32__
+            "\tcbas_cfg.txt"
+#else
+            "\t.cbas_cfg"
+#endif
+            "\nAnd put it in the calling directory."
+        );
+    }
+    ifile = NULL;
+    
+    char* entire_input_file;
+
     char* t;
     nfilenames = 0;
     const char* compaterr = "<COMPATIBILITY ERROR>";

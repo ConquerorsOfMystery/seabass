@@ -310,7 +310,7 @@ static void assign_lsym_gsym(expr_node* ee){
                     puts("You may not use global variables in pure functions.");
                     puts("This is the variable you are not allowed to access:");
                     puts(ee->symname);
-                    puts("This is the function you tried to access it from:");
+                    puts("This is the pure function you tried to access it from:");
                     puts(symbol_table[active_function]->name);
                     validator_exit_err();
                 }

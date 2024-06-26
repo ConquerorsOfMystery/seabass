@@ -1,0 +1,13 @@
+
+THE CONCEPT OF THE TOOLS OF KEGGEK PROJECT IS BACK.
+
+A full system/toolkit for software authorship and creative
+expression which runs on any machine, built around metaprogramming.
+
+HOW DO I MAKE METAPROGRAMMING POWERFUL FOR OTHER PROGRAMMERS?
+
+The masses are likely too dim-witted and hopelessly deluded to ever
+really be involved. 
+
+TODO: Finish this document.
+

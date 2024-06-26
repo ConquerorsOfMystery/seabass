@@ -11,7 +11,28 @@ which uses software (No shaders).
 
 I want algorithm implementations in CBAS- notably for software
 rendering, I want everything needed to go from triangle models
-and transforms to a "final result".
+and transforms to a "final result" all built-in and pre-packaged
+for use.
+
+I would also like to be able to access hardware rendering with
+similar ease.
+
+I could probably create my own shading language which can be compiled
+to GLSL or whatnot
+
+
+WHAT NEEDS TO BE MADE FOR CBAS TO BE "READY"?
+
+1. Software rendering toolkit
+
+2. GUI library
+
+3. More metaprogramming tools and demos
+
+4. Documentation
+
+Development of CBAS and the TOOLS OF KAGRENAC project should continue after I have successfully
+written more books for Amazon.
 
 
 
