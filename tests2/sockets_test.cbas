@@ -24,16 +24,22 @@ fn client:
     //let the server send us data....
     char[512] buf
     memclear(buf, 512);
-    if(px_recv(a.sock_fd, buf, 512) == -1)
-        perror("CLIENT RECV ERROR: ");
-        sys_exit(1);
+    int sum_bytes = 0;
+    while(1)
+        int zz
+        zz = px_recv(a.sock_fd, buf, 512);
+        if( zz == -1)
+            perror("CLIENT RECV ERROR: ");
+            sys_exit(1);
+        end
+        sum_bytes = sum_bytes + zz;
+        if(sum_bytes >= 512) break end
     end
     //print it to the screen...
     @prnt[
         /   "CLIENT RECEIVED:"
         /   (buf)
     ]
-
 end
 
 fn server:
