@@ -8,22 +8,24 @@ Android, Windows, Linux.
 
 And I want it to be reasonably simple to port to any other platforms.
 
+I want full hardware 3D! I don't want to skimp.
+
+    If I have full hardware 3D, I can GET software rendering too.
+
 Necessary parts:
 
 1. An interpreted stack machine byte code.
 
 2. An API which can interact with the network, graphics, sound, windowing system, and the file system.
-I really want full OpenGL or Vulkan for shading, but maybe I could have my own shading language?
+I really want full OpenGL or Vulkan for shading. VS+FS only, with a limited set of attributes.
 
 3. A CBAS tooling to target the interpreter.
 
 4. A physics engine. I figure I will write my own.
 
-5. File format handlers for common formats- so stb_image and something to handle OBJ or FBX files.
+5. File format handlers for audio and images. I figure I will leave model formats to my users.
 
-    Scratch this- Fuck handling files! I'll just do a multimedia toolkit.
-
-6. A graphical editor. I think doing scene trees like Unity or Godot is a bad idea- instead 
+6. A project manager/editor tool.
 
 WHAT IS THE NATURE OF USING SUCH AN ENGINE?
 
@@ -107,7 +109,8 @@ SO TO RE-ITERATE, WHAT DO I HAVE TO DO?
 
 1. OpenGL, OpenAL, Networking, and the file system. That's what has to be wrapped for CBAS.
 
-    >>> Literally the only thing that hasn't been wrapped yet is OpenGL ES.
+    >>> I will probably have to do a whole other thing than fun.hbas for this. Like, I'll
+    have to use SDL2 fully or something.
 
 2. I need to write a VM that is a target for CBAS and supports all the APIs I want wrapped.
 
@@ -134,3 +137,31 @@ executable (which steam will be able to see!) which then generates your game ins
     code as well.
 
 10. I let the cash roll in...
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SO... HOW DO I GET OPENGL ES WORKING?
+
+I want it to work on my system first, and once I have that, then I can try to compile demos for android and run
+them on my phone.
+
+If it works on linux and android, it will almost certainly work on Windows... but I shouldn't get my hopes
+up.
+
+... I guess I should focus on getting SDL2 working with OpenGL ES 2.0 here on Debian first with a triangle or
+something, then I should make that demo run on my phone.
+
+Once that is handled, add something that plays a noise when I click, and turn that into tapping
+the screen on android.
+
+Once that is handled, then I can begin wrapping for CBAS.
+
+https://stackoverflow.com/questions/35734333/can-i-use-bsd-sockets-in-android-ndk
+
+Oh! Wow! I can actually use BSD sockets and unix calls on Android? Nice!
+
+
+OpenGL ES 2.0 reference pages. This whole API has to be forwarded
+to CBAS for ease of programming, methinks.
+https://registry.khronos.org/OpenGL-Refpages/es2.0/
+
+
+
