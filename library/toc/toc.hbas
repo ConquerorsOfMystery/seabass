@@ -43,9 +43,11 @@ codegen u64 cg_Cemitter_indentlevel = 0;
     IMPL_README
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     If char in C is default signed, you should set this to zero.
+    otherwise, set it to 1.
     
-    This is true on GCC for instance. Which means that
-    when using GCC, you probably want this to be 0.
+    This is true on GCC for instance.
+    
+    The "default" for this is 0.
 */
 codegen u64 cg_Cemitter_explicit_signed_char = 0;
 
@@ -54,15 +56,15 @@ codegen u64 cg_Cemitter_explicit_signed_char = 0;
     IMPL_README
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     If char in C is default unsigned, you should set this to zero.
+    otherwise, set it to 1.
     
-    I don't know of any platform where this is true, but I hear
-    it's possible in the C standard, and there probably
-    are platforms where it's true.
+    I have heard that this is true on some platforms.
     
     The reason why you shouldn't set both this
-    and the above to "1" is that you will be
-    unable to declare `int main(int argc, char** argv, char** env)` without
-    access to char.
+    and the above to "1" is that declaring the main function
+    requires access to the "char" type for char** argv.
+    
+    The "default" for this is 1.
 */
 codegen u64 cg_Cemitter_explicit_unsigned_char = 1;
 
