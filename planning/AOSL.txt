@@ -1,0 +1,19 @@
+
+ABSTRACT OBJECT SPECIFICATION LANGUAGE
+
+Abstract objects, abstract types,
+
+Properties (on an object: another object, or data i.e. "integer"
+On a type: template object properties, constructor data
+)
+
+Singletons (Type which is also an AO)
+
+EXAMPLE THINKING... (needs work)
+
+TheEngine is an Engine, CBASCLASS
+
+TheEngine->CBASCLASS has playerhealth (is variable(int)), playerlvl (is variable(int))
+
+
+theEngine.entityclass = 
