@@ -1,0 +1,10 @@
+
+CODE STRUCTURE MODELLING LANGUAGE
+
+Build a language where you can define words. Words may have multiple functions, they may
+modify one or more other words, etcetera.
+
+Instead of writing code entirely imperatively, you give the computer understanding of the
+structure of your architecture first, and then *in the context of that architecture* you
+write imperative code.
+

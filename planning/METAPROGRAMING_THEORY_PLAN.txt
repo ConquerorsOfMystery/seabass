@@ -16,7 +16,7 @@ structure of the code, it is possible to make the language more
 suitable for that specific case. One way to have a context for
 instance is to have "[a] thing(s) you are talking about". Obvious
 example is how methods can speak of the object they were called
-on as "this".
+on as "this". Context effectively builds a local language.
 
 * Concept modelling. Nouns, adjectives, and verbs can have relationships
 between each other which describe software's structure, most obviously
