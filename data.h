@@ -89,6 +89,7 @@ typedef struct type{
         return type.
     */
     char* membername; /*used for struct members and function arguments*/
+    char* user_trait_struct; /*For used-defined trait system.*/
 }type;
 
 
@@ -103,6 +104,7 @@ typedef struct{
     uint64_t is_noexport;
     uint64_t is_union;
     uint64_t algn; //alignment
+    char* user_trait_struct; /*For used-defined trait system.*/
 } typedecl;
 
 
@@ -111,6 +113,7 @@ typedef struct typedecl_oop_metadata{
     int64_t ctor_id; //what is its ctor_id? -1 if it doesn't exist.
     int64_t dtor_id; //same thing again...
     int64_t have_checked; //have we actually checked to see if this type has type metadata?
+    char* user_trait_struct; /*For used-defined trait system.*/
 } typedecl_oop_metadata;
 extern typedecl_oop_metadata* oop_metadata;
 
@@ -139,6 +142,7 @@ typedef struct{
     uint64_t is_impure_uses_incomplete_symbols; /*uses incomplete symbols.*/
     uint64_t is_data; /*only set for data.*/
     uint64_t is_noexport;
+    char* user_trait_struct; /*For used-defined trait system.*/
 } symdecl;
 
 typedef struct{
@@ -166,6 +170,7 @@ typedef struct scope{
     uint64_t nstmts;
     uint64_t is_fbody;
     uint64_t is_loopbody;
+    char* user_trait_struct; /*For used-defined trait system.*/
 } scope;
 typedef struct{
     symdecl_astexec* syms;
@@ -222,6 +227,7 @@ typedef struct stmt{
     uint64_t linenum;
     uint64_t colnum;
     char* filename;
+    char* user_trait_struct; /*For used-defined trait system.*/
 } stmt;
 typedef struct{
     scope_astexec* whereami; /*scope this statement is in. Not owning.*/
@@ -328,6 +334,7 @@ typedef struct expr_node{
     uint64_t is_implied;
     uint64_t was_struct_var;
     type type_to_get_size_of; //sizeof and cast both use this.
+    char* user_trait_struct; /*For used-defined trait system.*/
 }expr_node;
 
 typedef struct expr_node_astexec{

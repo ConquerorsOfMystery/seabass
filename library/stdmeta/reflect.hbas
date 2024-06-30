@@ -436,6 +436,7 @@ class cgtype
     u64 is_function
 
     char* membername
+    char* user_trait_struct
 end
 
 class cgtypedecl
@@ -447,6 +448,7 @@ class cgtypedecl
     u64 is_noexport
     u64 is_union
     u64 algn
+    char* user_trait_struct
 end
 
 class cgsymdecl
@@ -470,6 +472,7 @@ class cgsymdecl
     u64 is_impure_uses_incomplete_symbols
     u64 is_data
     u64 is_noexport
+    char* user_trait_struct
 end
 
 class cgscope
@@ -480,6 +483,7 @@ class cgscope
     u64 nstmts
     u64 is_fbody
     u64 is_loopbody
+    char* user_trait_struct
 end
 
 class cgstmt
@@ -501,6 +505,7 @@ class cgstmt
     u64 linenum
     u64 colnum
     char* filename
+    char* user_trait_struct
 end
 
 class cgexpr_node
@@ -520,6 +525,7 @@ class cgexpr_node
     u64 is_implied
     u64 was_struct_var
     cgtype type_to_get_size_of
+    char* user_trait_struct
 end
 
 class cgtypedecl_oop_metadata
@@ -527,6 +533,7 @@ class cgtypedecl_oop_metadata
     i64 ctor_id
     i64 dtor_id
     i64 have_checked
+    char* user_trait_struct
 end
 
 

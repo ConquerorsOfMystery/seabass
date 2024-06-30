@@ -1,4 +1,46 @@
 
+~~~~
+ABSTRACT OBJECT SPECIFICATION LANGUAGE
+
+Objects that are either named or anonymously dwell in lists
+can have relationships between each other.
+
+I figure we need...
+
+1) Objects
+
+2) Types (template object trees) with constructors
+
+3) Constraint Qualifiers (Scans a set of objects and ascertains whether
+some abstract constraint holds)
+
+4) Lists (ordered set of objects)
+
+5) Names
+
+6) Modifiers (basically a function being invoked on an object)  
+
+WE CAN SPECIFY A BUNCH OF OBJECTS AND TREES OF OBJECTS,
+BUT HOW DOES THAT DECAY INTO CODE?
+
+some compiletime cbas code takes the objects and translates them
+into cbas code.
+
+Exactly how that happens? A mystery.
+
+Objects can have statement sequences associated with them,
+which can be compiled into function code or whatever.
+
+
+
+
+~~~~
+~~~~
+REJECTED SECTION
+~~~~
+~~~~
+
+
 ABSTRACT OBJECT SPECIFICATION LANGUAGE
 
 Abstract objects, abstract types,
@@ -8,6 +50,9 @@ On a type: template object properties, constructor data
 )
 
 Singletons (Type which is also an AO)
+
+
+~~~~~~~~~~~~~~~
 
 EXAMPLE THINKING... (needs work)
 
