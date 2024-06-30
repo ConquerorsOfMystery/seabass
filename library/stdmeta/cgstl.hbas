@@ -1,5 +1,5 @@
 
-#guard SEABASS_COMPILETIME_STL
+#guard CBAS_COMPILETIME_STL_DMHSW
 
 #include <stdmeta/tbas.hbas>
 

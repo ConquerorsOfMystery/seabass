@@ -1,0 +1,38 @@
+
+/*
+    TRAITS AND METADATA FOR COMPILETIME OBJECTS
+*/
+
+#guard compiletime_trait_system_DMHSW
+
+#include <stdmeta/cgstl.hbas>
+
+class cgtrait noexport
+    char* trait_name
+    char* strdata
+    i64 idata
+    f64 fdata
+    byte* dataptr
+    @cgvec[cgtrait*] relations
+end
+
+
+method codegen cgtrait.ctor:
+    this.trait_name = 0;
+    this.strdata = 0;
+    this.idata = 0;
+    this.fdata = 0;
+    this.dataptr = 0;
+    this.relations.ctor();
+end
+
+method codegen cgtrait.dtor:
+    if(this.trait_name != 0)
+        __builtin_free(this.trait_name)
+    end
+    if(this.strdata != 0)
+        __builtin_free(this.strdata)
+    end
+    this.relations.dtor();
+end
+

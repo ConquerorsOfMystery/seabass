@@ -28,6 +28,7 @@
 #include <stdmeta/uast_common.hbas>
 #include <stdmeta/errno.hbas>
 #include <stdmeta/knowl.hbas>
+#include <stdmeta/traits.hbas>
 #include <stdmeta/codegen.hbas>
 #include <stdmeta/cgtokvec.hbas>
 #include <stdmeta/mini_abstractions.hbas>
