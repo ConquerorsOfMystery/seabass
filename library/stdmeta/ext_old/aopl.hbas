@@ -6,7 +6,24 @@
 /*
     THE ABSTRACT OBJECT PROGRAMMING LANGUAGE
     
-    Objects + relationships
+    I want a programming language flexible enough to represent
+    any kind of code in a data structure that is infinitely flexible,
+    with mutable code generation.
+    
+    PRINCIPLE IDEAS:
+    
+    1. Context-oriented programming. You can establish a scope or context
+    for just about anything, and define relationships and write code that
+    is to be interpreted in that context.
+    
+    2. Interpretation-oriented programming. The language being mutable allows
+    you to define
+    
+    WHAT'S THE GIST?
+    
+    A software architecture is described in terms of objects and code in a
+    hierarchy- everything from the classes defined to the variables in a scope
+    to the control flow itself.
 */
 
 
@@ -39,7 +56,8 @@ class cg_aopl_object
     //0    - unclassified
     //1    - low level symbol
     //2    - low level typedecl
-    //3    - fact
+    //3    - low level fn
+    //4    - fact
     
     //100+ - user defined
     byte* ext_ptr //see cg_aopl_ext
@@ -51,23 +69,12 @@ class cg_aopl_object
     //to be global! This points to a cg_aopl_ctx!
 end
 
-codegen u64 CG_AOPL_EXPR_NODE_MAX_ARGS = 64;
-codegen u64 cg_aopl_user_op_counter = 128;
-
-class cg_aopl_exprnode
-    noexport
-    u64 opcode  //What is the nature of this expr_node?
-    char* type //abstract type or type
-    @cgvec[cg_aopl_exprnode*] subnodes
-    char* ref_symname
-    cg_aopl_object* aobj //an expr_node could own an abstract object...
-end
 
 class cg_aopl_ctx
     noexport
-    cg_aopl_object* owner
-    @cgvec[cg_aopl_exprnode*]   insns
+    cg_aopl_object*             owner
     @cgvec[cg_aopl_object*]     objects
+    cgstrll*                    code
 end
 
 class cg_aopl_ext
@@ -77,7 +84,7 @@ class cg_aopl_ext
     cgtypedecl                  ll_tdecl
     cgscope                     ll_ins_seq
     cg_aopl_ext_fact            fact
-    byte* user_ext
+    byte*                       user_ext
 end
 
 //OBJECT
@@ -92,24 +99,11 @@ method codegen cg_aopl_object.dtor:
     
 end
 
-//EXPRNODE
-method codegen cg_aopl_exprnode.ctor:
-    this.opcode = 0;
-    this.type = 0;
-    this.ref_symname = 0;
-    this.subnodes.ctor();
-end
-method codegen cg_aopl_exprnode.dtor:
-    this.subnodes.dtor();
-end
-
 //CTX
 method codegen cg_aopl_ctx.ctor:
-    this.insns.ctor();
     this.objects.ctor();
 end
 method codegen cg_aopl_ctx.dtor:
-    this.insns.dtor();
     this.objects.dtor();
 end
 

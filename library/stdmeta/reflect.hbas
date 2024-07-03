@@ -851,6 +851,18 @@ method codegen cgstrll:push_end(cgstrll other):
     return;
 end
 
+method codegen cgstrll:push_end_n(cgstrll other, u64 n):
+    
+    i64 i
+    for(i = 0, i < n, i++)
+        while(this.right != cast(cgstrll*)0)
+            this = this.right;
+        end
+        this.right = other.dupell();
+    end
+    return;
+end
+
 fn codegen cgtok_push_stream(cgstrll pushme):
     cgstrll** n
     cgstrll* pretender
