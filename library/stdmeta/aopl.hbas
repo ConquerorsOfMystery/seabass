@@ -83,7 +83,7 @@ end
 //OBJECT
 method codegen cg_aopl_object.ctor:
     this.name = 0;
-    this.type = 0;
+    this.atype = 0;
     this.classification = 0;
     this.has_ctx = 0;
     this.ctx_parent = 0;
