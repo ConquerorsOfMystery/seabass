@@ -1,0 +1,6 @@
+
+Define objects (implicitly or explicitly) and "types" (meaning a
+variety of things from what code generates for the object to 
+compiletime actions) and then write relationships (static statements)
+and procedures (compiletime or runtime) involving them.
+
