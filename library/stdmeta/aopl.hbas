@@ -1,0 +1,100 @@
+
+
+
+#guard ABSTRACT_OBJECT_PROGRAMMING_LANGUAGE_DMHSW
+
+/*
+    THE ABSTRACT OBJECT PROGRAMMING LANGUAGE
+    
+    Objects + relationships
+*/
+
+
+#include <stdmeta/tbas.hbas>
+
+class cg_aopl_ext_fact
+    noexport
+    u64 classification
+        //0 - unclassified
+        //1 - integer
+        //2 - double
+    i64 i
+    f64 d
+end
+
+
+
+codegen u64 cg_aopl_user_classification_counter = 100;
+//user type directory
+codegen @cgvec[char*] cg_aopl_global_user_type_directory;
+
+class cg_aopl_object
+    noexport
+    //subobjects. "has" relationship. This object forms a context.
+    @cgvec[cg_aopl_object*] subobjects
+    char* name
+    char* type //type specified by string
+    u64 classification
+    //LOW LEVEL CLASSIFICATION- WHAT IS THIS?
+    //0    - unclassified
+    //1    - low level symbol
+    //2    - low level typedecl
+    //3    - low level instruction sequence
+    //4    - fact
+    //5    - abstract instructions
+    //100+ - user defined
+    byte* ext_ptr //see cg_aopl_ext
+    
+    
+    
+    cg_aopl_object* ctx_parent //contextual parent
+end
+
+codegen u64 CG_AOPL_EXPR_NODE_MAX_ARGS = 64;
+codegen u64 cg_aopl_user_op_counter = 128;
+
+class cg_aopl_exprnode
+    noexport
+    u64 opcode //What is the nature of this expr_node?
+    char* type //user-created or internal type.
+    @cgvec[cg_aopl_exprnode*] subnodes
+    char* ref_symname
+end
+
+class cg_aopl_ext
+    noexport
+    union
+    cgsymdecl                   ll_sym
+    cgtypedecl                  ll_tdecl
+    cgscope                     ll_ins_seq
+    cg_aopl_ext_fact            fact
+    @cgvec[cg_aopl_exprnode*]   ins_seq
+    byte* user_ext
+end
+
+//OBJECT
+method codegen cg_aopl_object.ctor:
+    this.name = 0;
+    this.type = 0;
+    this.classification = 0;
+    this.ctx_parent = 0;
+    this.subobjects.ctor();
+end
+method codegen cg_aopl_object.dtor:
+    this.subobjects.dtor();
+end
+
+//EXPRNODE
+method codegen cg_aopl_exprnode.ctor:
+    this.opcode = 0;
+    this.type = 0;
+    this.ref_symname = 0;
+    this.subnodes.ctor();
+end
+method codegen cg_aopl_exprnode.dtor:
+    this.subnodes.dtor();
+end
+
+
+//ext cannot be initialized or destroyed as it is a union of types...
+

@@ -32,6 +32,7 @@
 #include <stdmeta/codegen.hbas>
 #include <stdmeta/cgtokvec.hbas>
 #include <stdmeta/mini_abstractions.hbas>
+#include <stdmeta/aopl.hbas>
 
 
 
