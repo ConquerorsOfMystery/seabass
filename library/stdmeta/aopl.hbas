@@ -59,6 +59,7 @@ class cg_aopl_exprnode
     char* type //user-created or internal type.
     @cgvec[cg_aopl_exprnode*] subnodes
     char* ref_symname
+    cg_aopl_object* aobj //an expr_node could own an abstract object...
 end
 
 class cg_aopl_ext
