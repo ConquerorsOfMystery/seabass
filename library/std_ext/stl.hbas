@@ -11,7 +11,10 @@
 
 /*
     TARGET STL FOR SEABASS
+    
+    TGT_UMAX, malloc, free, and realloc must be defined.
 */
+
 
 
 //CG vector, for PRIMITIVE DATA TYPES.
@@ -24,7 +27,7 @@
             //vector class...
             class __SEABASS_STL_REPLACEMENT_MAGIC__
                 TYPE* d
-                u64 len
+                TGT_UMAX len
             end
             //ctor/dtor
             method inline __SEABASS_STL_REPLACEMENT_MAGIC__.ctor:

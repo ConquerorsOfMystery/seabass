@@ -2337,7 +2337,8 @@ fn inline pure ftoa(char* dest, double v):
     ftoa_n(dest, v, 54); //54 is probably good enough...
 end
 
+//stl is now std_ext
 //
 
-#include<toc/stl.hbas>
+#include<std_ext/stl.hbas>
 
