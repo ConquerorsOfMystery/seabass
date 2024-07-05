@@ -639,6 +639,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
     cgstrll* rwalk
     cgstrll* in_rwalk
     u64 has_made_self = 0;
+    u64 has_declared_rwalk = 0;
     
     
     ocode = cg_qtok("fn"); rwalk = ocode;
@@ -672,9 +673,11 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
         @cg_bldr_pushqtok ";"
     elif(this.name.s streq "finish")
         //the finish function has this prototype...
+        has_declared_rwalk = 1;
         //we create special variables...
         @cg_bldr_pushqtok "cgstrll"
         @cg_bldr_pushqtok "retval"
+        
         @cg_bldr_pushqtok "cgstrll"
         @cg_bldr_pushqtok "*"
         @cg_bldr_pushqtok "rwalk"
@@ -1255,6 +1258,33 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok "@"
                 @cg_bldr_pushqtok "cg_bldr_tokmanip_push_strings"
                 continue
+            elif(in_rwalk.text streq "decl_rwalk")
+                if(this.name.s strneq "finish")
+                    @cg_bldr_pushqtok "cgstrll"
+                    @cg_bldr_pushqtok "*"
+                    @cg_bldr_pushqtok "rwalk"
+                    @cg_bldr_pushqtok ";"
+                end
+                has_declared_rwalk = 1;
+                continue
+            elif(in_rwalk.text streq "load_rwalk")
+                @cg_bldr_pushqtok ";"
+                @cg_bldr_pushqtok "rwalk"
+                @cg_bldr_pushqtok "="
+                @cg_bldr_pushqtok "this"
+                @cg_bldr_pushqtok "."
+                @cg_bldr_pushqtok "rwalk"
+                @cg_bldr_pushqtok ";"
+                continue
+            elif(in_rwalk.text streq "save_rwalk")
+                @cg_bldr_pushqtok ";"
+                @cg_bldr_pushqtok "this"
+                @cg_bldr_pushqtok "."
+                @cg_bldr_pushqtok "rwalk"
+                @cg_bldr_pushqtok "="
+                @cg_bldr_pushqtok "rwalk"
+                @cg_bldr_pushqtok ";"
+                continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "stpop")
                 @cg_bldr_pushqtok "("
@@ -1565,14 +1595,17 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                     @cg_bldr_pushqtok "=="
                     @cg_bldr_pushqtok "0"
                 @cg_bldr_pushqtok ")"
-                    if(this.name.s strneq "finish")
-                        @cg_bldr_pushqtok "return"
-                        @cg_bldr_pushqtok ";"
-                    else
+                    
+                    if(this.name.s streq "finish")
+                        //is the finish rule
                         @cg_bldr_pushqtok "return"
                         @cg_bldr_pushqtok "retval"
                         @cg_bldr_pushqtok "."
                         @cg_bldr_pushqtok "right"
+                        @cg_bldr_pushqtok ";"
+                    else
+                        //not the finish rule
+                        @cg_bldr_pushqtok "return"
                         @cg_bldr_pushqtok ";"
                     end
                 @cg_bldr_pushqtok "end"
@@ -1594,9 +1627,9 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 continue;
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "emit")
-                if(this.name.s strneq "finish")
+                if(!has_declared_rwalk)
                     __builtin_puts("RDPARSER_ERROR!");
-                    __builtin_puts("Cannot emit anywhere except finish rule");
+                    __builtin_puts("Cannot emit anywhere except finish rule OR if rwalk has been declared...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
                     __builtin_puts("Current Rule's name is:");
@@ -1633,9 +1666,9 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 //so we let ourselves do that.
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "emitq")
-                if(this.name.s strneq "finish")
+                if(!has_declared_rwalk)
                     __builtin_puts("RDPARSER_ERROR!");
-                    __builtin_puts("Cannot emitq anywhere except finish rule");
+                    __builtin_puts("Cannot emitq anywhere except finish rule OR if rwalk has been declared...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
                     __builtin_puts("Current Rule's name is:");
@@ -1660,9 +1693,9 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 //so we let ourselves do that.
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "emit_skip")
-                if(this.name.s strneq "finish")
+                if(!has_declared_rwalk)
                     __builtin_puts("RDPARSER_ERROR!");
-                    __builtin_puts("Cannot emit_skip anywhere except finish rule");
+                    __builtin_puts("Cannot emit_skip anywhere except finish rule OR if rwalk has been declared...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
                     __builtin_puts("Current Rule's name is:");
@@ -1747,6 +1780,11 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
         @cg_bldr_pushqtok "("
         @cg_bldr_pushqtok ")"
         @cg_bldr_pushqtok ";"
+        @cg_bldr_pushqtok "return"
+        @cg_bldr_pushqtok "retval"
+        @cg_bldr_pushqtok "."
+        @cg_bldr_pushqtok "right"
+        @cg_bldr_pushqtok ";"
     end
     @cg_bldr_pushqtok "end"
     this.ocode = ocode;
@@ -1799,9 +1837,16 @@ method codegen cg_rd_parser_spec:gen_struct()->cgstrll*:
         @cg_bldr_pushqtok "cgstrll"
         @cg_bldr_pushqtok "*"
         @cg_bldr_pushqtok "tok"
+        
         @cg_bldr_pushqtok "cgstrll"
         @cg_bldr_pushqtok "*"
         @cg_bldr_pushqtok "tok_stash"
+        
+        @cg_bldr_pushqtok "cgstrll"
+        @cg_bldr_pushqtok "*"
+        @cg_bldr_pushqtok "rwalk"
+        
+        
         
         @cg_bldr_pushqtok "cgstrll"
         @cg_bldr_pushqtok "*"

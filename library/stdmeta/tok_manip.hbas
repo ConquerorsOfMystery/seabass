@@ -146,13 +146,13 @@
     [
         //variables
         cgstrll* output_code;
-        cgstrll* rwalk;
+        //cgstrll* rwalk; -- was incorporated into cgrdparser.
         cgstr print_command;
         cgstr itoa_command;
     ]
     head[
         //push stuff we need onto the front.
-        cgstrll* rwalk
+        decl_rwalk
         this.output_code = cg_qtok(";");
         rwalk = this.output_code;
         push_strings[
@@ -185,9 +185,9 @@
             end
             eat
             finish_on_tok_null
-            this.rwalk = rwalk;
-            do norm
-            rwalk = this.rwalk;
+            save_rwalk
+                do norm
+            load_rwalk
         end
     ]
     norm[
@@ -211,53 +211,57 @@
         go command_printstringexpr
     ]
     dobar[
-        cgstrll* rwalk
-        rwalk = this.rwalk;
-        eat 
-        //emit a bar...
-        pqtok [this.print_command.s]
-        push_strings[
-            ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-        ]
-        this.rwalk = rwalk;
+        decl_rwalk
+        load_rwalk
+            eat 
+            //emit a bar...
+            emitq [this.print_command.s]
+            push_strings[
+                ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            ]
+        save_rwalk
         finish_on_tok_null
     ]
     command_printstringexpr[
-        cgstrll* rwalk
-        rwalk = this.rwalk;
-            pqtok [this.print_command.s]
-            pqtok "("
-                this.rwalk = rwalk;
+        decl_rwalk
+        load_rwalk
+            emitq [this.print_command.s]
+            emitq "("
+                save_rwalk
                     do getexpr
-                rwalk = this.rwalk;
-            pqtok ")"
-            pqtok ";"
-        this.rwalk = rwalk;
+                load_rwalk
+            emitq ")"
+            emitq ";"
+        save_rwalk
     ]
     command_printintexpr[
-        cgstrll* rwalk
-        rwalk = this.rwalk;
-            pqtok [this.itoa_command.s]
-            pqtok "("
-                    pqtok "__pprint_local_buf"
-                pqtok ","
-                    pqtok "("
-                        this.rwalk = rwalk;
+        decl_rwalk
+        //rwalk = this.rwalk;
+        load_rwalk
+            emitq [this.itoa_command.s]
+            emitq "("
+                    emitq "__pprint_local_buf"
+                emitq ","
+                    emitq "("
+                        //this.rwalk = rwalk;
+                        save_rwalk
                             do getexpr
-                        rwalk = this.rwalk;
-                    pqtok ")"
-            pqtok ")"
-            pqtok ";"
-                pqtok [this.print_command.s]
-                pqtok "("
-                    pqtok "__pprint_local_buf"
-                pqtok ")"
-            pqtok ";"
-        this.rwalk = rwalk;
+                        //rwalk = this.rwalk;
+                        load_rwalk
+                    emitq ")"
+            emitq ")"
+            emitq ";"
+                emitq [this.print_command.s]
+                emitq "("
+                    emitq "__pprint_local_buf"
+                emitq ")"
+            emitq ";"
+        //this.rwalk = rwalk;
+        save_rwalk
     ]
     getexpr[
-        cgstrll* rwalk
-        rwalk = this.rwalk;
+        decl_rwalk
+        load_rwalk
         if(tok_null)
             //emit an error
             __builtin_puts("PPRINT ERROR!");
@@ -277,7 +281,7 @@
                     pcount--;
                 end
                 
-                @cg_bldr_pushtok[tok:dupe()]
+                emit[tok:dupe()]
                 if(pcount < 1) break end
             end
             if(pcount != 0)
@@ -287,10 +291,10 @@
             end
             eat
         else
-            @cg_bldr_pushtok [tok:dupe()]
+            emit [tok:dupe()]
             eat
         end
-        this.rwalk = rwalk;
+        save_rwalk
     ]
     finish[
         //push the last bit of what we need... we need to 
