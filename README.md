@@ -52,21 +52,31 @@ read and write files, and even generate or manipulate source code (which can the
 
 # What is the state of the project?
 
-The language is more-or-less finalized, and the CBAS tool implementation is considered "complete and ready for use".
+TLDR? Feature-complete, but not fully realized.
 
-Barely any of the potential of the project has yet been tapped, but I am hopeful.
+The language is more-or-less finished, and the CBAS tool implementation is considered "complete and ready for use".
 
-the `toc` translator is mostly finished and ready for production
+the `toc` translator is mostly finished and ready for production.
 
 `stdmeta`, the standard metaprogramming library, is woefully underdeveloped and incomplete, which is sad because it is
-the "main point" of this language.
+the "main point" of this language. This is where 90% of the work has to happen, and a significant fraction of that is
+"theory work", much of which involves trial-and-error in implementation design.
 
 There is an enormous amount of theory work and new metaprogramming code that has to be written to make CBAS into even ten
 percent of what it is capable of being. 
 
-That said, all work on metaprogramming in CBAS has exponential gains in productivity due to the nature of metaprogramming,
-so it may go more quickly than expected.
+All work on metaprogramming in CBAS has exponential gains in productivity due to the nature of metaprogramming,
+so as more work happens, the work itself should get quicker (the core concept of metaprogramming).
 
+# If I used CBAS right now using only what is already here, what would I get?
+
+An extremely portable C-like language with much better macros. FFI with C is fairly trivial to set up too, so you could
+forward your favorite libraries and use them without too much hassle.
+
+Metaprogramming in CBAS is extremely advanced compared to other languages, but not quite "breathing fire and firing
+lightning out of your finger tips".
+
+In order to use this, though, you'd have to have documentation... which this project also lacks.
 
 # How do I use it?
 
@@ -246,7 +256,13 @@ emotionally driven infancy into a utopian future.
 It has barely started. CBAS's raw immediate capabilities do not yet replace Rust or
 C++, let alone revolutionize the industry.
 
-If I can keep working on it, and keep having good ideas. this should change soon.
+If I can keep working on it, and keep having good ideas this should change soon.
+
+# Do you have a time-estimate for how long this would take?
+
+If I had 8 months of concentrated development time I could probably do it.
+
+I know my own capabilities, I believe I understand where this project has to go, and thus I am confident in that figure.
 
 # TECHNOLOGY DEVELOPMENT ROADMAP
 
