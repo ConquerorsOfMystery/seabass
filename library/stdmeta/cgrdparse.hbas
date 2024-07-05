@@ -6,7 +6,7 @@
 
 
 
-#include <stdmeta/bldr.hbas>
+#include <stdmeta/wksht.hbas>
 #include <stdmeta/uast.hbas>
 
 //used here.
@@ -158,6 +158,39 @@ end
     @rwalk_skip ;
     @pushqtok "end"
     return retval;
+]
+@wksht cg__rd__parse__stk_access_depth[
+    [
+        /*
+        @cg_bldr_pushqtok "("
+                @cg_bldr_pushqtok "this"
+                @cg_bldr_pushqtok "."
+                @cg_bldr_pushqtok "uast"
+                @cg_bldr_pushqtok "."
+                @cg_bldr_pushqtok "nodes"
+                @cg_bldr_pushqtok "["
+                    @cg_bldr_pushqtok "this"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "uast"
+                    @cg_bldr_pushqtok "."
+                    @cg_bldr_pushqtok "pstack"
+                    @cg_bldr_pushqtok "["
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "uast"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "stackptr"
+                        @cg_bldr_pushqtok "-"
+                        @cg_bldr_pushqtok "1"
+                    @cg_bldr_pushqtok "]"
+                @cg_bldr_pushqtok "]"
+            @cg_bldr_pushqtok ")"
+            */
+            (this.uast.node[this.uast.pstack[DEPTH]])
+    ]
+    [
+        DEPTH
+    ]
 ]
 
 
@@ -1210,6 +1243,10 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok "tok_stash"
                 @cg_bldr_pushqtok ";"
                 continue
+            elif(in_rwalk.text streq "pushqtok")
+                @cg_bldr_pushqtok "@"
+                @cg_bldr_pushqtok "cg_bldr_pushqtok"
+                continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "stpop")
                 @cg_bldr_pushqtok "("
@@ -1247,6 +1284,10 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                         @cg_bldr_pushqtok "]"
                     @cg_bldr_pushqtok "]"
                 @cg_bldr_pushqtok ")"
+                continue
+            elif(in_rwalk.text streq "stk_node")
+                @cg_bldr_pushqtok "@"
+                @cg_bldr_pushqtok "cg__rd__parse__stk_access_depth"
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "stpush")

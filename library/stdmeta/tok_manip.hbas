@@ -225,7 +225,7 @@
     command_printstringexpr[
         cgstrll* rwalk
         rwalk = this.rwalk;
-            @cg_bldr_pushqtok [this.print_command.s]
+            pushqtok [this.print_command.s]
             @cg_bldr_pushqtok "("
                 this.rwalk = rwalk;
                     do getexpr
