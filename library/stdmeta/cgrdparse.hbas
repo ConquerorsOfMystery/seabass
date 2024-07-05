@@ -1243,9 +1243,17 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok "tok_stash"
                 @cg_bldr_pushqtok ";"
                 continue
-            elif(in_rwalk.text streq "pushqtok")
+            elif(in_rwalk.text streq "pqtok")
                 @cg_bldr_pushqtok "@"
                 @cg_bldr_pushqtok "cg_bldr_pushqtok"
+                continue
+            elif(in_rwalk.text streq "ptok")
+                @cg_bldr_pushqtok "@"
+                @cg_bldr_pushqtok "cg_bldr_pushtok"
+                continue
+            elif(in_rwalk.text streq "push_strings")
+                @cg_bldr_pushqtok "@"
+                @cg_bldr_pushqtok "cg_bldr_tokmanip_push_strings"
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "stpop")

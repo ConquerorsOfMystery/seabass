@@ -155,7 +155,7 @@
         cgstrll* rwalk
         this.output_code = cg_qtok(";");
         rwalk = this.output_code;
-        @cg_bldr_tokmanip_push_strings[
+        push_strings[
             if(1)
                 char[250] __pprint_local_buf
         ]
@@ -215,8 +215,8 @@
         rwalk = this.rwalk;
         eat 
         //emit a bar...
-        @cg_bldr_pushqtok [this.print_command.s]
-        @cg_bldr_tokmanip_push_strings[
+        pqtok [this.print_command.s]
+        push_strings[
             ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         ]
         this.rwalk = rwalk;
@@ -225,34 +225,34 @@
     command_printstringexpr[
         cgstrll* rwalk
         rwalk = this.rwalk;
-            pushqtok [this.print_command.s]
-            @cg_bldr_pushqtok "("
+            pqtok [this.print_command.s]
+            pqtok "("
                 this.rwalk = rwalk;
                     do getexpr
                 rwalk = this.rwalk;
-            @cg_bldr_pushqtok ")"
-            @cg_bldr_pushqtok ";"
+            pqtok ")"
+            pqtok ";"
         this.rwalk = rwalk;
     ]
     command_printintexpr[
         cgstrll* rwalk
         rwalk = this.rwalk;
-            @cg_bldr_pushqtok [this.itoa_command.s]
-            @cg_bldr_pushqtok "("
-                    @cg_bldr_pushqtok "__pprint_local_buf"
-                @cg_bldr_pushqtok ","
-                    @cg_bldr_pushqtok "("
+            pqtok [this.itoa_command.s]
+            pqtok "("
+                    pqtok "__pprint_local_buf"
+                pqtok ","
+                    pqtok "("
                         this.rwalk = rwalk;
                             do getexpr
                         rwalk = this.rwalk;
-                    @cg_bldr_pushqtok ")"
-            @cg_bldr_pushqtok ")"
-            @cg_bldr_pushqtok ";"
-                @cg_bldr_pushqtok [this.print_command.s]
-                @cg_bldr_pushqtok "("
-                    @cg_bldr_pushqtok "__pprint_local_buf"
-                @cg_bldr_pushqtok ")"
-            @cg_bldr_pushqtok ";"
+                    pqtok ")"
+            pqtok ")"
+            pqtok ";"
+                pqtok [this.print_command.s]
+                pqtok "("
+                    pqtok "__pprint_local_buf"
+                pqtok ")"
+            pqtok ";"
         this.rwalk = rwalk;
     ]
     getexpr[
