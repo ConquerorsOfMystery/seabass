@@ -52,20 +52,21 @@ read and write files, and even generate or manipulate source code (which can the
 
 # What is the state of the project?
 
-The language is more-or-less finalized, and the tool implementation is considered "complete and ready for use".
+The language is more-or-less finalized, and the CBAS tool implementation is considered "complete and ready for use".
 
-You may find implementation bugs, but they should be rare. Error messages are pretty good, but they could
-use some work.
+Barely any of the potential of the project has yet been tapped, but I am hopeful.
 
-A small but powerful array of metaprogramming tools are provided in `stdmeta`. It is planned to be extended
-in the future.
+the `toc` translator is mostly finished and ready for production
 
-The "toc" code generator is useful and effective.
+`stdmeta`, the standard metaprogramming library, is woefully underdeveloped and incomplete, which is sad because it is
+the "main point" of this language.
 
-There are some libraries written for the `toc` backend- notably FFIs for OpenGL 1.1 and OpenAL 1.1.
+There is an enormous amount of theory work and new metaprogramming code that has to be written to make CBAS into even ten
+percent of what it is capable of being. 
 
-The codebase is largely undocumented. Tutorials, references, guides, and expository material need to be written to make
-the language a success.
+That said, all work on metaprogramming in CBAS has exponential gains in productivity due to the nature of metaprogramming,
+so it may go more quickly than expected.
+
 
 # How do I use it?
 
@@ -304,5 +305,24 @@ have to make it much thicker...).
 
 7. Make an SDK. A complete toolchain you can download. For Linux, it's pretty easy, but for Windows it's not
 easy.
+
+# Do you believe Coder's Basilisk has more potential for revolutionizing the industry than AI?
+
+Both yes and no. The primary gain of Coder's Basilisk is the ability to more efficiently utilize an intelligent
+mind to generate code. Whether that intelligent mind is an AI or a human is not particularly important.
+
+Existing programming languages leverage the human mind extremely poorly and expressing your programming ideas
+to the computer is often awkward.
+
+You can talk to online chatbots and ask them to write code for you, and I am impressed with what they have done,
+but it's not a replacement for real programming.
+
+If AI were to become "advanced enough" I believe it could internally develop something like CBAS in order to write
+code. As it stands, it's fucking bad at it.
+
+I used to believe neural network based AIs were never going to get anywhere, but GPT-4o and Claude 3.5 have made me
+reneg on that- I am skeptical (I was rather unimpressed with ChatGPT).
+
+So I'll be conservative and say "maybe yes".
 
 
