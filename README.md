@@ -32,7 +32,23 @@ In technical terms, CBAS contains three key components which make it the best th
 
 3. parsehooks
 
+"codegen code" (also called compiletime code) is code which runs at compiletime. codegen code is different
+from "normal" CBAS code in that it does not get compiled into the final binary- it only "lives" during
+the execution of the compiler itself.
 
+codegen code is turing complete and it gives CBAS near-complete compiletime execution.
+
+"codegen_main" is the name of a function which the compilation unit must define whose purpose is to generate
+"target code" - i.e. assembly, C, or a final binary. Because CBAS places the requirement of defining how code
+is compiled on the code itself, it is self-retargeting. All code in CBAS is portable.
+
+"parsehooks" are the ultimate secret sauce of CBAS. The parser regularly checks for the presence of the at sign
+`@` at various points in your code. If it sees the @ sign followed by an identifier, say, `@serpent`, it will
+look for a codegen function named `parsehook_serpent` and execute it. 
+
+Parsehooks give CBAS the ability to define custom syntax, even entirely new programming languages right within
+the confines of a single compilation unit, even a single file. They can manipulate the state of the compiler,
+read and write files, and even generate or manipulate source code (which can then be parsed by the main parser).
 
 # What is the state of the project?
 
@@ -130,7 +146,29 @@ COMMENT:
 Runtime CBAS behaves the way that the code generator says it should The "toc" code generator
 makes low-level CBAS code behave like C.
 
+# Are there any demonstrations of CBAS's true power?
 
+Truly? No, but there are minor examples- we have a compiletime recursive descent parser generator
+DSL implemented (`@cgrdparser`), which was used to implement a custom pretty-printer syntax, `@pprint`.
+
+Some language features from C++ have been mirrored in CBAS using metaprogramming code- notably templates.
+
+Most CBAS code is unfortunately mostly just a spruced-up C or a dumbed-down C++.
+
+# I looked through the code- isn't this just macros?
+
+The majority of CBAS metaprogramming usage in the codebase is to implement macros, and indeed
+CBAS does have one of the most intricate and flexible macro systems I know of, however CBAS's
+metaprogramming facilities are not "just macros".
+
+CBAS's metaprogramming facilities have not been properly demonstrated, nor fully fleshed out yet.
+
+I, the sole author, David MHS Webster, am still working on the "theory" of metaprogramming as it
+pertains to the project.
+
+# Do you accept contributions?
+
+Ideas, yes, but absolutely no code submissions.
 
 # What "real programming" can I do in CBAS immediately?
 
@@ -175,15 +213,96 @@ file extension and everything.
 
 # Documentation?
 
+Needs work, but the best we have is this:
+
 `cbas -m help`
 
-# What is the theory or idea behind this language?
+This is new technology still being developed. You're on your own, kid.
+
+# The Grand Vision of CBAS
 
 "Maximize the utilization of Man's intellectual capabilities"
 
 CBAS allows programmers to make the language itself seamlessly meld with
 your mind. You can make the structure of the language better reflect
-the problem being solved.
+the problem being solved, and even make problems easier to think about. 
 
+Taken to its extreme, I imagine this concept makes each programmer a 
+"10x" version of himself, or more properly, a "1000x"
+version. The end result should be that all intellectual output is boosted
+drastically, to such a point that even a single gifted person can outperform
+a billion dollar company packed with geniuses.
+
+The natural progression of this ideology will eventually outgrow this tool,
+as multimedia programming will eventually take over, but for now this is the
+best I can really do.
+
+CBAS represents my best attempt to advance humanity out of its delusional and
+emotionally driven infancy into a utopian future.
+
+# How close is CBAS to the accomplishment of this vision?
+
+It has barely started. CBAS's raw immediate capabilities do not yet replace Rust or
+C++, let alone revolutionize the industry.
+
+If I can keep working on it, and keep having good ideas. this should change soon.
+
+# TECHNOLOGY DEVELOPMENT ROADMAP
+
+What code needs to be written for the CBAS project to make it a real success?
+
+Primarily for me, but perhaps to the intrigue of any curious reader...
+
+(These are mostly in-order, but I may be in multiple phases at once)
+
+1. The Language Designer toolkit. I've already written `@cgrdparser`, but this is not
+sufficient for designing and implementing a programming language. Designing an AST and
+dictating how the AST is semantically analyzed and traversed are also extremely important.
+
+2. Write DSLs and custom helpers for various common programming problems. CBAS's whole shtick
+is writing your own languages... but I really haven't done that very much. Most of these
+DSL things I write to begin with are probably just going to be things that help me design and
+implement programming language features faster, since that's going to be my first line of work here.
+
+3. Write libraries. I need commonly used libraries from C available to me in CBAS, everything from
+modern OpenGL to cryptography libraries to audio processing to gui toolkits. I may also choose to 
+write full replacements in CBAS.
+
+This also includes code generators- I want to be able to generate more than just C code. Particularly,
+I would like to have at least one interpreter or JIT or something.
+
+4. Make an IDE. Now, I usually hate IDEs, but I believe that I can probably wrap CBAS in a way to make
+it into a graphical programming language, or rather make a graphical programming language which is, at
+its core, CBAS.
+
+5. Write real-world software. Big stuff. I want a web browser, file system utilities, you name it. I want
+stuff that really grabs peoples' attention. Development tools.
+
+# DOCUMENTATION AND PACKAGING ROADMAP
+
+How do I take what I have written or will write in CBAS and package it into useful (?marketable?) tools?
+
+1. Write example programs in CBAS. Basic stuff. Stuff which reads and writes files and maybe draws some pretty
+pictures in the terminal, answers math problems or whatever. 
+
+2. Write reference material. I want the whole language documented including the metaprogramming library. I want
+all the reference material in nice pretty HTML, hopefully with diagrams.
+
+3. Write tutorials in CBAS. I want a full "introduction to metaprogramming with CBAS" series which starts
+with teaching people how to write simple stuff like they had never written C in their life all the way to
+writing their custom DSLs.
+
+4. Make videos about CBAS. What is this language, what does it do, why would you want to use it instead of
+Rust or C++.
+
+5. Showcase stuff written in CBAS. When I get around to writing "cool stuff" in CBAS, I want to show it off
+so that people will actually use my stuff.
+
+6. Write books about CBAS. I figure once the tech is out there, there will be a market for books written on
+the language. The first and most obvious book I want to write is a K&R style book about the language (i'll
+have to make it much thicker...).
+
+7. Make an SDK. A complete toolchain you can download. For Linux, it's pretty easy, but for Windows it's not
+easy.
 
 

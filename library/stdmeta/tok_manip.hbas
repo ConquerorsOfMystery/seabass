@@ -14,47 +14,31 @@
     a set of macros, templates, and syntaxes that
     will make it much easier for me to work with them.
     
-    tool 1: tokmanip_push_tokens
+    tokmanip_push_tokens
     
         Enables me to write code "normally" for sequential pushqtoks
         after the first token.
     
-    tool 2: foldout_arg
+    foldout_arg
     
         Quickly grab an argument (bracketed or not) off of an argument list.
         
         This has previously been something I had to do by hand, manually.
         
-    tool 3: pprint
+    pprint
         
         "Pretty printer". Printf's cooler older cousin.
         
-    tool 4: cgbuf
+    cgbuf
     
         Dynamically allocated byte array.
         
-    tool 5: cgtoklist
+    cgtoklist
+    
+        
 */
 
 
-
-
-/*
-    foldout_arg
-    
-    usage:
-    @dupell_inlist
-    cgstrll* my_arg
-    
-    @foldout_arg my_arg inlist_dupe
-    
-    //my_arg now contains the de-bracketed first argument.
-    //if inlist_dupe was NULL, or the first argument was
-    //an empty set of curly braces, then my_arg
-    //will also be null.
-    
-    this
-*/
 
 
 
