@@ -1,26 +1,38 @@
-Before anything else...
-
 # CODER'S BASILISK - THE ULTIMATE PROGRAMMING TOOL
 
 Coder's Basilisk (CBAS) is the first of the last programming languages.
 
-It is a self-extending, self-retargeting programming language designed
-to completely supersede C and C++. 
+At its base level, CBAS is little more than a C clone. We have all your favorite
+C features- structs, functions, unions, pointers, malloc and free, with a little
+bit of syntax sugar here and there to make things easier (methods, constructors
+and destructors).
 
-The core idea of CBAS is that the program being compiled specifies how 
-it should be compiled- the syntax of CBAS is totally mutable and extensible.
+The "secret sauce" of CBAS is metaprogramming. The compiler itself is both
+extensible and programmable from within the compilation unit (i.e. the code
+you write). If CBAS does not have a feature that you want, you can add the
+feature.
 
-Programs written in CBAS can extend the compiler itself to give it new
-and useful capabilities.
+CBAS is meant to completely supersede all existing programming language
+infrastructure and replace it with a clean, sleek, simple system written
+in C99.
 
-The tool itself is considered "finished" at this time, however it is not
-yet packaged properly for widespread use.
+# What makes Coder's BASILISK good?
 
-# What makes Coder's Basilisk special?
+In layman's terms: you can program the computer to write code for you instead of you writing
+it yourself. Offload work from the programmer onto the computer.
 
-Using Coder's Basilisk, it is possible to tailor a vast array of DSLs as well as custom
-general-purpose abstractions, all perfectly melded with a capable high-performance low-level
-C-like language.
+This means the programmer can focus their effort away from the minutae of implementation detail
+and more on core infrastructure.
+
+In technical terms, CBAS contains three key components which make it the best thing since K&R:
+
+1. codegen code
+
+2. codegen_main
+
+3. parsehooks
+
+
 
 # What is the state of the project?
 
@@ -57,9 +69,6 @@ fully capable). The metaprogramming library should also be a no brainer on those
 converter however the standard library stuff in `toc` may have to be tweaked per-platform. This is mostly 
 because C itself differs from platform to platform, and cbas currently only has a C backend written (toc).
 
-Some `cstring` functions (`string.h`) may not be available on some platforms, but they are
-easily replaced.
-
 # How do I write cbas code?
 
 At time-of-writing (June 2024) the codebase goes largely without proper documentation.
@@ -77,12 +86,53 @@ The metaprogramming capabilities of cbas are a whole other animal, though. It is
 good question what can be done with them. Not even one iota of the capabilities of this language have been
 tapped.
 
-Do you like money? Here's an entrepeneurial idea for you: Take what I've written here and figure out how
-to package it into the most powerful programming devkit ever made, and sell it to the US Government.
+# What fantastic capabilities does CBAS actually have right now?
 
-You'll be a multi-millionaire in less than a year.
+You can implement your own programming language (compiling to CBAS) and then use it in
+the very same file you implemented it in. Your languages can be just as powerful as CBAS
+and FFI is pretty much seamless.
 
-# What can it do right now?
+You can write procedurally generated code generators using the builder (@mkbldr, @mkbldrn) 
+and worksheet (@wksht) interfaces, so that the computer can write code for you instead of you
+doing it.
+
+You can take your code and retarget to any platform you can fathom, or just use the
+already-written C backend, "toc".
+
+All (well-formed) code written in CBAS is 100% cross platform from the start. You need only implement
+something that takes all elements of the CBAS AST and turn them into the target language.
+
+# Can CBAS do multithreading?
+
+Yes. There is a very simple pthreads-based multithreading system implemented in the standard library.
+
+You should be able to write your own for any potential target.
+
+# Can I use language feature X in CBAS?
+
+Is there a way to do X (even if it is rather obtuse and difficult to read) in C?
+
+Example: coroutines. They're not a C feature, but you can do what a coroutine does
+by writing your own state machines.
+
+Then the answer is "almost certainly yes" and you can make it look pretty and easy to
+use to- that's what CBAS is all about.
+
+# What memory model does CBAS use?
+
+Compiletime CBAS hooks into the system's C library implementations of malloc, realloc, and free
+which are exposed to compiletime code through "__builtin_" functions.
+
+Runtime CBAS behaves the same way (see comment below).
+
+COMMENT:
+
+Runtime CBAS behaves the way that the code generator says it should The "toc" code generator
+makes low-level CBAS code behave like C.
+
+
+
+# What "real programming" can I do in CBAS immediately?
 
 You can write code in the cbas metaprogramming language and the tool can compile to C, which
 can then be compiled by GCC, TinyCC, or clang into target code. 
@@ -91,14 +141,14 @@ With a little bit of effort it should be trivial to compile cbas code to any tar
 
 The cbas programming tool (cbas) is not the only thing in-box. This puppy comes with
 batteries included, we have OpenAL 1.1, OpenGL 1.1, BSD sockets, and (wrapped) parts of SDL2 already available
-for programming.
+for programming. We also have a very simple threading implementation written in pthreads.
 
 While this does make cbas a capable programming language in its own right, it ultimately serves
 as little more than a demo. 
 
 For "real" development, you should FFI your favorite C libraries into cbas.
 
-OpenGL 1.1 and OpenAL 1.1 provide examples of how you do this.
+OpenGL 1.1, OpenAL 1.1, usermode_stdlib, and funbas provide examples of how you do this.
 
 
 # What is the potential of the project?
@@ -127,29 +177,13 @@ file extension and everything.
 
 `cbas -m help`
 
-# Didn't this project have another name?
-
-it is also called "Seabass". However, I discovered this name was taken by multiple other projects.
-
-I wanted to keep the "cbas" name (if for no other reason than the enormous trouble of going through
-all my code and removing it) but not have it mean "Seabass".
-
-While in the shower, I had the idea of calling it "Coder's Basilisk".
-
-There is a thought experiment known as "Roko's Basilisk" in which a sentient AI creates simulations
-of those who did not assist in its creation (but were aware of it) to torture forever.
-
-the CBAS project's ultimate goal is to hyper-stimulate human intellectual output, which will hopefully
-contribute to the advancement of our race. While there's no torture, it's not too dissimilar a concept.
-
-So this project is "Coder's Basilisk".
-
-# I am interested in your theory. What's the theory behind CBAS?
+# What is the theory or idea behind this language?
 
 "Maximize the utilization of Man's intellectual capabilities"
 
 CBAS allows programmers to make the language itself seamlessly meld with
 your mind. You can make the structure of the language better reflect
 the problem being solved.
+
 
 
