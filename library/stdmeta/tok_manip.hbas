@@ -142,6 +142,7 @@
 
 
 @cgrdparser [
+    uast
     pprint
     [
         //variables

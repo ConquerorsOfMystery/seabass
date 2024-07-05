@@ -17,5 +17,73 @@ format you desire for your language.
 5. You write something which takes the resultant data structure and
 creates the desired result- generated code.
 
+OUTLINE OF IMPLEMENTATION 2 B
+
+1. You design your AST nodes. Everything from your high level structures to "properties"
+or statements or what-have-you. This should be similar to, but not the same as, CBAS struct
+definition. AST nodes are always noexport, and never unions. No arrays, only
+single members or vectors.
+
+2. You define a parser. Basically, we either use cgrdparser, or we write a wrapper for it.
+
+3. You define a traversal of your AST, which also generates code. The traversal will define which
+nodes are "visited" or merely "read" (former: you write code for that node, latter: the node is used
+while writing code for a different node). 
+
+HOW DO I WANT TO BE SPECIFYING NODES?
+
+I figure we do it exactly like struct definition, but, trimmed down. No need for asterisks.
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+node myNode
+    myOtherNode alpha //it's a pointer
+    vec[yetAnotherNode] betavec //vector of yetAnotherNode, each one is stored in its own memory slot.
+    int importance //integer property
+    float weight   //float property
+    
+    myStruct*[10] mystructs //myStruct is not an AST node, so we allow definite arrays and pointerage.
+end
+
+node myOtherNode
+    int a
+    vec[yetAnotherNode] cc
+end
+
+node yetAnotherNode
+    int*[37] q
+end
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+in parsing the node definition code, we scrape out all the names and bodies first. This allows us
+to figure out which names are names of nodes (All node type names will be mangled).
+
+I figure all node names will get some sort of prefix, like cg__idk__uh__ 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+WRITING A PARSER
+
+I want a language like cgrdparser for writing the parser, but more streamlined. You default to writing
+non-CBAS code, but you can inject CBAS if you want. It should look like CBAS but not be CBAS so that
+if you know CBAS you can write it.
+
+Since the purpose of this language is only for writing rules in a parser, we don't need anything that
+defines types, we only need to be able to look at existing types.
+
+That means we only need to "reproduce" the function body definition part of CBAS, and I believe
+we can avoid implementing a fair portion of it.
+
+WHAT IF I JUST USED CBAS?
+
+This would effectively mean "just use cgrdparser". It could work just fine, and probably be more powerful,
+but I imagine this would have a lot of rough edges, if for no other reason than keywords in this hypothetical
+new language being mixed with CBAS.
+
+It might not be an issue, honestly.
+
+
+
 
 

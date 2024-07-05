@@ -62,12 +62,16 @@ class cg_rd_parser_spec
     cgstr realname              //name of the struct we make.
     cgstrll* structcode         //code to define the struct. Variables.
     cg_rd_parser_rule* rules    //rules for the parser
+    
     u64 nrules                  //number of rules
+    
     u64 is_targeting_cgrdparse  //is this targeting cgrdparse?
                                 //if this targets cgrdparse, then this
                                 //generates a parser which generates tokens
                                 //which are then meant to be passed to
                                 //a different cgrdparse instance
+    
+    u64 uses_uast               //does this parser use the uast?
 end
 
 fn codegen cgrdparsehook_prototype_donotinvoke(cgstrll* in, cg_rd_parser_spec spec)->cgstrll*:
@@ -196,7 +200,18 @@ end
 
 codegen u64 cg__rd__p__m_temporary_id = 0;
 
-
+//used for match syntax.
+/*
+    match [[stringexpr]
+        body
+    ]
+    
+    When received through the bldr interface, the outermost [] are gone.
+    
+    [stringexpr] body
+    
+    Neat, huh?
+*/
 @mkbldr[
     cg__rd__p__m
     
@@ -226,6 +241,7 @@ codegen u64 cg__rd__p__m_temporary_id = 0;
         end
         cgstrll* qq
         qq = dummy:cg_token_foldout_arglist();
+        //dummy.right henceforth holds the contents of the match body...
         if(qq.right.d == CG_TOK_CBRACK)
             __builtin_puts("RDPARSER_ERROR");
             __builtin_puts("match with empty string expression!");
@@ -238,7 +254,8 @@ codegen u64 cg__rd__p__m_temporary_id = 0;
         
 
         
-        //generate a temporary name.
+        //We need two temporary variables- one of them to hold the value of our
+        //string expression, the other to store whether a match was made or not.
         temp_var_name:fromstr("__cg_rd_parse_temp_var_");
         temp_var_name2:fromstr("__cg_rd_parse_temp_var2_");
         if(1)
@@ -258,7 +275,7 @@ codegen u64 cg__rd__p__m_temporary_id = 0;
         @pushqtok "="
         @pushqtok "0"
         @pushqtok ";"
-        //expression statement.
+        //Here we evaluate our string expression!
         @pushqtok [temp_var_name.s]
         @pushqtok "="
         @pushtok [qq] //this is a move
@@ -556,13 +573,17 @@ codegen u64 cg__rd__p__m_temporary_id = 0;
         
         @pushqtok "end" //end of giant elif chain..
         
-
+        
         @pushqtok "if"
         @pushqtok "("
-        @pushqtok [temp_var_name2.s]
+        @pushqtok [temp_var_name2.s] //"if at any time match succeeded"
         @pushqtok ")"
-            //
-            @pushtok [dummy.right]
+            //NOTICE! Quite cleverly, the structure of if-else can be leveraged here, such that
+            //a match statement can use an "else" or even an "elseif" inside of its body.
+            
+            //I am quite proud of this. It's the power of metaprogramming. Totally awesome.
+            @pushtok [dummy.right] //look up- after we folded out the bracketed sequence from dummy into qq, we 
+            //had the first part of the match statement left.
             @rwalk_skip;
         @pushqtok "end"
     @pushqtok "end" //if (1)
@@ -640,8 +661,11 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
     cgstrll* in_rwalk
     u64 has_made_self = 0;
     u64 has_declared_rwalk = 0;
-    
-    
+    u64 uses_uast = spec.uses_uast;
+    /*
+        __builtin_puts("~~ HANDLING RULE");
+        __builtin_puts(this.name.s);
+    */
     ocode = cg_qtok("fn"); rwalk = ocode;
     @cg_bldr_pushqtok "codegen"
     //use fn_name
@@ -663,14 +687,16 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
     //For the end function...
     if(this.name.s streq "head")
         //the head function instantiates the UAST.
-        @cg_bldr_pushqtok "this"
-        @cg_bldr_pushqtok "."
-        @cg_bldr_pushqtok "uast"
-        @cg_bldr_pushqtok "."
-        @cg_bldr_pushqtok "ctor"
-        @cg_bldr_pushqtok "("
-        @cg_bldr_pushqtok ")"
-        @cg_bldr_pushqtok ";"
+        if(uses_uast)
+            @cg_bldr_pushqtok "this"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "uast"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "ctor"
+            @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok ")"
+            @cg_bldr_pushqtok ";"
+        end
     elif(this.name.s streq "finish")
         //the finish function has this prototype...
         has_declared_rwalk = 1;
@@ -732,22 +758,25 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
         end
         
         //uast nodes store their capture in the udata member...
-        if(in_rwalk.d == CG_TOK_OPERATOR &&
-            in_rwalk.text streq "." &&
-            in_rwalk.right != 0 &&
-            in_rwalk.right.d == CG_TOK_IDENT &&
-            (
-                in_rwalk.right.text streq "getcapture"
-                ||
-                in_rwalk.right.text streq "capture"
+        if(uses_uast)
+            if(
+                in_rwalk.d == CG_TOK_OPERATOR &&
+                in_rwalk.text streq "." &&
+                in_rwalk.right != 0 &&
+                in_rwalk.right.d == CG_TOK_IDENT &&
+                (
+                    in_rwalk.right.text streq "getcapture"
+                    ||
+                    in_rwalk.right.text streq "capture"
+                )
             )
-        )
-            in_rwalk = in_rwalk.right;
-            @cg_bldr_pushqtok "."
-            @cg_bldr_pushqtok "udata_as_cgstrll"
-            @cg_bldr_pushqtok "("
-            @cg_bldr_pushqtok ")"
-            continue
+                in_rwalk = in_rwalk.right;
+                @cg_bldr_pushqtok "."
+                @cg_bldr_pushqtok "udata_as_cgstrll"
+                @cg_bldr_pushqtok "("
+                @cg_bldr_pushqtok ")"
+                continue
+            end
         end
         
         
@@ -756,6 +785,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         //handle ^^ rules...
         if(
+            uses_uast &&
             in_rwalk.d == CG_TOK_OPERATOR &&
             in_rwalk.text streq "^" &&
             in_rwalk.right != 0 &&
@@ -925,6 +955,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 end
                 @cg_bldr_pushqtok ")"
                 //TODO: insert acceptance code here....
+                //^ ? Is this finished?
                     @cg_bldr_pushqtok ";"
                     @cg_bldr_pushqtok "self"
                     @cg_bldr_pushqtok "."
@@ -1144,7 +1175,8 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok ")"
                 continue                
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "uast")
+            
+            elif(uses_uast && in_rwalk.text streq "uast")
                 @cg_bldr_pushqtok "("
                 @cg_bldr_pushqtok "this"
                 @cg_bldr_pushqtok "."
@@ -1152,16 +1184,16 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok ")"
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "uastnode")
+            elif(uses_uast && in_rwalk.text streq "uastnode")
                 @cg_bldr_pushqtok "cg_uastnode"
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "mkself")
+            elif(uses_uast && in_rwalk.text streq "mkself")
                 @cg_bldr_pushqtok "cg_uastnode"
                 @cg_bldr_pushqtok "self"
                 has_made_self = 1;
                 continue
-            elif(in_rwalk.text streq "getcapture")
+            elif(uses_uast && in_rwalk.text streq "getcapture")
                 if(!has_made_self)
                     __builtin_puts("RDPARSER_ERROR!");
                     __builtin_puts("getcapture requires `self` to exist, please insert `mkself` at the top of the rule to create the self node for this rule...");
@@ -1179,7 +1211,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                     @cg_bldr_pushqtok ")"
                 @cg_bldr_pushqtok ")"
                 continue
-            elif(in_rwalk.text streq "capture")
+            elif(uses_uast && in_rwalk.text streq "capture")
                 if(!has_made_self)
                     __builtin_puts("RDPARSER_ERROR!");
                     __builtin_puts("capture requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
@@ -1286,7 +1318,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok ";"
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "stpop")
+            elif(uses_uast && in_rwalk.text streq "stpop")
                 @cg_bldr_pushqtok "("
                 @cg_bldr_pushqtok "this"
                 @cg_bldr_pushqtok "."
@@ -1298,7 +1330,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok ")"
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "stack_top_node")
+            elif(uses_uast && in_rwalk.text streq "stack_top_node")
                 @cg_bldr_pushqtok "("
                     @cg_bldr_pushqtok "this"
                     @cg_bldr_pushqtok "."
@@ -1323,12 +1355,12 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                     @cg_bldr_pushqtok "]"
                 @cg_bldr_pushqtok ")"
                 continue
-            elif(in_rwalk.text streq "stk_node")
+            elif(uses_uast && in_rwalk.text streq "stk_node")
                 @cg_bldr_pushqtok "@"
                 @cg_bldr_pushqtok "cg__rd__parse__stk_access_depth"
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "stpush")
+            elif(uses_uast && in_rwalk.text streq "stpush")
             /*
                 NOTE TO SELF:
                 Q: What is the stack? What does it do?
@@ -1353,7 +1385,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok "stackpush"
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "addnode")
+            elif(uses_uast && in_rwalk.text streq "addnode")
                 in_rwalk = in_rwalk.right;
                 if(in_rwalk == 0 ||
                 in_rwalk.d != CG_TOK_IDENT)
@@ -1379,7 +1411,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok ")"
                 //continue will consume it for us...
                 continue
-            elif(in_rwalk.text streq "addself")
+            elif(uses_uast && in_rwalk.text streq "addself")
                 if(!has_made_self)
                     __builtin_puts("RDPARSER_ERROR!");
                     __builtin_puts("addself requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
@@ -1404,7 +1436,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 //continue will consume it for us...
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "addpushnode")
+            elif(uses_uast && in_rwalk.text streq "addpushnode")
                 in_rwalk = in_rwalk.right;
                 if(in_rwalk == 0 ||
                 in_rwalk.d != CG_TOK_IDENT)
@@ -1448,7 +1480,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             
                 continue
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            elif(in_rwalk.text streq "addpushself")
+            elif(uses_uast && in_rwalk.text streq "addpushself")
                 if(!has_made_self)
                     __builtin_puts("RDPARSER_ERROR!");
                     __builtin_puts("addpushself requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
@@ -1727,14 +1759,16 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                     @cg_bldr_pushqtok ";"
                 else
                     @cg_bldr_pushqtok ";"
-                    @cg_bldr_pushqtok "this"
-                    @cg_bldr_pushqtok "."
-                    @cg_bldr_pushqtok "uast"
-                    @cg_bldr_pushqtok "."
-                    @cg_bldr_pushqtok "dtor"
-                    @cg_bldr_pushqtok "("
-                    @cg_bldr_pushqtok ")"
-                    @cg_bldr_pushqtok ";"
+                    if(uses_uast)
+                        @cg_bldr_pushqtok "this"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "uast"
+                        @cg_bldr_pushqtok "."
+                        @cg_bldr_pushqtok "dtor"
+                        @cg_bldr_pushqtok "("
+                        @cg_bldr_pushqtok ")"
+                        @cg_bldr_pushqtok ";"
+                    end
                     @cg_bldr_pushqtok "return"
                     @cg_bldr_pushqtok "retval"
                     @cg_bldr_pushqtok "."
@@ -1772,14 +1806,16 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
     //we must destroy the uast...
     if(this.name.s streq "finish")
         @cg_bldr_pushqtok ";"
-        @cg_bldr_pushqtok "this"
-        @cg_bldr_pushqtok "."
-        @cg_bldr_pushqtok "uast"
-        @cg_bldr_pushqtok "."
-        @cg_bldr_pushqtok "dtor"
-        @cg_bldr_pushqtok "("
-        @cg_bldr_pushqtok ")"
-        @cg_bldr_pushqtok ";"
+        if(uses_uast)
+            @cg_bldr_pushqtok "this"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "uast"
+            @cg_bldr_pushqtok "."
+            @cg_bldr_pushqtok "dtor"
+            @cg_bldr_pushqtok "("
+            @cg_bldr_pushqtok ")"
+            @cg_bldr_pushqtok ";"
+        end
         @cg_bldr_pushqtok "return"
         @cg_bldr_pushqtok "retval"
         @cg_bldr_pushqtok "."
@@ -1851,8 +1887,10 @@ method codegen cg_rd_parser_spec:gen_struct()->cgstrll*:
         @cg_bldr_pushqtok "cgstrll"
         @cg_bldr_pushqtok "*"
         @cg_bldr_pushqtok "tok_root"
-        @cg_bldr_pushqtok "cg_uast"
-        @cg_bldr_pushqtok "uast"
+        if(this.uses_uast)
+            @cg_bldr_pushqtok "cg_uast"
+            @cg_bldr_pushqtok "uast"
+        end
         if(this.is_targeting_cgrdparse)
             @cg_bldr_pushqtok "cg_rd_parser_spec"
             @cg_bldr_pushqtok "*"
@@ -1904,6 +1942,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
     cgstrll* rwalk
     cg_rd_parser_spec spec
     spec.is_targeting_cgrdparse = 0;
+    spec.uses_uast = 0;
     
     //Note to self:
     //we don't need to pack retval with a dummy,
@@ -1972,10 +2011,6 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
         if(in_rwalk == 0)
             break;
         end
-            /*
-                TODO: support writing custom
-                parsehooks in cgrdparse...
-            */
             
         if(
             in_rwalk.d == CG_TOK_OPERATOR &&
@@ -2105,10 +2140,18 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
             __builtin_exit(1);
         end
         //check for this special case...
-        if(in_rwalk.text streq "cgrdparse")
-            spec.is_targeting_cgrdparse = 1;
-            in_rwalk = in_rwalk.right;
-            continue
+        while(1)
+            if(in_rwalk.text streq "cgrdparse")
+                spec.is_targeting_cgrdparse = 1;
+                in_rwalk = in_rwalk.right;
+                continue
+            end
+            if(in_rwalk.text streq "uast")
+                spec.uses_uast = 1;
+                in_rwalk = in_rwalk.right;
+                continue
+            end
+            break
         end
         //this will be moved.
         current_rulename:fromstr(in_rwalk.text);
