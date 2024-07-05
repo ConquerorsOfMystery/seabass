@@ -57,25 +57,7 @@
 */
 
 
-@wksht cg_bldr_foldout_arg [
-    [
-        if((ARG2) != cast(cgstrll*)0)
-            
-            cgstrll foldout_arg_dummy
-            foldout_arg_dummy.right = (ARG2);
-            (ARG1) = foldout_arg_dummy:cg_token_foldout_arglist();
-            
-            if((ARG1) != cast(cgstrll*)0)
-                if((ARG1).d == CG_TOK_OBRACK)
-                    ARG1 = cg_tok_arglist_remove_brackets((ARG1));
-                end
-            end
-            (ARG2) = foldout_arg_dummy.right;
-        end
-    ][
-        ARG1 ARG2
-    ]
-]
+
 
 // ARG1 = NEXT THING OFF THE FRONT OF ARG2
 

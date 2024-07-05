@@ -1,0 +1,21 @@
+
+My thinking has looped back into the thought that what we really need
+is a "language designer" DSL.
+
+Either a revamp of, tool on top of, or replacement for 
+the compiletime recursive descent parser generator, cgrdparser.
+
+WHAT ARE THE BASIC STAGES OF LANGUAGE DESIGN?
+
+1. You have a "goal" for the new language
+2. You determine what the core elements of this language are
+and what they do
+3. You devise the data structures which represent what the language
+will express
+4. You write a parser which collects up the data from text in the
+format you desire for your language.
+5. You write something which takes the resultant data structure and
+creates the desired result- generated code.
+
+
+
