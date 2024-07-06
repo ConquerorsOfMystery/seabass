@@ -1,0 +1,10 @@
+
+HOW DO I LAY OUT AN AST?
+
+Structs are already pretty good. I could just use that
+however, the hard part is writing the AST traversal.
+
+What if I wrote a language specifically for writing the code
+that is usually part of traversing and manipulating ASTs?
+
+Good idea?
