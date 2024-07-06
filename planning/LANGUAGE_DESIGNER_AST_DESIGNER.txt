@@ -13,7 +13,42 @@ THE AST DESIGNER LANGUAGE
 
 first, you lay out all the structs you want in your AST.
 
+I figure I want to do this 
+
 second, you make "visitation" functions for your nodes, i.e. "what do
 I do if I visit this node"
 
 third, on your final AST, you call the visitation function on the root node(s).
+
+@cg_ast_designer[
+    myLanguage
+    structs
+    [
+    
+        mystruct[
+            int a
+            myOtherStruct b
+            @vec[myOtherStruct] c
+        ]
+        myOtherStruct[
+            int a
+            float x
+        ]
+        //the ast designer will detect dependencies and sort the structs
+        //accordingly, searching for loops. If it finds a dependency loop,
+        //it will emit an error.
+    ]
+    mystruct.visit[
+        //write CBAS code here to handle visiting a mystruct...
+    ]
+    mystruct.action[
+        //write CBAS code to implement action on mystruct...
+    ]
+    
+]
+
+//callable method
+myLanguage_mystruct a
+a.visit();
+
+
