@@ -476,7 +476,7 @@ static inline strll* consume__bytes_with_bigstore(strll* current_node, unsigned 
     right_old = current_node->right;
     current_node->right = STRUTIL_CALLOC(1, sizeof(strll));
     current_node->right->right = right_old;
-    //We need to 
+    //Notice that we don't do any memmove nonsense...
     current_node->right->text = text_old + nbytes;
     return current_node->right;
 }
