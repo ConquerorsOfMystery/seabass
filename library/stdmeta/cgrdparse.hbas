@@ -2475,7 +2475,26 @@ end
     as long as we only have pointer members. Not a big deal, right?
     
     3. We could constrict AST interaction within our AST manipulation code so that all AST interactions
-    can easily be parsed, and then trick 1 can be applied. This is my best idea.
+    can easily be parsed, and then trick 1 can be applied. This is my best idea. Fundamentally, all
+    AST interactions are inevitably member reads or writes (member access)... so... what's wrong?
+    
+    cg_astdsgn_access_member (parent_expr).name
+    
+    which will turn into
+    
+    ((parent_expr):__name__()[0])
+    
+    This is a "low level interface" upon which I will design later implementations... it solves a problem
+    that higher level tools need solved in order to function.
+    
+    HOW DO I GENERATE AST MANIPULATION CODE?
+    
+    Well, I figure much like cgrdparser, it's basically just CBAS with some macros, minor new language constructs, and syntax sugars.
+    
+    These manipulation functions are then written as members of the nodes.
+    
+    Setters and getters need to be written for every single one of a node's members, including
+    vector member accesses.
     
     Code to manipulate AST nodes should be written in a DSL specifically designed for manipulating
     AST nodes. It should generally be CBAS, but with special statements for manipulating AST
