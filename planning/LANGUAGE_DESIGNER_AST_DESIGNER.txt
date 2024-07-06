@@ -8,3 +8,12 @@ What if I wrote a language specifically for writing the code
 that is usually part of traversing and manipulating ASTs?
 
 Good idea?
+
+THE AST DESIGNER LANGUAGE
+
+first, you lay out all the structs you want in your AST.
+
+second, you make "visitation" functions for your nodes, i.e. "what do
+I do if I visit this node"
+
+third, on your final AST, you call the visitation function on the root node(s).
