@@ -2458,5 +2458,31 @@ end
     return cg_rd_parser_parse_spec(inlist);
 ]
 
+/*
+    PLAN- THE AST DESIGNER
+    
+    Create a set of structs, possibly with circular dependency graphs (i.e. A->B->A) that
+    represents your language, then write functions and methods that act on AST nodes.
+    
+    HOW DO I REPRESENT CIRCULAR DEPENDENCIES FOR STRUCTS IN MY LANGUAGE?
+    
+    1. all references to other nodes are turned into byte*. We can then turn all .member accesses
+    into (  :member_reader()[0]). This is not completely bulletproof, though, and honestly it seems
+    like it creates more problems than it solves...
+    
+    2. Define structs while you're defining structs. This is all compiletime CBAS, which means
+    we don't need to go through the toc translator... so we *could* create circular dependencies
+    as long as we only have pointer members. Not a big deal, right?
+    
+    3. We could constrict AST interaction within our AST manipulation code so that all AST interactions
+    can easily be parsed, and then trick 1 can be applied. This is my best idea.
+    
+    Code to manipulate AST nodes should be written in a DSL specifically designed for manipulating
+    AST nodes. It should generally be CBAS, but with special statements for manipulating AST
+    state (this makes writing the DSL easier).
+    
+    
+*/
+
 
 

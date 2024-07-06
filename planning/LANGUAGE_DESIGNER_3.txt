@@ -1,0 +1,12 @@
+
+A COHERENT VISION?
+
+AST Designer + cgrdparser form "low level langdev tools" i.e. level 1
+
+?? forms level 2
+
+?? forms level 3...
+
+Stack technology. Write higher level language designers in terms of lower level
+ones.
+
