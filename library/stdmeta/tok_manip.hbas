@@ -136,7 +136,6 @@
     ]
     head[
         //push stuff we need onto the front.
-        decl_rwalk
         this.output_code = cg_qtok(";");
         rwalk = this.output_code;
         push_strings[
@@ -195,7 +194,6 @@
         go command_printstringexpr
     ]
     dobar[
-        decl_rwalk
         load_rwalk
             eat 
             //emit a bar...
@@ -207,7 +205,6 @@
         finish_on_tok_null
     ]
     command_printstringexpr[
-        decl_rwalk
         load_rwalk
             emitq [this.print_command.s]
             emitq "("
@@ -219,7 +216,6 @@
         save_rwalk
     ]
     command_printintexpr[
-        decl_rwalk
         //rwalk = this.rwalk;
         load_rwalk
             emitq [this.itoa_command.s]
@@ -244,7 +240,6 @@
         save_rwalk
     ]
     getexpr[
-        decl_rwalk
         load_rwalk
         if(tok_null)
             //emit an error

@@ -684,6 +684,11 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
     end
     
     @cg_bldr_pushqtok ":"
+    
+    @cg_bldr_pushqtok "cgstrll"
+    @cg_bldr_pushqtok "*"
+    @cg_bldr_pushqtok "rwalk"
+    has_declared_rwalk = 1;
     //For the end function...
     if(this.name.s streq "head")
         //the head function instantiates the UAST.
@@ -699,14 +704,10 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
         end
     elif(this.name.s streq "finish")
         //the finish function has this prototype...
-        has_declared_rwalk = 1;
         //we create special variables...
         @cg_bldr_pushqtok "cgstrll"
         @cg_bldr_pushqtok "retval"
         
-        @cg_bldr_pushqtok "cgstrll"
-        @cg_bldr_pushqtok "*"
-        @cg_bldr_pushqtok "rwalk"
         
         @cg_bldr_pushqtok "retval"
         @cg_bldr_pushqtok "."
@@ -1290,6 +1291,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 @cg_bldr_pushqtok "@"
                 @cg_bldr_pushqtok "cg_bldr_tokmanip_push_strings"
                 continue
+            /*
             elif(in_rwalk.text streq "decl_rwalk")
                 if(this.name.s strneq "finish")
                     @cg_bldr_pushqtok "cgstrll"
@@ -1299,6 +1301,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 end
                 has_declared_rwalk = 1;
                 continue
+            */
             elif(in_rwalk.text streq "load_rwalk")
                 @cg_bldr_pushqtok ";"
                 @cg_bldr_pushqtok "rwalk"
@@ -1801,9 +1804,10 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
         //string literals are preserved.
         @cg_bldr_pushtok [in_rwalk:dupe()]
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    end//end of for
-    //if we are the finish rule,
-    //we must destroy the uast...
+    end//end of for each token in icode...
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if(this.name.s streq "finish")
         @cg_bldr_pushqtok ";"
         if(uses_uast)
@@ -2445,9 +2449,6 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
         
         @cg_bldr_pushqtok "end"
     end
-    //emit a call...
-    //@cg_bldr_pushqtok "@"
-    //@cg_bldr_pushqtok "cg_rd_parser__internal__clean_match_spec_passer"
     spec:free();
     return retval;
 end
@@ -2456,3 +2457,6 @@ end
     //literally just this.
     return cg_rd_parser_parse_spec(inlist);
 ]
+
+
+
