@@ -50,6 +50,34 @@
     state (this makes writing the DSL easier).
     
     
+    
+    FORMAT
+    
+    @cg_astdesigner[
+        nodes
+        myAST
+        [
+            myNode1* a
+            myNode2* b
+            @vec[myNode3*] c
+            
+        ]
+        myNode1[
+            int x
+            char* y
+        ]
+        myNode2[
+            myNode1* zz
+        ]
+        myNode3[
+            @vec[myAST*] zzz
+        ]
+        code
+        myNode3.visit()[
+        
+        ]
+    ]
+    
 */
 
 
