@@ -57,38 +57,38 @@
 struct cg_astdesigner_struct_def
     noexport
     cgstr name;
-    @cgvec[cgtype] members;
-    @cgvec[u16] member_flags;
-    //TODO: methods?
+    cgstrll* contents_in //before name mangling
+    cgstrll* contents_out //after name mangling
+    @cgvec[cgstrll*] func_defs;
 end
 
 struct cg_astdesigner_ast
     noexport
     cgstr name;
     @cgvec[cg_astdesigner_struct_def*] node_defs;
+    @cgvec[cgstrll*] func_defs;
     //TODO: more fns?
 end
 
 method codegen cg_astdesigner_struct_def.ctor():
     this.name.s = 0;
-    this.members.ctor();
-    this.member_flags.ctor();
+    this.func_defs.ctor();
 end
 
 method codegen cg_astdesigner_struct_def.dtor():
     this.name:free();
-    this.members.dtor();
-    this.member_flags.dtor();
-
+    this.func_defs.dtor();
 end
 
 method codegen cg_astdesigner_ast.ctor():
     this.name.s = 0;
     this.node_defs.ctor();
+    this.func_defs.ctor();
 end
 
 method codegen cg_astdesigner_ast.dtor():
     this.name:free();
     this.node_defs.dtor();
+    this.func_defs.dtor();
 end
 
