@@ -27,7 +27,7 @@
     can easily be parsed, and then trick 1 can be applied. This is my best idea. Fundamentally, all
     AST interactions are inevitably member reads or writes (member access)... so... what's wrong?
     
-    cg_astdsgn_access_member (parent_expr).name
+    @cg_astdsgn_access_member [parent_expr] name
     
     which will turn into
     
@@ -52,4 +52,43 @@
     
 */
 
+
+
+struct cg_astdesigner_struct_def
+    noexport
+    cgstr name;
+    @cgvec[cgtype] members;
+    @cgvec[u16] member_flags;
+    //TODO: methods?
+end
+
+struct cg_astdesigner_ast
+    noexport
+    cgstr name;
+    @cgvec[cg_astdesigner_struct_def*] node_defs;
+    //TODO: more fns?
+end
+
+method codegen cg_astdesigner_struct_def.ctor():
+    this.name.s = 0;
+    this.members.ctor();
+    this.member_flags.ctor();
+end
+
+method codegen cg_astdesigner_struct_def.dtor():
+    this.name:free();
+    this.members.dtor();
+    this.member_flags.dtor();
+
+end
+
+method codegen cg_astdesigner_ast.ctor():
+    this.name.s = 0;
+    this.node_defs.ctor();
+end
+
+method codegen cg_astdesigner_ast.dtor():
+    this.name:free();
+    this.node_defs.dtor();
+end
 
