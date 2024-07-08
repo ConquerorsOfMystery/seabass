@@ -1664,7 +1664,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             elif(in_rwalk.text streq "emit")
                 if(!has_declared_rwalk)
                     __builtin_puts("RDPARSER_ERROR!");
-                    __builtin_puts("Cannot emit anywhere except finish rule OR if rwalk has been declared...");
+                    __builtin_puts("rwalk undeclared");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
                     __builtin_puts("Current Rule's name is:");

@@ -1,0 +1,28 @@
+
+#include <meta>
+@cg_tree_node_types[
+    myNode1[
+        i64 a
+        myNode2* c
+    ]
+    myNode2[
+        myNode1* c
+        i64 qq
+    ]
+]
+
+fn codegen codegen_main():
+    //while(1) end
+    myNode1 a
+    a.a = 3;
+    a.c = cast(myNode2*)__builtin_malloc(sizeof(myNode2));
+    a.c.qq = 99;
+    @pprint[
+        /   "a.a = "
+        /int(a.a)
+        /   "a.c.qq = "
+        /int(a.c.qq)
+    ]
+    __builtin_free((byte*)a.c);
+    a.c = 0;
+end

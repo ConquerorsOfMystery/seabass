@@ -54,7 +54,6 @@
     FORMAT
     
     @cg_astdesigner[
-        nodes
         myAST
         [
             myNode1* a
@@ -72,9 +71,8 @@
         myNode3[
             @vec[myAST*] zzz
         ]
-        code
-        myNode3.visit()[
-        
+        method myNode3.visit()->myNode3* [
+            //put code here...
         ]
     ]
     
@@ -82,22 +80,34 @@
 
 
 
+struct cg_astdesigner_fn_def
+    noexport
+    cgstr name
+    cgstrll* code_in
+    cgstrll* code_out
+end
+
 struct cg_astdesigner_struct_def
     noexport
     cgstr name;
     cgstrll* contents_in //before name mangling
     cgstrll* contents_out //after name mangling
-    @cgvec[cgstrll*] func_defs;
+    @cgvec[cg_astdesigner_fn_def*] func_defs;
 end
+
 
 struct cg_astdesigner_ast
     noexport
     cgstr name;
     @cgvec[cg_astdesigner_struct_def*] node_defs;
-    @cgvec[cgstrll*] func_defs;
+    @cgvec[cg_astdesigner_fn_def*] func_defs;
     //TODO: more fns?
 end
 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// METHODS
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 method codegen cg_astdesigner_struct_def.ctor():
     this.name.s = 0;
     this.func_defs.ctor();
@@ -107,6 +117,17 @@ method codegen cg_astdesigner_struct_def.dtor():
     this.name:free();
     this.func_defs.dtor();
 end
+
+method codegen cg_astdesigner_fn_def.ctor():
+    this.name.s = 0;
+    this.code_in = cast(cgstrll*)0;
+    this.code_out = cast(cgstrll*)0;
+end
+method codegen cg_astdesigner_fn_def.dtor():
+    this.name.free();
+end
+
+
 
 method codegen cg_astdesigner_ast.ctor():
     this.name.s = 0;
@@ -119,4 +140,131 @@ method codegen cg_astdesigner_ast.dtor():
     this.node_defs.dtor();
     this.func_defs.dtor();
 end
+
+//TREE DESIGNER- an intermediate representation
+
+struct cg_tree_node_types_struct_def
+noexport
+    cgstrll* name
+    cgstrll* content
+end
+
+/*
+    Tree designer...
+    
+    @treenodes[
+    
+        mynode1[
+            bla bla
+        ]
+        mynode2[
+            bla bla
+        ]
+    ]
+*/
+@cgrdparser[
+    cg_tree_node_types
+    [
+        @cgvec[cg_tree_node_types_struct_def] tree_structs
+    ]
+    
+    head[
+        this.tree_structs.ctor();
+        while(1)
+            finish_on_tok_null
+            ident[
+                do parse_node
+            else
+                @pprint[
+                    /   "CG_TREE_NODE_TYPES SYNTAX ERROR"
+                    /   "Expected Identifier, got this instead:"
+                ]
+                tok.debug_print();
+                __builtin_exit(1);
+            ]
+            
+        end
+    ]
+    parse_node[
+        cg_tree_node_types_struct_def dd
+        dd.name = 0;
+        dd.content = 0;
+        //grab the thing immediately right of the name- the contents of the struct in brackets
+        @cg_bldr_foldout_arg [dd.content] [tok.right]
+        dd.name = tok.dupe();
+        eat //this eats the name...
+        
+        this.tree_structs.push(dd);
+        finish
+    ]
+    finish[
+        i64 i;
+        i64 len = this.tree_structs.len;
+        emitq ";"
+        if(len <= 0)
+            finish
+        end
+        //there is at least one struct declared!
+        for(i = 0; i < len; i++)
+            emitq "@"
+            emitq "global"
+            emitq "struct"
+            emit [this.tree_structs.d[i].name]
+            emitq "noexport"
+        end
+        //emit contents of structs...
+        for(i = len-1; i >= 0; i--)
+            emit [this.tree_structs.d[i].content]
+            emit_skip
+            emitq "end"
+        end
+    ]
+
+]
+/*
+    ast designer is written in cgrdparser. Neat, huh?
+*/
+
+/*
+
+@cgrdparser[
+    cg_ast_designer
+    [
+        cg_astdesigner_ast ast_spec
+    ]
+    head[
+        this.ast_spec.ctor();
+        
+        
+        do parse_node_defs
+        do parse_node_methods
+        finish
+    ]
+    parse_node_defs[
+        if(tok_not_null)
+            ident[
+                
+                else
+                    finish
+            ]
+        end
+    ]
+    parse_node_def[
+    
+    ]
+    parse_node_methods[
+        
+    ]
+    parse_node_method[
+        
+    ]
+    finish[
+        //TODO
+        emitq ";"
+        finish
+    ]
+]
+*/
+
+
 
