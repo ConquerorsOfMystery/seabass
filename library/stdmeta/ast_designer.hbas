@@ -302,8 +302,10 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
             //set_MEMBERNAME,
         end
     end
-    
-    return retval.right;
+    cgstrll* rrr = retval.right;
+    retval.right = 0;
+    retval:freelist();
+    return rrr;
 ]
 
 
