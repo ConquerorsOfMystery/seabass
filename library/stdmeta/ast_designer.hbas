@@ -99,7 +99,6 @@ end
     Tree designer...
     
     @treenodes[
-    
         mynode1[
             bla bla
         ]
@@ -109,7 +108,7 @@ end
     ]
 */
 @cgrdparser[
-    cg_tree_node_types
+    cg_tree_types
     [
         @cgvec[cg_tree_node_types_struct_def] tree_structs
     ]

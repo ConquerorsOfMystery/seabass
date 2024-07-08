@@ -1,6 +1,6 @@
 
 #include <meta>
-@cg_tree_node_types[
+@cg_tree_types[
     myNode1[
         i64 a
         myNode2* c
