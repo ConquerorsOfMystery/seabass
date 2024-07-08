@@ -73,50 +73,51 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
 @mktemplate [
     cg_ast_ctx_stk
     [
-        [__NAME_GEN__]
-        //name_gen is the context struct itself.
-        struct __NAME_GEN__
-            noexport
-            __BODY__
-        end
-        
-        //name_2_gen is the context stack
-        struct __NAME_2_GEN__
-            noexport
-            //NOT POINTER!
-            @cgvec[__NAME_GEN__] s
-        end
-        
-        method codegen __NAME_2_GEN__.ctor():
-            this.s.ctor();
-        end
-        
-        method codegen __NAME_2_GEN__.dtor():
-            this.s.dtor();
-        end
-        
-        method codegen __NAME_2_GEN__.push():
-            __NAME_GEN__ qq
-            //clear memory of qq
-            u64 i
-            for(i = 0; i < sizeof(__NAME_GEN__); i++)
-                ((byte*)qq)[i] = 0;
+        [__NAME_2_GEN__]
+        @globalscope
+            //name_gen is the context struct itself.
+            struct __NAME_GEN__
+                noexport
+                __BODY__
             end
-            //push it
-            this.s.push(qq);
+            
+            //name_2_gen is the context stack
+            class __NAME_2_GEN__
+                noexport
+                //NOT POINTER!
+                @cgvec[__NAME_GEN__] s
+            end
+            
+            method codegen __NAME_2_GEN__.ctor():
+                this.s.ctor();
+            end
+            
+            method codegen __NAME_2_GEN__.dtor():
+                this.s.dtor();
+            end
+            
+            method codegen __NAME_2_GEN__.push():
+                __NAME_GEN__ qq
+                //clear memory of qq
+                u64 i
+                for(i = 0; i < sizeof(__NAME_GEN__); i++)
+                    ((byte*)qq)[i] = 0;
+                end
+                //push it
+                this.s.push(qq);
+            end
+            
+            method codegen __NAME_2_GEN__.pop():
+                this.s.pop();
+            end
+            
+            method codegen __NAME_2_GEN__.top()->__NAME_GEN__*:
+                if(this.s.len == 0) return cast(__NAME_GEN__*)0; end
+                return this.s.d[this.s.len-1];
+            end
+            @cg_ast_ctx_stk_generate_methods_for_NAME_GEN_structs_ [__NAME_GEN__] [__NAME_2_GEN__]
+            //#__CBAS_TERMINATE
         end
-        
-        method codegen __NAME_2_GEN__.pop():
-            this.s.pop();
-        end
-        
-        method codegen __NAME_2_GEN__.top()->__NAME_GEN__*:
-            if(this.s.len == 0) return cast(__NAME_GEN__*)0; end
-            return this.s.d[this.s.len-1];
-        end
-        
-        //TODO: Write methods for each member of body.
-        @cg_ast_ctx_stk_generate_methods_for_NAME_GEN_structs_ [__NAME_GEN__] [__NAME_2_GEN__]
     ][
         __BODY__
     ][
@@ -162,7 +163,8 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
                     /int(t.basetype)
                 ]
             end
-            for(i = 0; i < t.pointerlevel; i++)
+            u64 j
+            for(j = 0; j < t.pointerlevel; j++)
                 @cg_bldr_pushqtok "*"
             end
         end
@@ -207,6 +209,7 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
         for(i = 0; i < cbas_ast.ntypedecls[0]; i++)
             if(struct2.text streq cbas_ast.type_table[0][i].name)
                 struct2_type = cbas_ast.type_table[0][i];
+                break
             end
         end
     end
@@ -233,7 +236,6 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
             end
         end
     end
-    
     //TODO: write methods...
     //verify that the context struct contains only pointers...
     if(1)
@@ -301,7 +303,7 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
         end
     end
     
-    return retval;
+    return retval.right;
 ]
 
 

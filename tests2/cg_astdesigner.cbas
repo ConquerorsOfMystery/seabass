@@ -11,11 +11,67 @@
     ]
 ]
 
+@wksht myCtxStk [
+    [
+        @cg_ast_ctx_stk [
+            myNode1* Bruh
+            myNode1* Buddy
+            myNode2* BuhBomb
+        ]
+    ][]
+]
+
+
+
+
 fn codegen codegen_main():
     myNode1 a
+    myNode1 a2
+    @myCtxStk qqq
     a.a = 3;
     a.c = cast(myNode2*)__builtin_malloc(sizeof(myNode2));
     a.c.qq = 99;
+    qqq.push();
+    qqq.set_Bruh(a);
+    qqq.push();
+    qqq.set_Bruh(a2);
+    if(qqq.get_Bruh() == 0)
+        @pprint[
+            /   "Failure!"
+        ]
+    elif(qqq.get_Bruh() == a)
+        @pprint[
+            /   "huh?"
+        ]
+    elif(qqq.get_Bruh() == a2)
+        @pprint[
+            /   "Good!"
+        ]
+    end
+    qqq.pop();
+    if(qqq.get_Bruh() == 0)
+        @pprint[
+            /   "Failure!"
+        ]
+    elif(qqq.get_Bruh() == a)
+        @pprint[
+            /   "Good x2"
+        ]
+    elif(qqq.get_Bruh() == a2)
+        @pprint[
+            /   "Bad!"
+        ]
+    end
+    qqq.pop();
+    if(qqq.get_Bruh() != 0)
+        @pprint[
+            /   "?????"
+        ]
+        else
+        @pprint[
+            /   "Good x3"
+        ]
+    end
     @pprint[
         /   "a.a = "
         /int(a.a)
