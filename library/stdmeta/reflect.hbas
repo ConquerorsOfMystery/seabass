@@ -165,7 +165,6 @@ end
 
 method codegen pure cgstr:len->u64:
     u64 i
-    i = 0;
 
     //necessary to prevent segfaults
     if(this:isempty())
@@ -175,6 +174,12 @@ method codegen pure cgstr:len->u64:
     //count characters
     for(i=0, this.s[i], i++) end
     
+    return i;
+end
+
+fn codegen pure cgstrlen(char* s)->u64:
+    u64 i
+    for(i=0, s[i], i++) end
     return i;
 end
 

@@ -33,12 +33,85 @@
     end
     
     you also need methods for pushing new contexts...
-
+    
+    @cg_ast_ctx_stk[
+        myField1* a
+        myField2* b
+    ]
+    should define the ctx struct as well as the ctx itself.
+    the evaluation
 */
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+codegen u64 cg_ast_ctx_stk_instance_counter = 1;
 
+@wksht template_identifier_replacer [
+    [
+        if(1)
+            char[50] buf
+            u64 ours = __INSTANCE_COUNTER;
+            cgstrcpy(buf, __INSTANCE_STRING);
+            __builtin_utoa(buf + cgstrlen(buf), ours);
+            cgstrll* iter = result;
+            while(iter != 0)
+                if(iter.d != CG_TOK_IDENT) iter = iter.right continue end
+                if(iter.text streq __REPLACEME_STRING)
+                    __builtin_free(iter.text);
+                    iter.text = __builtin_strdup(buf);
+                end
+                iter = iter.right
+            end
+        end
+    ]
+    [
+        __REPLACEME_STRING  __INSTANCE_STRING __INSTANCE_COUNTER
+    ]
+]
+
+
+@mktemplate [
+    cg_ast_ctx_stk
+    [
+        [__NAME_GEN__]
+        struct __NAME_GEN__
+            noexport
+            __BODY__
+        end
+        
+        struct __NAME_2_GEN__
+            @cgvec[__NAME_GEN__] s
+        end
+        
+        method codegen __NAME_2_GEN__.ctor():
+            this.s.ctor();
+        end
+        
+        method codegen __NAME_2_GEN__.dtor():
+            this.s.dtor();
+        end
+        //TODO: Write methods for each member of body.
+        @cg_ast_ctx_stk_generate_methods_for_NAME_GEN_structs_ [__NAME_GEN__] [__NAME_2_GEN__]
+    ][
+        __BODY__
+    ][
+        cg_ast_ctx_stk_instance_counter++;
+        @template_identifier_replacer "__NAME_GEN__" "__cg_ast_ctx_stk_struct_" cg_ast_ctx_stk_instance_counter
+        @template_identifier_replacer "__NAME_2_GEN__" "__cg_ast_ctx_stk_stk_" cg_ast_ctx_stk_instance_counter
+        return result;
+    ]
+]
+
+@mkbldrn cg_ast_ctx_stk_generate_methods_for_NAME_GEN_structs_ 2 [
+    //TODO
+    cgstrll* struct1 //NAME_GEN struct
+    cgstrll* struct2 //NAME_2_GEN struct
+    @cg_bldr_initqtok ";";
+    
+    
+    
+    return retval;
+]
 
 
 
