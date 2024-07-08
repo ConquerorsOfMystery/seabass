@@ -176,10 +176,18 @@ end
                 do parse_node
             else
                 @pprint[
-                    /   "CG_TREE_NODE_TYPES SYNTAX ERROR"
+                    /   "cg_tree_node_types SYNTAX ERROR"
                     /   "Expected Identifier, got this instead:"
                 ]
                 tok.debug_print();
+                @pprint[
+                    /   "File:"
+                    /   (tok.filename)
+                    /   "Line:"
+                    /int(tok.linenum)
+                    /   "Col:"
+                    /int(tok.colnum)
+                ]
                 __builtin_exit(1);
             ]
             
@@ -198,7 +206,7 @@ end
         finish
     ]
     finish[
-        i64 i;
+        i64 i
         i64 len = this.tree_structs.len;
         emitq ";"
         if(len <= 0)
