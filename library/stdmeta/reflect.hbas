@@ -863,6 +863,9 @@ method codegen cgstrll:push_end_n(cgstrll other, u64 n):
     return;
 end
 
+/*
+    Push a token list onto the token stream.
+*/
 fn codegen cgtok_push_stream(cgstrll pushme):
     cgstrll** n
     cgstrll* pretender
