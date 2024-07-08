@@ -14,7 +14,7 @@
     a set of macros, templates, and syntaxes that
     will make it much easier for me to work with them.
     
-    tokmanip_push_tokens
+    tokmanip_push_strings
     
         Enables me to write code "normally" for sequential pushqtoks
         after the first token.
@@ -34,7 +34,8 @@
         Dynamically allocated byte array.
         
     cgtoklist
-    
+        
+        larger data structure for handling a cgstrll (codegen string linked list) data structure.
         
 */
 

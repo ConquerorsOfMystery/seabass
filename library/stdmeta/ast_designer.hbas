@@ -6,6 +6,142 @@
 #include <stdmeta/cgrdparse.hbas>
 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//  THE CONTEXT STACK
+//  "What is the current loop construct?" (i.e. while parsing, generating your AST)?
+//  Sometimes you need to know what the "last X" you parsed was, or "X you are under"
+//  I want to design a data structure specificall for this.
+/*
+    You need a sequence of pointers and names.
+    struct myCtxStruct
+        noexport
+        myStruct* mystruct
+        myStruct* myLoop
+        [...]
+    end
+    
+    Then you define a "context stack data structure"
+    struct myCtxStructDataStack
+        noexport
+        @cgvec[myCtxStruct] stk
+    end
+    
+    Then you write methods...
+    method codegen myCtxStructDataStack.get_mystruct()->myStruct*:
+        //start from the end of the vector and look for the first non-null
+        //entry in any myCtxStruct's mystruct field.
+    end
+    
+    you also need methods for pushing new contexts...
+
+*/
+//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//TREE DESIGNER
+//
+//lay out all the node types for a tree with ease!
+//useful for writing ASTs!
+//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+struct cg_tree_node_types_struct_def
+noexport
+    cgstrll* name
+    cgstrll* content
+end
+
+/*
+    Tree designer...
+    
+    @treenodes[
+        mynode1[
+            bla bla
+        ]
+        mynode2[
+            bla bla
+        ]
+    ]
+*/
+@cgrdparser[
+    cg_tree_types
+    [
+        @cgvec[cg_tree_node_types_struct_def] tree_structs
+    ]
+    head[
+        this.tree_structs.ctor();
+        while(1)
+            finish_on_tok_null
+            ident[
+                    do parse_node
+            else
+                    @pprint[
+                        /   "cg_tree_node_types SYNTAX ERROR"
+                        /   "Expected Identifier, got this instead:"
+                    ]
+                    tok.debug_print();
+                    @pprint[
+                        /   "File:"
+                        /   (tok.filename)
+                        /   "Line:"
+                        /int(tok.linenum)
+                        /   "Col:"
+                        /int(tok.colnum)
+                    ]
+                    __builtin_exit(1);
+            ]
+            
+        end
+    ]
+    parse_node[
+        cg_tree_node_types_struct_def dd
+        dd.name = 0;
+        dd.content = 0;
+        //grab the thing immediately right of the name- the contents of the struct in brackets
+        @cg_bldr_foldout_arg [dd.content] [tok.right]
+        dd.name = tok.dupe();
+        eat //this eats the name...
+        
+        this.tree_structs.push(dd);
+        finish
+    ]
+    finish[
+        i64 i
+        i64 len = this.tree_structs.len;
+        emitq ";"
+        if(len <= 0)
+            finish
+        end
+        //there is at least one struct declared!
+        for(i = 0; i < len; i++)
+            emitq "@"
+            emitq "global"
+            emitq "struct"
+            emit [this.tree_structs.d[i].name]
+            emitq "noexport"
+        end
+        //emit contents of structs...
+        for(i = len-1; i >= 0; i--)
+            emit [this.tree_structs.d[i].content]
+            emit_skip
+            emitq "end"
+        end
+    ]
+]
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/*
+    AST DESIGNER
+*/
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 
 /*
     PLAN- THE AST DESIGNER
@@ -78,106 +214,7 @@
 */
 
 
-
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//TREE DESIGNER
-//
-//lay out all the node types for a tree with ease!
-//useful for writing ASTs!
-//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-struct cg_tree_node_types_struct_def
-noexport
-    cgstrll* name
-    cgstrll* content
-end
-
 /*
-    Tree designer...
-    
-    @treenodes[
-        mynode1[
-            bla bla
-        ]
-        mynode2[
-            bla bla
-        ]
-    ]
-*/
-@cgrdparser[
-    cg_tree_types
-    [
-        @cgvec[cg_tree_node_types_struct_def] tree_structs
-    ]
-    head[
-        this.tree_structs.ctor();
-        while(1)
-            finish_on_tok_null
-            ident[
-                do parse_node
-            else
-                @pprint[
-                    /   "cg_tree_node_types SYNTAX ERROR"
-                    /   "Expected Identifier, got this instead:"
-                ]
-                tok.debug_print();
-                @pprint[
-                    /   "File:"
-                    /   (tok.filename)
-                    /   "Line:"
-                    /int(tok.linenum)
-                    /   "Col:"
-                    /int(tok.colnum)
-                ]
-                __builtin_exit(1);
-            ]
-            
-        end
-    ]
-    parse_node[
-        cg_tree_node_types_struct_def dd
-        dd.name = 0;
-        dd.content = 0;
-        //grab the thing immediately right of the name- the contents of the struct in brackets
-        @cg_bldr_foldout_arg [dd.content] [tok.right]
-        dd.name = tok.dupe();
-        eat //this eats the name...
-        
-        this.tree_structs.push(dd);
-        finish
-    ]
-    finish[
-        i64 i
-        i64 len = this.tree_structs.len;
-        emitq ";"
-        if(len <= 0)
-            finish
-        end
-        //there is at least one struct declared!
-        for(i = 0; i < len; i++)
-            emitq "@"
-            emitq "global"
-            emitq "struct"
-            emit [this.tree_structs.d[i].name]
-            emitq "noexport"
-        end
-        //emit contents of structs...
-        for(i = len-1; i >= 0; i--)
-            emit [this.tree_structs.d[i].content]
-            emit_skip
-            emitq "end"
-        end
-    ]
-]
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/*
-    AST DESIGNER
-*/
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 struct cg_astdesigner_fn_def
     noexport
@@ -241,7 +278,6 @@ method codegen cg_astdesigner_ast.dtor():
 end
 
 
-/*
 
 @cgrdparser[
     cg_ast_designer
