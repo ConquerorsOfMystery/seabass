@@ -12,7 +12,6 @@
 ]
 
 fn codegen codegen_main():
-    //while(1) end
     myNode1 a
     a.a = 3;
     a.c = cast(myNode2*)__builtin_malloc(sizeof(myNode2));
