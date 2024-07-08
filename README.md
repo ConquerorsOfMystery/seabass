@@ -15,8 +15,7 @@ you write). If CBAS does not have a feature that you want, you can add the
 feature.
 
 CBAS is meant to completely supersede all existing programming language
-infrastructure and replace it with a clean, sleek, simple system written
-in C99.
+infrastructure and replace it with a clean, sleek, simple and reasonably efficient system.
 
 # What makes Coder's BASILISK good?
 
@@ -69,6 +68,11 @@ percent of what it is capable of being.
 
 All work on metaprogramming in CBAS has exponential gains in productivity due to the nature of metaprogramming,
 so as more work happens, the work itself should get quicker (the core concept of metaprogramming).
+
+# Are you planning on self-hosting the compiler?
+
+It would be fairly trivial to port the compiler into its own language, however I do not find this necessary
+at the current time. The C99 implementation works wonderfully.
 
 # If I used CBAS right now using only what is already here, what would I get?
 
