@@ -2,7 +2,7 @@
 
 #guard compiletime_ast_designer_lowlevel_DMHSW
 
-#include <stdmeta/wksht.hbas>
+#include <stdmeta/cgstl.hbas>
 #include <stdmeta/cgrdparse.hbas>
 
 
@@ -80,6 +80,7 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
         end
         
         struct __NAME_2_GEN__
+            noexport
             @cgvec[__NAME_GEN__] s
         end
         
@@ -103,7 +104,7 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
 ]
 
 @mkbldrn cg_ast_ctx_stk_generate_methods_for_NAME_GEN_structs_ 2 [
-    //TODO
+    //TODO- after the structs have been defined, 
     cgstrll* struct1 //NAME_GEN struct
     cgstrll* struct2 //NAME_2_GEN struct
     @cg_bldr_initqtok ";";
