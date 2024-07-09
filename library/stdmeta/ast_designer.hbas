@@ -46,7 +46,7 @@
 
 codegen u64 cg_ast_ctx_stk_instance_counter = 1;
 
-@wksht template_identifier_replacer [
+@wksht cg_template_identifier_replacer [
     [
         if(1)
             char[50] buf
@@ -122,8 +122,8 @@ codegen u64 cg_ast_ctx_stk_instance_counter = 1;
         __BODY__
     ][
         cg_ast_ctx_stk_instance_counter++;
-        @template_identifier_replacer "__NAME_GEN__" "__cg_ast_ctx_stk_struct_" cg_ast_ctx_stk_instance_counter
-        @template_identifier_replacer "__NAME_2_GEN__" "__cg_ast_ctx_stk_stk_" cg_ast_ctx_stk_instance_counter
+        @cg_template_identifier_replacer "__NAME_GEN__" "__cg_ast_ctx_stk_struct_" cg_ast_ctx_stk_instance_counter
+        @cg_template_identifier_replacer "__NAME_2_GEN__" "__cg_ast_ctx_stk_stk_" cg_ast_ctx_stk_instance_counter
         return result;
     ]
 ]

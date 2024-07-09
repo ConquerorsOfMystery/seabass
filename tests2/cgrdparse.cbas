@@ -45,7 +45,7 @@ end
     [
         cgstr int_name
     ]
-
+    uses_uast
     head [
         this.int_name.s = cast(u8*)0;
         while(tok_not_null)
