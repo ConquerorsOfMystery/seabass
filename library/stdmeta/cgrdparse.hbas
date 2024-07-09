@@ -2143,8 +2143,8 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
             in_rwalk:debug_print();
             __builtin_exit(1);
         end
-        //check for this special case...
-        while(1)
+        //check for these special cases...
+        if(1)
             if(in_rwalk.text streq "cgrdparse")
                 spec.is_targeting_cgrdparse = 1;
                 in_rwalk = in_rwalk.right;
@@ -2155,7 +2155,6 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
                 in_rwalk = in_rwalk.right;
                 continue
             end
-            break
         end
         //this will be moved.
         current_rulename:fromstr(in_rwalk.text);
@@ -2219,7 +2218,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
         //walk right...
         in_rwalk = in_rwalk.right;
         //continue...
-    end
+    end //eof while(1) for body
     retval = spec:gen_struct(); rwalk = retval; @cg_bldr_rwalk_skip ;
     
     u64 ruleid_head
