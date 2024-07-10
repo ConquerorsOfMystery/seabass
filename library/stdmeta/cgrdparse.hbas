@@ -101,7 +101,7 @@ end
 
 
 fn codegen cg_rd_parse_fail_match_syntax(char* msg, char* langname, char* rulename):
-    __builtin_puts("RDPARSER_ERROR!");
+    __builtin_puts("CGRDPARSER_ERROR!");
     __builtin_puts("match has different syntax.");
     __builtin_puts("The syntax is:");
     __builtin_puts("match[ [my_charpointer_expr()]\n code(); \n]");
@@ -113,7 +113,7 @@ fn codegen cg_rd_parse_fail_match_syntax(char* msg, char* langname, char* rulena
     __builtin_exit(1);
 end
 fn codegen cg_rd_parse_fail_stringlit_syntax(char* msg, char* langname, char* rulename):
-    __builtin_puts("RDPARSER_ERROR!");
+    __builtin_puts("CGRDPARSER_ERROR!");
     __builtin_puts("stringlit's syntax was wrong.");
     __builtin_puts("The syntax is:");
     __builtin_puts("stringlit[ mycode(); ]");
@@ -233,7 +233,7 @@ codegen u64 cg__rd__p__m_temporary_id = 0;
 
         //we now have a scope for variables.
         if(inlist_dupe.d != CG_TOK_OBRACK)
-            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("CGRDPARSER_ERROR");
             __builtin_puts("match followed by something other than brackets!");
             __builtin_puts("The syntax is:");
             __builtin_puts("match[ [my_charpointer_expr()]\n code(); \n]");
@@ -243,7 +243,7 @@ codegen u64 cg__rd__p__m_temporary_id = 0;
         qq = dummy:cg_token_foldout_arglist();
         //dummy.right henceforth holds the contents of the match body...
         if(qq.right.d == CG_TOK_CBRACK)
-            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("CGRDPARSER_ERROR");
             __builtin_puts("match with empty string expression!");
             __builtin_puts("The syntax is:");
             __builtin_puts("match [ [my_charpointer_expr()] code(); ]");
@@ -797,7 +797,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             in_rwalk = in_rwalk.right;
             in_rwalk = in_rwalk.right;
             if(in_rwalk == 0 || (in_rwalk.d != CG_TOK_IDENT && in_rwalk.d != CG_TOK_STRING))
-                __builtin_puts("RDPARSER_ERROR!");
+                __builtin_puts("CGRDPARSER_ERROR!");
                 __builtin_puts("^^CAPTURE syntax requires STRING LITERAL or IDENTIFER!");
                 __builtin_puts("Parser's name is:");
                 __builtin_puts(spec.name.s);
@@ -816,7 +816,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             if(in_rwalk.d == CG_TOK_IDENT)
                 //difficult case...
                 if(!has_made_self)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("^^CAPTURE requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -946,7 +946,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 elif(in_rwalk.text streq "ANY")
                     @cg_bldr_pushqtok "1"
                 else
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("^^CAPTURE syntax unknown identifier!!");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1050,7 +1050,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 in_rwalk = in_rwalk.right;
                 //Make sure this thing has text...
                 if(in_rwalk == cast(cgstrll*)0)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("do at end of rule definition.");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1059,7 +1059,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                     __builtin_exit(1);
                 end
                 if(in_rwalk.text == cast(char*)0)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("do on something that has no text?");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1072,7 +1072,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 i64 ruleid
                 ruleid = spec:get_rule_id(in_rwalk.text);
                 if(ruleid == -1)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("do on non-rule!");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1099,7 +1099,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 in_rwalk = in_rwalk.right;
                 //Make sure this thing has text...
                 if(in_rwalk == cast(cgstrll*)0)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("go at end of rule definition.");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1108,7 +1108,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                     __builtin_exit(1);
                 end
                 if(in_rwalk.text == cast(char*)0)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("go on something that has no text?");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1121,7 +1121,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 i64 ruleid
                 ruleid = spec:get_rule_id(in_rwalk.text);
                 if(ruleid == -1)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("go on non-rule!");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1196,7 +1196,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 continue
             elif(uses_uast && in_rwalk.text streq "getcapture")
                 if(!has_made_self)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("getcapture requires `self` to exist, please insert `mkself` at the top of the rule to create the self node for this rule...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1214,7 +1214,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 continue
             elif(uses_uast && in_rwalk.text streq "capture")
                 if(!has_made_self)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("capture requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1371,7 +1371,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             */
                 if(in_rwalk.right == 0 ||
                 in_rwalk.right != CG_TOK_OPAREN)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("stpush must be followed by a");
                     __builtin_puts("parenthesized expression evaluating to a u64! use like so:");
                     __builtin_puts("stpush(12 + 3);");
@@ -1392,7 +1392,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 in_rwalk = in_rwalk.right;
                 if(in_rwalk == 0 ||
                 in_rwalk.d != CG_TOK_IDENT)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("addnode on non-identifier!");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1416,7 +1416,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 continue
             elif(uses_uast && in_rwalk.text streq "addself")
                 if(!has_made_self)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("addself requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1443,7 +1443,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 in_rwalk = in_rwalk.right;
                 if(in_rwalk == 0 ||
                 in_rwalk.d != CG_TOK_IDENT)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("addpushnode on non-identifier!");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1485,7 +1485,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(uses_uast && in_rwalk.text streq "addpushself")
                 if(!has_made_self)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("addpushself requires `self` to exist, please insert `mkself` somewhere to create the self node for this rule...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1663,7 +1663,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "emit")
                 if(!has_declared_rwalk)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("rwalk undeclared");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1674,7 +1674,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 //step ahead
                 //Check for errors...
                 if(in_rwalk.right == cast(cgstrll*)0)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("emit at end of end rule definition.");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1682,7 +1682,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                     __builtin_exit(1);
                 end
                 if(in_rwalk.right.d != CG_TOK_OBRACK)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("emit not followed by bracketed token list.");
                     __builtin_puts("emit must be followed by a bracketed expression");
                     __builtin_puts("The expression must evaluate to a cgstrll*");
@@ -1702,7 +1702,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "emitq")
                 if(!has_declared_rwalk)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("Cannot emitq anywhere except finish rule OR if rwalk has been declared...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1713,7 +1713,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 //step ahead
                 //Check for errors...
                 if(in_rwalk.right == cast(cgstrll*)0)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("emitq at end of end rule definition.");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1729,7 +1729,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             elif(in_rwalk.text streq "emit_skip")
                 if(!has_declared_rwalk)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("Cannot emit_skip anywhere except finish rule OR if rwalk has been declared...");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1740,7 +1740,7 @@ method codegen cg_rd_parser_rule:gen_ocode(cg_rd_parser_spec* spec):
                 //step ahead
                 //Check for errors...
                 if(in_rwalk.right == cast(cgstrll*)0)
-                    __builtin_puts("RDPARSER_ERROR!");
+                    __builtin_puts("CGRDPARSER_ERROR!");
                     __builtin_puts("emit_skip at end of end rule definition.");
                     __builtin_puts("Parser's name is:");
                     __builtin_puts(spec.name.s);
@@ -1958,7 +1958,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
     
     //1. the name
     if(input.d != CG_TOK_IDENT)
-        __builtin_puts("RDPARSER_ERROR");
+        __builtin_puts("CGRDPARSER_ERROR");
         __builtin_puts("A valid identifier was not provided for the language name.");
         __builtin_puts("Here is the code:");
         input:debug_print();
@@ -1975,7 +1975,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
     end
         
     if(input.right == cast(cgstrll*)0)
-        __builtin_puts("RDPARSER_ERROR");
+        __builtin_puts("CGRDPARSER_ERROR");
         __builtin_puts("No variables portion.");
         __builtin_puts("Language name is:");
         __builtin_puts(spec.name.s);
@@ -1986,14 +1986,14 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
     cgstrll* t
     t = input:cg_token_foldout_arglist();
     if(!cast(uptr)t)
-        __builtin_puts("RDPARSER_ERROR");
+        __builtin_puts("CGRDPARSER_ERROR");
         __builtin_puts("No arglist?");
         __builtin_puts("Language name is:");
         __builtin_puts(spec.name.s);
         __builtin_exit(1);
     end
     if(t.right.d == CG_TOK_CBRACK)
-        __builtin_puts("RDPARSER_ERROR");
+        __builtin_puts("CGRDPARSER_ERROR");
         __builtin_puts("Empty Variable list.");
         __builtin_puts("If you don't want variables,");
         __builtin_puts("just put a semicolon in.");
@@ -2029,7 +2029,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
                 in_rwalk.text == 0 ||
                 in_rwalk.d != CG_TOK_IDENT
             )
-                __builtin_puts("RDPARSER_ERROR");
+                __builtin_puts("CGRDPARSER_ERROR");
                 __builtin_puts("expected identifer after @");
                 __builtin_puts("The language being parsed is...");
                 __builtin_puts(spec.name.s);
@@ -2064,7 +2064,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
                         (ss.fargs+1).basetype != CG_BASE_STRUCT ||
                         (ss.fargs+1).pointerlevel != 1 
                     )
-                        __builtin_puts("RDPARSER_ERROR");
+                        __builtin_puts("CGRDPARSER_ERROR");
                         __builtin_puts("cgrdparsehook has invalid prototype...");
                         __builtin_puts("The correct prototype is as follows:");
                         __builtin_puts("fn codegen cgrdparsehook_myparser_ext(cgstrll* in)->cgstrll*;");
@@ -2078,7 +2078,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
                 end //eof for
             end //eof searching for the parsehook...
             if(!found)
-                __builtin_puts("RDPARSER_ERROR");
+                __builtin_puts("CGRDPARSER_ERROR");
                 __builtin_puts("cgrdparsehook not found!");
                 __builtin_puts("Maybe you named it wrong? It should look like this:");
                 __builtin_puts("fn codegen cgrdparsehook_myparser_ext(cgstrll* in)->cgstrll*;");
@@ -2096,7 +2096,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
                 in_rwalk.right == 0 ||
                 in_rwalk.right.d != CG_TOK_OBRACK
             )
-                __builtin_puts("RDPARSER_ERROR");
+                __builtin_puts("CGRDPARSER_ERROR");
                 __builtin_puts("expected '[' after cgrdparsehook invocation...");
                 __builtin_puts("The language being parsed is...");
                 __builtin_puts(spec.name.s);
@@ -2134,7 +2134,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
         end //EOF parsehook handling...
         
         if(in_rwalk.d != CG_TOK_IDENT)
-            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("CGRDPARSER_ERROR");
             __builtin_puts("expected rulename, head, end,");
             __builtin_puts("or the end of the spec.");
             __builtin_puts("The language being parsed is...");
@@ -2160,7 +2160,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
         current_rulename:fromstr(in_rwalk.text);
         
         if(in_rwalk.right == cast(cgstrll*)0)
-            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("CGRDPARSER_ERROR");
             __builtin_puts("rulename at end of spec.");
             __builtin_puts("The language being parsed is...");
             __builtin_puts(spec.name.s);
@@ -2169,7 +2169,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
             __builtin_exit(1);            
         end
         if(in_rwalk.right.d != CG_TOK_OBRACK)
-            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("CGRDPARSER_ERROR");
             __builtin_puts("expected opening square bracket.");
             __builtin_puts(spec.name.s);
             __builtin_puts("The rule is...");
@@ -2184,7 +2184,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
         
         //test for the unusual cases...
         if(rule_icode == cast(cgstrll*)0)
-            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("CGRDPARSER_ERROR");
             __builtin_puts("cg_token_foldout_arglist() returned null.");
             __builtin_puts("spec is:");
             __builtin_puts(spec.name.s);
@@ -2195,7 +2195,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
             __builtin_exit(1);        
         end 
         if(rule_icode.right.d == CG_TOK_CBRACK)
-            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("CGRDPARSER_ERROR");
             __builtin_puts("Rule definition has no code!");
             __builtin_puts("To have an empty rule, just put");
             __builtin_puts("A semicolon in there.");
@@ -2231,7 +2231,7 @@ fn codegen cg_rd_parser_parse_spec(cgstrll* input)->cgstrll*:
         has_head = (ruleid_head != -1);
         has_fin = (ruleid_finish != -1);
         if(!has_head || !has_fin)
-            __builtin_puts("RDPARSER_ERROR");
+            __builtin_puts("CGRDPARSER_ERROR");
             __builtin_puts("The essential rule(s):");
             if(!has_head) __builtin_puts("head");  end
             if(!has_fin)  __builtin_puts("finish");end
