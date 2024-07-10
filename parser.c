@@ -234,7 +234,9 @@ static inline void parse_repeatedly_try_metaprogramming(){
         if(peek() == NULL) return;
         if(peek()->data != TOK_OPERATOR) return;
         if(!streq(peek()->text, "@")) return;
+        uint64_t active_function_stash = active_function;
         parse_do_metaprogramming();
+        active_function = active_function_stash;
     }
 }
 
