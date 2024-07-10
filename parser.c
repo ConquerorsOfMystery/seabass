@@ -253,6 +253,7 @@ void compile_unit(strll* _unit){
     pack_tokens();
     while(1){
         peek_always_not_null = 0;
+        active_function = -1;
         if(next == NULL) {
             break;
         }
@@ -457,6 +458,7 @@ void compile_unit(strll* _unit){
 }
 
 void parse_global(){
+    active_function = -1;
         if(peek()->data == TOK_IDENT){
             if(streq(peek()->text, "__cbas_run_fn")){
                 char* t;
