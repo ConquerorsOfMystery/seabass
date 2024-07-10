@@ -440,6 +440,10 @@ easy.
 
 ## Do you believe Coder's Basilisk has more potential for revolutionizing the world than neural network AIs?
 
+If N.N. based AIs are not a path to AGI and ASI, then CBAS is likely more impactful.
+
+If they are...
+
 It depends on how quickly we reach A.S.I. and what the state of the world is when that happens.
 
 If ASI is <5 years away and we have a utopian future where it's all free software that anyone can use,
@@ -450,7 +454,7 @@ and prevent anyone else from having them, then CBAS may represent the best tech 
 can access.
 
 If ASI is 40 years away, then CBAS and technology which is like it will likely define the period of
-time until ASI comes around, and would probably what would be used to build ASI quicker than if it
-had not come around.
+time until ASI comes around, and would probably be used to build ASI quicker than if it had not come 
+around.
 
 
