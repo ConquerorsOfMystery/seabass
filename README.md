@@ -44,8 +44,8 @@ having access to this technology. Keeping it out of the hands of the common man 
 my direct detriment, even if I became fabulously wealthy now, just because CBAS may drastically
 increase intellectual output that much.
 
-3. Love. I care about the creators, the brilliant and creative people out there trying to
-make stuff, who are hindered by the weak and pathetic tools that hold them back. CBAS should
+3. Love. I care about the creators, My fellow sages, the brilliant and creative people out there 
+trying to make stuff, who are hindered by the weak and pathetic tools that hold them back. CBAS should
 be a substantial improvement, although I believe I can create far more powerful tools (which I hope
 to make in CBAS).
 
