@@ -18,10 +18,12 @@
     * AST Post-processors. Basically, you'll be able to write code which takes the CBAS++ AST as
     input and then modifies it according to certain rules.
     
+    * The Custom statement- sort of like asm, but for higher order programming implementation rather than 
+    low level programming. @@myHandler[] gets handled AFTER parsing. That way, you can 
+    
+    NEW FEATURE IDEAS???
+    
     * State machine programming. I want to be able to write my own state machines inside of CBAS++.
-    
-    * 
-    
     
     FEATURES RECURRING AND POSSIBLY IMPROVED FROM CBAS:
     
@@ -138,6 +140,7 @@ end
         u64 linenum
         u64 colnum
         char* filename
+        cgstrll* custom_code //for the custom statement type
         @cgvec[__cbaspp__mod*] mods
     ]
     __cbaspp__expr_node[
@@ -159,4 +162,12 @@ end
         @cgvec[__cbaspp__mod*] mods
     ]
 ]
+
+codegen int CG_STMT_CBASPP_CUSTOM=16;
+
+/*
+    TODO: write code to manipulate this AST,
+    for instance, adding new nodes and whatnot.
+    This will then be used in the parser.
+*/
 

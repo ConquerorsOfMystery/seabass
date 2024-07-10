@@ -114,7 +114,7 @@ codegen int CG_STMT_ASM=12;
 codegen int CG_STMT_CONTINUE=13;
 codegen int CG_STMT_BREAK=14;
 codegen int CG_STMT_SWITCH=15;
-codegen int CG_NSTMT_TYPES;
+codegen int CG_NSTMT_TYPES=16;
 
 
 
