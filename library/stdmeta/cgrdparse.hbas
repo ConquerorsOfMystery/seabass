@@ -9,7 +9,8 @@
 #include <stdmeta/wksht.hbas>
 #include <stdmeta/uast.hbas>
 
-//used here.
+//arg1 is an expression evaluating to an LVALUE cgstrll*
+//arg2 is an expresson evaluating to an LVALUE cgstrll* as well.
 @wksht cg_bldr_foldout_arg [
     [
         if((ARG2) != cast(cgstrll*)0)
