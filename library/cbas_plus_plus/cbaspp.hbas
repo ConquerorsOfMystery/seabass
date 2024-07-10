@@ -2,4 +2,162 @@
 #guard CBAS_PLUS_PLUS_DMHSW
 
 #include <meta>
-//TODO
+
+/*
+    CBAS PLUS PLUS- THE OBJECT-ORIENTED METAPROGRAMMING LANGUAGE TO WIN THEM ALL?
+    
+    Major New Features over CBAS:
+    
+    * "The Agent Model" for multithreaded programming. Sets of "global variables" per thread.
+    
+    You can instantiate multiple instances of an "agent" as they are a type.
+    
+    * Type/Fn modifiers and properties. Basically, when constructing a type, you'll now be able to
+    "tag" that type with parameters (sort of like configuration).
+    
+    * AST Post-processors. Basically, you'll be able to write code which takes the CBAS++ AST as
+    input and then modifies it according to certain rules.
+    
+    * State machine programming. I want to be able to write my own state machines inside of CBAS++.
+    
+    * 
+    
+    
+    FEATURES RECURRING AND POSSIBLY IMPROVED FROM CBAS:
+    
+    * codegen code, noexport functions and structs
+    
+    * parsehooks, now CBASPLUSPLUS_parsehook_
+    
+    * codegen_main (as a CBAS function) but also the aforementioned CBAS++ post-processors that
+    process CBAS++ code before it is validated. How that exactly happens? Idk!
+    
+    
+    
+    CBAS COMPATIBILITY AND INTEROP
+    
+    * All CBAS classes and structs have to be forwarded to exist inside of CBAS++
+    
+    * all CBAS++ types, functions, you name it have a prefix, _cbaspp_ although you should
+    be able to disable the prefix on some symbols if you want
+    
+    
+    COMPILATION PROCESS
+    
+    <a set of symbols and directives>
+    
+    cbaspp_compile //actually performs compilation of all unprocessed symbols
+    
+    
+    
+    
+*/
+struct __cbaspp__mod noexport
+    //TODO
+    byte* mod_udata
+    u64[256] udata
+end
+struct __cbaspp__type noexport
+        u64 basetype
+        u64 pointerlevel
+        u64 arraylen
+        u64 structid
+        u64 is_lvalue
+
+        u64 funcid
+        u64 is_function
+
+        char* membername
+        @cgvec[__cbaspp__mod*] mods
+
+end
+
+
+@cg_tree_types[
+    __cbaspp__root[
+        @cgvec[__cbaspp__typedecl*] typedecls
+        @cgvec[__cbaspp__typedecl*] symdecls
+    ]
+    __cbaspp__typedecl[
+        char* name
+        @cgvec[__cbaspp__type] members
+        u64 is_incomplete
+        u64 is_noexport
+        u64 is_union
+        u64 algn
+        u64 is_compiled
+        @cgvec[__cbaspp__mod*] mods
+    ]
+    __cbaspp__symdecl[
+        __cbaspp__type* t
+        char* name
+        __cbaspp__type*[CG_MAX_FARGS] fargs
+        u64 nargs
+        u8* fbody
+        u8* cdata
+        u64 cdata_sz
+        u64 is_pub
+        u64 is_incomplete
+        u64 is_codegen
+        u64 is_impure
+        u64 is_pure
+        u64 is_inline
+        u64 is_atomic
+        u64 is_volatile
+        u64 is_impure_globals_or_asm
+        u64 is_impure_uses_incomplete_symbols
+        u64 is_data
+        u64 is_noexport
+        @cgvec[__cbaspp__mod*] mods
+    ]
+    __cbaspp__scope[
+        @cgvec[__cbaspp__symdecl] syms
+        //cgsymdecl* syms
+        //u64 nsyms
+        @cgvec[__cbaspp__stmt] stmts
+        //u8* stmts
+        //u64 nstmts
+        u64 is_fbody
+        u64 is_loopbody
+        @cgvec[__cbaspp__mod*] mods
+    ]
+    __cbaspp__stmt[
+        __cbaspp__scope* whereami
+        __cbaspp__scope* myscope
+        u64 kind
+        __cbaspp__expr_node*[3] expressions
+        u64 nexpressions
+        __cbaspp__stmt* referenced_loop
+        u64 symid
+        char* referenced_label_name
+        char** switch_label_list
+        u64* switch_label_indices
+        u64 switch_nlabels
+        i64 goto_scopediff
+        i64 goto_vardiff
+        i64 goto_where_in_scope
+        u64 linenum
+        u64 colnum
+        char* filename
+        @cgvec[__cbaspp__mod*] mods
+    ]
+    __cbaspp__expr_node[
+        __cbaspp__type t
+        u64 kind
+        double fdata
+        u64 idata
+        __cbaspp__expr_node*[CG_MAX_FARGS] subnodes
+        u64 symid
+        u64 fnptr_nargs
+        u64 constint_propagator
+        char* symname
+        char* method_name
+        u64 is_global_variable
+        u64 is_function
+        u64 is_implied
+        u64 was_struct_var
+        __cbaspp__type type_to_get_size_of
+        @cgvec[__cbaspp__mod*] mods
+    ]
+]
+
