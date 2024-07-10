@@ -13,17 +13,31 @@
     You can instantiate multiple instances of an "agent" as they are a type.
     
     * Type/Fn modifiers and properties. Basically, when constructing a type, you'll now be able to
-    "tag" that type with parameters (sort of like configuration).
+    "tag" that type with parameters (sort of like configuration). I have no idea how this will work,
+    excepting that perhaps I could allow you to walk the scope hierarchy during parsing of a function 
+    and tag variables and scopes and symbols and whatnot.
     
-    * AST Post-processors. Basically, you'll be able to write code which takes the CBAS++ AST as
-    input and then modifies it according to certain rules.
+    * AST Post-processors. Basically, you'll be able to write code which takes CBAS++ AST nodes as
+    input and then modifies it according to certain rules. 
     
     * The Custom statement- sort of like asm, but for higher order programming implementation rather than 
-    low level programming. @@myHandler[] gets handled AFTER parsing. That way, you can 
+    low level programming. @@myHandler[] gets handled AFTER parsing. It would work sort of like parsehooks...
     
-    NEW FEATURE IDEAS???
+    fn codegen cbaspp_custstmt_myStmt(
+        __cbaspp__stmt* refstmt, 
+        __cbaspp__symdecl* home_fn, 
+        __cbaspp__scope* whereami
+    );
     
-    * State machine programming. I want to be able to write my own state machines inside of CBAS++.
+    //in cbas++
+    
+    @@myStmt[code->goes.here;]
+    
+    I figure that handling via the custom statement hook could actually be deferred- i.e.
+    if a custom statement relied on the output of another (unfulfilled) custom statement, it
+    could delay action.
+    
+    
     
     FEATURES RECURRING AND POSSIBLY IMPROVED FROM CBAS:
     
@@ -50,8 +64,12 @@
     
     cbaspp_compile //actually performs compilation of all unprocessed symbols
     
+    cbaspp_compile [LIST_OF_SYMS] //perform compilation of a specific set of symbols
     
     
+    NIXED IDEAS
+    
+    * State machine programming. I want to be able to write my own state machines inside of CBAS++.
     
 */
 struct __cbaspp__mod noexport
