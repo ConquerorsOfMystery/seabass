@@ -53,9 +53,8 @@
     
 */
 struct __cbaspp__mod noexport
-    //TODO
+    char* name
     byte* mod_udata
-    u64[256] udata
 end
 struct __cbaspp__type noexport
         u64 basetype
