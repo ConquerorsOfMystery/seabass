@@ -3333,8 +3333,8 @@ void validate_function(symdecl* funk){
     //restore state of this so that parsehook usage is not wonky
     nscopes = nscopes_stash;
     nloops = nloops_stash;
-    free(scopestack);
-    free(loopstack);
+    if(scopestack) free(scopestack);
+    if(loopstack) free(loopstack);
     scopestack = scopestack_stash;
     loopstack = loopstack_stash;
     /*

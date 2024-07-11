@@ -328,8 +328,8 @@ void impl_builtin_parse_global(){
     cur_func_frame_size = stash_cur_func_frame_size;
     nscopes = nscopes_stash;
     nloops = nloops_stash;
-    free(scopestack);
-    free(loopstack);
+    if(scopestack) free(scopestack);
+    if(loopstack) free(loopstack);
     scopestack = scopestack_stash;
     loopstack = loopstack_stash;
 }
