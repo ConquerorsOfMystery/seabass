@@ -937,6 +937,20 @@ fn codegen cg_getast()->cgast*:
     return (cgast*)__builtin_get_ast()
 end
 
+fn codegen cg_get_active_fn()->cgsymdecl*:
+    if(cg_getast().active_function[0] != -1)
+        return 
+            cg_getast().
+            symbol_table//the symbol table
+            [0]         //get the symbol_table pointer directly, which is a list of symbol*
+            [cg_getast().active_function[0]]//the active_function'th pointer in that 
+                                            //list of pointers is the pointer we want.
+    else
+        return (cast(cgsymdecl*)0);
+    end
+end
+
+
 //gets the value of the next variable.
 fn codegen cg_peek()->cgstrll*:
     return cast(cgstrll*)__builtin_peek();

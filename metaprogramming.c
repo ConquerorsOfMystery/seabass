@@ -315,9 +315,23 @@ void impl_builtin_parse_global(){
     */
     uint64_t stash_cur_func_frame_size = cur_func_frame_size;
     uint64_t stash_cur_expr_stack_usage = cur_expr_stack_usage;
-    parse_global();
+    unsigned long long nscopes_stash = nscopes;
+    unsigned long long nloops_stash = nloops;
+    scope** scopestack_stash = scopestack;
+    stmt** loopstack_stash = loopstack;
+    nscopes = 0;
+    nloops = 0;
+    scopestack = 0;
+    loopstack = 0;
+        parse_global();
     cur_expr_stack_usage = stash_cur_expr_stack_usage;
     cur_func_frame_size = stash_cur_func_frame_size;
+    nscopes = nscopes_stash;
+    nloops = nloops_stash;
+    free(scopestack);
+    free(loopstack);
+    scopestack = scopestack_stash;
+    loopstack = loopstack_stash;
 }
 
 

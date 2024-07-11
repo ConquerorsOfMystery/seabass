@@ -237,6 +237,7 @@ static inline void parse_repeatedly_try_metaprogramming(){
         //active_function must be stashed...
         uint64_t active_function_stash = active_function;
         parse_do_metaprogramming();
+
         active_function = active_function_stash;
     }
 }
@@ -459,6 +460,7 @@ void compile_unit(strll* _unit){
 
 void parse_global(){
     active_function = -1;
+
         if(peek()->data == TOK_IDENT){
             if(streq(peek()->text, "__cbas_run_fn")){
                 char* t;
@@ -1628,6 +1630,12 @@ void parse_fn(int is_method){
         }
     }else{
         symbol_table[symid]->is_incomplete = 1; /*important for codegen functions...*/
+        if(nscopes || nloops){
+            parse_error("fbody parsing when nscopes or nloops are not 0");
+        }
+        if((long long int)active_function != (long long int)-1){
+            parse_error("fbody parsing when active_function != -1");
+        }
         active_function = symid;
         parse_fbody();
         active_function = -1;

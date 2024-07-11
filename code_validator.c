@@ -3267,14 +3267,18 @@ void validate_function(symdecl* funk){
         puts("INTERNAL VALIDATOR ERROR: Passed non-function.");
         validator_exit_err();
     }
+    
     unsigned long long nscopes_stash = nscopes;
     unsigned long long nloops_stash = nloops;
     scope** scopestack_stash = scopestack;
     stmt** loopstack_stash = loopstack;
+    
     nscopes = 0;
     nloops = 0;
     scopestack = 0;
     loopstack = 0;
+    
+    
     if(nscopes > 0 || nloops > 0){
         puts("INTERNAL VALIDATOR ERROR: Bad scopestack or loopstack.");
         validator_exit_err();
