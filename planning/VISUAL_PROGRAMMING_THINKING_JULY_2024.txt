@@ -1,0 +1,13 @@
+
+My comment on scopes:
+
+All programming is done as one or more semi-linear sequences of instructions, each of which references variables either A) in global state B) in the local context of the stack C) in an object
+
+You can genericize the global-context-object system into "abstract scopes" with a set of namespaces attached to them.
+Methods are just functions with a particular class's local variables included specially in their namespace.
+Scopes are just objects on the stack
+the set of variables that comprise the data in a particular scope comprise an anonymous class
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+I'm thinking that if I define a fairly flexible object-oriented language around the concept of "abstract scopes"
+then I could make a graphical programming language that could succeed.
