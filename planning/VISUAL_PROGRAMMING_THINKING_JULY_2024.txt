@@ -10,4 +10,7 @@ the set of variables that comprise the data in a particular scope comprise an an
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 I'm thinking that if I define a fairly flexible object-oriented language around the concept of "abstract scopes"
-then I could make a graphical programming language that could succeed.
+then I could make a graphical programming language that could succeed. Use colors for each of the "instruction
+sequences".
+
+Abstract objects and custom statements can provide metaprogramming facilities.
