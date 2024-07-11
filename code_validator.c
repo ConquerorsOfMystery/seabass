@@ -3267,6 +3267,14 @@ void validate_function(symdecl* funk){
         puts("INTERNAL VALIDATOR ERROR: Passed non-function.");
         validator_exit_err();
     }
+    unsigned long long nscopes_stash = nscopes;
+    unsigned long long nloops_stash = nloops;
+    scope** scopestack_stash = scopestack;
+    stmt** loopstack_stash = loopstack;
+    nscopes = 0;
+    nloops = 0;
+    scopestack = 0;
+    loopstack = 0;
     if(nscopes > 0 || nloops > 0){
         puts("INTERNAL VALIDATOR ERROR: Bad scopestack or loopstack.");
         validator_exit_err();
@@ -3317,10 +3325,20 @@ void validate_function(symdecl* funk){
     //
     
     optimize_fn(funk);
+    
+    //restore state of this so that parsehook usage is not wonky
+    nscopes = nscopes_stash;
+    nloops = nloops_stash;
+    free(scopestack);
+    free(loopstack);
+    scopestack = scopestack_stash;
+    loopstack = loopstack_stash;
     /*
         TODO: 
         Fix big: You can shadow variables by accident...
     */
+    
+    /*
     
     if(nscopes > 0){
         puts("INTERNAL VALIDATOR ERROR: Bad scopestack after walk_assign_lsym_gsym");
@@ -3330,6 +3348,7 @@ void validate_function(symdecl* funk){
         puts("INTERNAL VALIDATOR ERROR: Bad loopstack after walk_assign_lsym_gsym");
         validator_exit_err();
     }
+    */
     /*DONE: Assign loop pointers to continue and break statements. It also does goto.*/
 
 
