@@ -1,6 +1,6 @@
 
 /*
-    SEABASS METAPROGRAMMING LIBRARY
+    CODER'S BASILISK METAPROGRAMMING LIBRARY
     
     This is the file you should include to use the entire standard metaprogramming
     toolkit in your programs.
@@ -22,7 +22,7 @@
     
 */
 
-#guard seabass_standard_metaprogramming_library_all
+#guard CBAS_standard_metaprogramming_library_all_DMHSW
 
 #include <stdmeta/tokenz.hbas>
 #include <stdmeta/uast_common.hbas>
